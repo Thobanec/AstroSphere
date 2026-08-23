@@ -29,7 +29,13 @@ from astrosphere.config import (
     AppConfig,
 )
 
+from web.api import (
+    api,
+)
+
 app = Flask(__name__)
+
+app.register_blueprint(api)
 
 
 @app.route("/")
