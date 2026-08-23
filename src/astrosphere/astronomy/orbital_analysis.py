@@ -1,6 +1,7 @@
 from calendar import monthrange
 from datetime import timedelta
 
+from astrosphere.astronomy.ephemeris import load_de440s
 from skyfield.api import load
 
 from astrosphere.astronomy.calculations import (
@@ -68,7 +69,7 @@ def analyze_body_distance(
             "cannot be the same."
         )
 
-    planets = load("de440s.bsp")
+    planets = load_de440s()
     timescale = load.timescale()
 
     reference_body = planets[reference_body_name]

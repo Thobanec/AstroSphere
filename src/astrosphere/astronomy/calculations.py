@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from math import sqrt
 
+from astrosphere.astronomy.ephemeris import load_de440s
 from skyfield.api import load
 
 
@@ -9,7 +10,7 @@ def load_solar_system():
     Load the DE440S Solar System ephemeris.
     """
 
-    return load("de440s.bsp")
+    return load_de440s()
 
 
 def get_current_time():
