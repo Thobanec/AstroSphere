@@ -23,6 +23,37 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+              - name: Verify Azure configuration
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          echo "Client ID length: ${#AZURE_CLIENT_ID}"
+          echo "Tenant ID length: ${#AZURE_TENANT_ID}"
+          echo "Subscription ID length: ${#AZURE_SUBSCRIPTION_ID}"
+
+          if [ "$AZURE_TENANT_ID" = "c11f68a3-f8be-4fd2-b2ba-348abc06f657" ]; then
+            echo "Tenant ID matches expected Azure tenant."
+          else
+            echo "Tenant ID DOES NOT match expected Azure tenant."
+            exit 1
+          fi
+
+          if [ "$AZURE_CLIENT_ID" = "dfddbc64-c045-476f-b5dd-cc2317fc1d40" ]; then
+            echo "Client ID matches expected App Registration."
+          else
+            echo "Client ID DOES NOT match expected App Registration."
+            exit 1
+          fi
+
+          if [ "$AZURE_SUBSCRIPTION_ID" = "62b6400e-f0fd-4812-934d-60a74b23fc6b" ]; then
+            echo "Subscription ID matches expected subscription."
+          else
+            echo "Subscription ID DOES NOT match expected subscription."
+            exit 1
+          fi
+
       - name: Log in to Azure
         uses: azure/login@v2
         with:
