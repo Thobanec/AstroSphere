@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | Solar System Analysis
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                🌌
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Solar System Analysis Platform
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="main">
+
+
+        <section class="hero">
+
+            <h2>
+                Orbital Analysis
+            </h2>
+
+            <p>
+                Explore distances and orbital
+                relationships between Solar System bodies.
+            </p>
+
+        </section>
+
+
+        <section class="analysis-card">
+
+
+            <div class="card-header">
+
+                <h3>
+                    Configure Analysis
+                </h3>
+
+                <p>
+                    Select the bodies and parameters
+                    for your analysis.
+                </p>
+
+            </div>
+
+
+            <form
+                action="{{ url_for('analyze') }}"
+                method="POST"
+            >
+
+
+                <div class="form-grid">
+
+
+                    <div class="form-group">
+
+                        <label for="reference">
+                            Reference Body
+                        </label>
+
+                        <select
+                            id="reference"
+                            name="reference"
+                            required
+                        >
+
+                            {% for planet in planets.values() %}
+
+                                <option
+                                    value="{{ planet.name.lower() }}"
+                                    {% if planet.name == "Earth" %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    {{ planet.name }}
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="target">
+                            Target Body
+                        </label>
+
+                        <select
+                            id="target"
+                            name="target"
+                            required
+                        >
+
+                            {% for planet in planets.values() %}
+
+                                {% if planet.name != "Earth" %}
+
+                                    <option
+                                        value="{{ planet.name.lower() }}"
+                                        {% if planet.name == "Jupiter" %}
+                                            selected
+                                        {% endif %}
+                                    >
+
+                                        {{ planet.name }}
+
+                                    </option>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="start_date">
+                            Analysis Start Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="start_date"
+                            name="start_date"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="period">
+                            Analysis Period
+                        </label>
+
+                        <select
+                            id="period"
+                            name="period"
+                            required
+                        >
+
+                            <option value="3">
+                                3 months
+                            </option>
+
+                            <option value="6">
+                                6 months
+                            </option>
+
+                            <option
+                                value="12"
+                                selected
+                            >
+                                12 months
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="interval">
+                            Sampling Interval
+                        </label>
+
+                        <select
+                            id="interval"
+                            name="interval"
+                            required
+                        >
+
+                            <option value="1">
+                                Daily
+                            </option>
+
+                            <option
+                                value="7"
+                                selected
+                            >
+                                Weekly
+                            </option>
+
+                            <option value="30">
+                                Monthly
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="actions">
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                    >
+
+                        🚀 Run Analysis
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        onclick="window.location.href='/overview'"
+                    >
+
+                        ☀ Solar System Overview
+
+                    </button>
+
+                </div>
+
+
+            </form>
+
+
+        </section>
+
+
+        <section class="status-card">
+
+            <div class="status-icon">
+                ✨
+            </div>
+
+            <div>
+
+                <h3>
+                    Ready for analysis
+                </h3>
+
+                <p>
+                    Configure your parameters above
+                    and run an orbital analysis.
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <footer>
+
+        <p>
+            AstroSphere · Solar System Analysis
+        </p>
+
+    </footer>
+
+
+</div>
+
+</body>
+
+</html>

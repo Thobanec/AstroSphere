@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | {{ planet.name }}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                🌌
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Solar System Analysis Platform
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+
+    <main class="main">
+
+
+        <!-- =================================================
+             HERO
+             ================================================= -->
+
+        <section class="hero">
+
+            <h2>
+                {{ planet.name }}
+            </h2>
+
+            <p>
+                Current planetary data and astronomical
+                measurements.
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             CALCULATION INFORMATION
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Calculation Information
+                </h3>
+
+                <p>
+                    Current astronomical position calculated
+                    using the DE440S ephemeris.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Calculation Time
+                    </label>
+
+                    <div>
+                        {{ now.utc_strftime(
+                            "%d %B %Y %H:%M:%S UTC"
+                        ) }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Object
+                    </label>
+
+                    <div>
+                        {{ planet.name }}
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CURRENT DISTANCES
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Current Distances
+                </h3>
+
+                <p>
+                    Current astronomical distances for
+                    {{ planet.name }}.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <!-- Distance From Sun -->
+
+                <div class="form-group">
+
+                    <label>
+                        Distance From Sun
+                    </label>
+
+                    <div>
+
+                        {{
+                            "%.3f"|format(
+                                distance_from_sun
+                                / 1000000
+                            )
+                        }}
+
+                        million km
+
+                    </div>
+
+                </div>
+
+
+                <!-- Distance From Earth -->
+
+                <div class="form-group">
+
+                    <label>
+                        Distance From Earth
+                    </label>
+
+                    <div>
+
+                        {{
+                            "%.3f"|format(
+                                distance_from_earth
+                                / 1000000
+                            )
+                        }}
+
+                        million km
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             RELATIVE VELOCITY
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Relative Velocity
+                </h3>
+
+                <p>
+                    Relative velocity between Earth and
+                    {{ planet.name }}.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Relative Velocity
+                    </label>
+
+                    <div>
+
+                        {{
+                            "%.3f"|format(
+                                velocity_relative_to_earth
+                            )
+                        }}
+
+                        km/s
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             NAVIGATION
+             ================================================= -->
+
+        <div class="actions">
+
+
+            <button
+                type="button"
+                class="btn-primary"
+                onclick="window.location.href='/overview'"
+            >
+
+                ← Solar System Overview
+
+            </button>
+
+
+            <button
+                type="button"
+                class="btn-secondary"
+                onclick="window.location.href='/'"
+            >
+
+                ← Orbital Analysis
+
+            </button>
+
+
+        </div>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer>
+
+        <p>
+            AstroSphere · Solar System Analysis
+        </p>
+
+    </footer>
+
+
+</div>
+
+</body>
+
+</html>

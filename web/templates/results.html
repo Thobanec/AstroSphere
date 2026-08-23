@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | Analysis Results
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                🌌
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Solar System Analysis Platform
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+
+    <main class="main">
+
+
+        <!-- =================================================
+             HERO
+             ================================================= -->
+
+        <section class="hero">
+
+            <h2>
+
+                {{ reference_body.name }}
+
+                →
+
+                {{ target_body.name }}
+
+            </h2>
+
+            <p>
+                Orbital distance analysis results
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             ANALYSIS SUMMARY
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Analysis Summary
+                </h3>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Start Date
+                    </label>
+
+                    <div>
+                        {{ results[0]["date"].strftime("%d %B %Y") }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        End Date
+                    </label>
+
+                    <div>
+                        {{ results[-1]["date"].strftime("%d %B %Y") }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Analysis Period
+                    </label>
+
+                    <div>
+                        {{ config.months }} months
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Sampling Interval
+                    </label>
+
+                    <div>
+                        Every {{ config.interval_days }} day(s)
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CLOSEST APPROACH
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Closest Approach
+                </h3>
+
+            </div>
+
+
+            <h2>
+
+                {{ "%.3f"|format(minimum_km / 1000000) }}
+
+                million km
+
+            </h2>
+
+
+            <p>
+
+                {{ closest["date"].strftime("%d %B %Y") }}
+
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             FARTHEST APPROACH
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Farthest Approach
+                </h3>
+
+            </div>
+
+
+            <h2>
+
+                {{ "%.3f"|format(maximum_km / 1000000) }}
+
+                million km
+
+            </h2>
+
+
+            <p>
+
+                {{ farthest["date"].strftime("%d %B %Y") }}
+
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             DISTANCE STATISTICS
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Distance Statistics
+                </h3>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Initial Distance
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(initial_km / 1000000) }}
+
+                        million km
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Final Distance
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(final_km / 1000000) }}
+
+                        million km
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Average Distance
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(average_km / 1000000) }}
+
+                        million km
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Distance Variation
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(variation_km / 1000000) }}
+
+                        million km
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Distance Change
+                    </label>
+
+                    <div>
+
+                        {{ "%+.3f"|format(distance_change_km / 1000000) }}
+
+                        million km
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Percentage Change
+                    </label>
+
+                    <div>
+
+                        {{ "%+.3f"|format(percentage_change) }}%
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- Distance Trend -->
+
+            <div class="status-card">
+
+
+                <div class="status-icon">
+
+                    {% if distance_change_km < 0 %}
+
+                        ↘️
+
+                    {% elif distance_change_km > 0 %}
+
+                        ↗️
+
+                    {% else %}
+
+                        ➡️
+
+                    {% endif %}
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        {{ trend }}
+                    </h3>
+
+                    <p>
+
+                        Overall distance trend during
+                        the selected analysis period.
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             RELATIVE VELOCITY
+             ================================================= -->
+
+        <section class="analysis-card">
+
+
+            <div class="card-header">
+
+                <h3>
+                    Relative Velocity
+                </h3>
+
+                <p>
+
+                    Relative velocity between
+                    {{ reference_body.name }}
+                    and
+                    {{ target_body.name }}.
+
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <!-- Initial Velocity -->
+
+                <div class="form-group">
+
+                    <label>
+                        Initial Velocity
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(initial_velocity_km_s) }}
+
+                        km/s
+
+                    </div>
+
+                </div>
+
+
+                <!-- Final Velocity -->
+
+                <div class="form-group">
+
+                    <label>
+                        Final Velocity
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(final_velocity_km_s) }}
+
+                        km/s
+
+                    </div>
+
+                </div>
+
+
+                <!-- Average Velocity -->
+
+                <div class="form-group">
+
+                    <label>
+                        Average Velocity
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(average_velocity_km_s) }}
+
+                        km/s
+
+                    </div>
+
+                </div>
+
+
+                <!-- Minimum Velocity -->
+
+                <div class="form-group">
+
+                    <label>
+                        Minimum Velocity
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(minimum_velocity_km_s) }}
+
+                        km/s
+
+                    </div>
+
+                </div>
+
+
+                <!-- Maximum Velocity -->
+
+                <div class="form-group">
+
+                    <label>
+                        Maximum Velocity
+                    </label>
+
+                    <div>
+
+                        {{ "%.3f"|format(maximum_velocity_km_s) }}
+
+                        km/s
+
+                    </div>
+
+                </div>
+
+
+                <!-- Velocity Change -->
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity Change
+                    </label>
+
+                    <div>
+
+                        {{ "%+.3f"|format(velocity_change_km_s) }}
+
+                        km/s
+
+                    </div>
+
+                </div>
+
+
+                <!-- Percentage Change -->
+
+                <div class="form-group">
+
+                    <label>
+                        Percentage Change
+                    </label>
+
+                    <div>
+
+                        {{ "%+.3f"|format(velocity_percentage_change) }}%
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- Velocity Trend -->
+
+            <div class="status-card">
+
+
+                <div class="status-icon">
+
+                    {% if velocity_change_km_s < 0 %}
+
+                        ↘️
+
+                    {% elif velocity_change_km_s > 0 %}
+
+                        ↗️
+
+                    {% else %}
+
+                        ➡️
+
+                    {% endif %}
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        {{ velocity_trend }}
+                    </h3>
+
+                    <p>
+
+                        Overall relative velocity trend
+                        during the selected analysis period.
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             DISTANCE CHART
+             ================================================= -->
+
+        <section class="analysis-card">
+
+
+            <div class="card-header">
+
+                <h3>
+                    Distance Over Time
+                </h3>
+
+                <p>
+
+                    Interactive orbital distance visualization.
+
+                </p>
+
+            </div>
+
+
+            <div
+                id="distance-chart"
+                style="width: 100%; height: 500px;"
+            ></div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             RELATIVE VELOCITY CHART
+             ================================================= -->
+
+        <section class="analysis-card">
+
+
+            <div class="card-header">
+
+                <h3>
+                    Relative Velocity Over Time
+                </h3>
+
+                <p>
+
+                    Interactive relative velocity visualization.
+
+                </p>
+
+            </div>
+
+
+            <div
+                id="velocity-chart"
+                style="width: 100%; height: 500px;"
+            ></div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             ACTIONS
+             ================================================= -->
+
+        <div class="actions">
+
+            <button
+                class="btn-primary"
+                onclick="window.location.href='/'"
+            >
+
+                ← New Analysis
+
+            </button>
+
+        </div>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer>
+
+        <p>
+            AstroSphere · Solar System Analysis
+        </p>
+
+    </footer>
+
+
+</div>
+
+
+<!-- =========================================================
+     PLOTLY
+     ========================================================= -->
+
+<script>
+
+    /*
+     * Data prepared by Flask.
+     */
+
+    const dates = {{ chart_dates | tojson }};
+
+    const distances = {{ chart_distances | tojson }};
+
+    const velocities = {{ chart_velocities | tojson }};
+
+
+    /*
+     * Shared Plotly configuration.
+     */
+
+    const chartConfig = {
+
+        responsive: true,
+
+        displaylogo: false,
+
+        modeBarButtonsToRemove: [
+
+            "lasso2d",
+
+            "select2d"
+
+        ]
+
+    };
+
+
+    /*
+     * ========================================================
+     * DISTANCE CHART
+     * ========================================================
+     */
+
+    const chartData = [
+
+        {
+
+            x: dates,
+
+            y: distances,
+
+            type: "scatter",
+
+            mode: "lines+markers",
+
+            name:
+                "{{ reference_body.name }} → {{ target_body.name }}",
+
+            line: {
+
+                width: 2
+
+            },
+
+            marker: {
+
+                size: 6
+
+            },
+
+            hovertemplate:
+
+                "<b>%{x}</b><br>" +
+
+                "Distance: %{y:.3f} million km" +
+
+                "<extra></extra>"
+
+        }
+
+    ];
+
+
+    const chartLayout = {
+
+        title: {
+
+            text:
+                "{{ reference_body.name }} → {{ target_body.name }} Distance Over Time"
+
+        },
+
+        hovermode: "x unified",
+
+        margin: {
+
+            l: 70,
+
+            r: 30,
+
+            t: 70,
+
+            b: 70
+
+        },
+
+        paper_bgcolor:
+            "rgba(0,0,0,0)",
+
+        plot_bgcolor:
+            "rgba(0,0,0,0)",
+
+        font: {
+
+            color: "#ffffff"
+
+        },
+
+        xaxis: {
+
+            title: "Date",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        },
+
+        yaxis: {
+
+            title:
+                "Distance (million km)",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        }
+
+    };
+
+
+    Plotly.newPlot(
+
+        "distance-chart",
+
+        chartData,
+
+        chartLayout,
+
+        chartConfig
+
+    );
+
+
+    /*
+     * ========================================================
+     * RELATIVE VELOCITY CHART
+     * ========================================================
+     */
+
+    const velocityChartData = [
+
+        {
+
+            x: dates,
+
+            y: velocities,
+
+            type: "scatter",
+
+            mode: "lines+markers",
+
+            name:
+                "{{ reference_body.name }} → {{ target_body.name }}",
+
+            line: {
+
+                width: 2
+
+            },
+
+            marker: {
+
+                size: 6
+
+            },
+
+            hovertemplate:
+
+                "<b>%{x}</b><br>" +
+
+                "Relative Velocity: %{y:.3f} km/s" +
+
+                "<extra></extra>"
+
+        }
+
+    ];
+
+
+    const velocityChartLayout = {
+
+        title: {
+
+            text:
+                "{{ reference_body.name }} → {{ target_body.name }} Relative Velocity Over Time"
+
+        },
+
+        hovermode: "x unified",
+
+        margin: {
+
+            l: 70,
+
+            r: 30,
+
+            t: 70,
+
+            b: 70
+
+        },
+
+        paper_bgcolor:
+            "rgba(0,0,0,0)",
+
+        plot_bgcolor:
+            "rgba(0,0,0,0)",
+
+        font: {
+
+            color: "#ffffff"
+
+        },
+
+        xaxis: {
+
+            title: "Date",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        },
+
+        yaxis: {
+
+            title:
+                "Relative Velocity (km/s)",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        }
+
+    };
+
+
+    Plotly.newPlot(
+
+        "velocity-chart",
+
+        velocityChartData,
+
+        velocityChartLayout,
+
+        chartConfig
+
+    );
+
+</script>
+
+
+</body>
+
+</html>

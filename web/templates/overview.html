@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | Solar System Overview
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <script
+        src="https://cdn.plot.ly/plotly-2.35.2.min.js"
+    ></script>
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                🌌
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Solar System Analysis Platform
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+
+    <main class="main">
+
+
+        <!-- =================================================
+             HERO
+             ================================================= -->
+
+        <section class="hero">
+
+            <h2>
+                Solar System Overview
+            </h2>
+
+            <p>
+                Current distances between Solar System bodies.
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             CALCULATION INFORMATION
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Calculation Information
+                </h3>
+
+                <p>
+                    Current astronomical position calculations
+                    using the DE440S ephemeris.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Calculation Time
+                    </label>
+
+                    <div>
+                        {{ now.utc_strftime(
+                            "%d %B %Y %H:%M:%S UTC"
+                        ) }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Objects Tracked
+                    </label>
+
+                    <div>
+                        {{ results|length }}
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             DISTANCE FROM SUN CHART
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Distance From Sun
+                </h3>
+
+                <p>
+                    Current distance of each Solar System body
+                    from the Sun.
+                </p>
+
+            </div>
+
+
+            <div
+                id="sun-distance-chart"
+                style="
+                    width: 100%;
+                    height: 550px;
+                "
+            ></div>
+
+        </section>
+
+
+        <!-- =================================================
+             DISTANCE FROM EARTH CHART
+             ================================================= -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Distance From Earth
+                </h3>
+
+                <p>
+                    Current distance of each Solar System body
+                    from Earth.
+                </p>
+
+            </div>
+
+
+            <div
+                id="earth-distance-chart"
+                style="
+                    width: 100%;
+                    height: 550px;
+                "
+            ></div>
+
+        </section>
+
+
+        <!-- =================================================
+             SOLAR SYSTEM DISTANCE TABLE
+             ================================================= -->
+
+        <section class="analysis-card">
+
+
+            <div class="card-header">
+
+                <h3>
+                    Solar System Distances
+                </h3>
+
+                <p>
+                    Distances are calculated from the current
+                    astronomical positions.
+                </p>
+
+            </div>
+
+
+            <div style="overflow-x: auto;">
+
+
+                <table
+                    style="
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                    "
+                >
+
+
+                    <thead>
+
+                        <tr>
+
+
+                            <th
+                                style="
+                                    text-align: left;
+                                    padding: 14px;
+                                    border-bottom: 1px solid
+                                    rgba(255,255,255,0.15);
+                                "
+                            >
+                                Object
+                            </th>
+
+
+                            <th
+                                style="
+                                    text-align: right;
+                                    padding: 14px;
+                                    border-bottom: 1px solid
+                                    rgba(255,255,255,0.15);
+                                "
+                            >
+                                Distance From Sun
+                            </th>
+
+
+                            <th
+                                style="
+                                    text-align: right;
+                                    padding: 14px;
+                                    border-bottom: 1px solid
+                                    rgba(255,255,255,0.15);
+                                "
+                            >
+                                Distance From Earth
+                            </th>
+
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        {% for result in results %}
+
+                        <tr>
+
+
+                            <td
+                                style="
+                                    padding: 14px;
+                                    border-bottom: 1px solid
+                                    rgba(255,255,255,0.08);
+                                "
+                            >
+
+                                <a
+                                    href="{{ url_for(
+                                        'planet_detail',
+                                        planet_name=result['name'].lower()
+                                    ) }}"
+                                    style="
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-weight: 600;
+                                    "
+                                >
+
+                                    {{ result["name"] }}
+
+                                </a>
+
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding: 14px;
+                                    text-align: right;
+                                    border-bottom: 1px solid
+                                    rgba(255,255,255,0.08);
+                                "
+                            >
+
+                                {{
+                                    "%.3f"|format(
+                                        result["distance_from_sun"]
+                                        / 1000000
+                                    )
+                                }}
+
+                                million km
+
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding: 14px;
+                                    text-align: right;
+                                    border-bottom: 1px solid
+                                    rgba(255,255,255,0.08);
+                                "
+                            >
+
+                                {{
+                                    "%.3f"|format(
+                                        result["distance_from_earth"]
+                                        / 1000000
+                                    )
+                                }}
+
+                                million km
+
+                            </td>
+
+
+                        </tr>
+
+                        {% endfor %}
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             ACTIONS
+             ================================================= -->
+
+        <div class="actions">
+
+
+            <button
+                type="button"
+                class="btn-primary"
+                onclick="window.location.href='/'"
+            >
+
+                ← Back to Analysis
+
+            </button>
+
+
+        </div>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer>
+
+        <p>
+            AstroSphere · Solar System Analysis
+        </p>
+
+    </footer>
+
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT / PLOTLY
+     ========================================================= -->
+
+<script>
+
+
+    // ========================================================
+    // DATA FROM FLASK / JINJA
+    // ========================================================
+
+    const objectNames = [
+
+        {% for result in results %}
+
+            "{{ result['name'] }}"
+
+            {% if not loop.last %},{% endif %}
+
+        {% endfor %}
+
+    ];
+
+
+    const distancesFromSun = [
+
+        {% for result in results %}
+
+            {{ result['distance_from_sun'] / 1000000 }}
+
+            {% if not loop.last %},{% endif %}
+
+        {% endfor %}
+
+    ];
+
+
+    const distancesFromEarth = [
+
+        {% for result in results %}
+
+            {{ result['distance_from_earth'] / 1000000 }}
+
+            {% if not loop.last %},{% endif %}
+
+        {% endfor %}
+
+    ];
+
+
+    // ========================================================
+    // DISTANCE FROM SUN
+    // ========================================================
+
+    const sunChartData = [
+
+        {
+
+            x: objectNames,
+
+            y: distancesFromSun,
+
+            type: "bar",
+
+            hovertemplate:
+                "<b>%{x}</b><br>" +
+                "Distance from Sun: " +
+                "%{y:.3f} million km" +
+                "<extra></extra>"
+
+        }
+
+    ];
+
+
+    const sunChartLayout = {
+
+        title: {
+
+            text:
+                "Current Distance of Solar System Bodies From the Sun"
+
+        },
+
+        hovermode: "closest",
+
+        margin: {
+
+            l: 80,
+
+            r: 30,
+
+            t: 80,
+
+            b: 80
+
+        },
+
+        paper_bgcolor:
+            "rgba(0,0,0,0)",
+
+        plot_bgcolor:
+            "rgba(0,0,0,0)",
+
+        font: {
+
+            color: "#ffffff"
+
+        },
+
+        xaxis: {
+
+            title:
+                "Solar System Body",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        },
+
+        yaxis: {
+
+            title:
+                "Distance (million km)",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        }
+
+    };
+
+
+    const chartConfig = {
+
+        responsive: true,
+
+        displaylogo: false,
+
+        modeBarButtonsToRemove: [
+
+            "lasso2d",
+
+            "select2d"
+
+        ]
+
+    };
+
+
+    Plotly.newPlot(
+
+        "sun-distance-chart",
+
+        sunChartData,
+
+        sunChartLayout,
+
+        chartConfig
+
+    );
+
+
+    // ========================================================
+    // DISTANCE FROM EARTH
+    // ========================================================
+
+    const earthChartData = [
+
+        {
+
+            x: objectNames,
+
+            y: distancesFromEarth,
+
+            type: "bar",
+
+            hovertemplate:
+                "<b>%{x}</b><br>" +
+                "Distance from Earth: " +
+                "%{y:.3f} million km" +
+                "<extra></extra>"
+
+        }
+
+    ];
+
+
+    const earthChartLayout = {
+
+        title: {
+
+            text:
+                "Current Distance of Solar System Bodies From Earth"
+
+        },
+
+        hovermode: "closest",
+
+        margin: {
+
+            l: 80,
+
+            r: 30,
+
+            t: 80,
+
+            b: 80
+
+        },
+
+        paper_bgcolor:
+            "rgba(0,0,0,0)",
+
+        plot_bgcolor:
+            "rgba(0,0,0,0)",
+
+        font: {
+
+            color: "#ffffff"
+
+        },
+
+        xaxis: {
+
+            title:
+                "Solar System Body",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        },
+
+        yaxis: {
+
+            title:
+                "Distance (million km)",
+
+            gridcolor:
+                "rgba(255,255,255,0.15)"
+
+        }
+
+    };
+
+
+    Plotly.newPlot(
+
+        "earth-distance-chart",
+
+        earthChartData,
+
+        earthChartLayout,
+
+        chartConfig
+
+    );
+
+
+</script>
+
+
+</body>
+
+</html>

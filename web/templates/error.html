@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | Error
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                🌌
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Solar System Analysis Platform
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="main">
+
+
+        <section class="analysis-card">
+
+            <div class="status-card">
+
+                <div class="status-icon">
+                    ⚠️
+                </div>
+
+                <div>
+
+                    <h2>
+                        Analysis Error
+                    </h2>
+
+                    <p>
+                        {{ message }}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="actions">
+
+                <button
+                    class="btn-primary"
+                    onclick="window.location.href='/'"
+                >
+                    ← Return to Analysis
+                </button>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+</body>
+
+</html>
