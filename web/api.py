@@ -12,10 +12,6 @@ from astrosphere.astronomy.orbital_analysis import (
 
 from astrosphere.astronomy.planets import (
     PLANET_LOOKUP,
-)
-
-from astrosphere.astronomy.planets import (
-    PLANET_LOOKUP,
     PLANETS,
 )
 
