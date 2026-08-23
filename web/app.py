@@ -25,6 +25,10 @@ from astrosphere.overview import (
     generate_solar_system_overview,
 )
 
+from astrosphere.config import (
+    AppConfig,
+)
+
 app = Flask(__name__)
 
 
@@ -508,7 +512,7 @@ def analyze():
 if __name__ == "__main__":
 
     app.run(
-        debug=True,
-        host="127.0.0.1",
-        port=5000,
+        debug=AppConfig.DEBUG,
+        host=AppConfig.HOST,
+        port=AppConfig.PORT,
     )
