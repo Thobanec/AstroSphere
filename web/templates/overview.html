@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
 
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <meta charset="UTF-8">
 
     <meta
@@ -58,6 +59,8 @@
         </div>
 
     </header>
+
+    {% include "_navigation.html" %}
 
 
     <!-- =====================================================
@@ -130,6 +133,40 @@
 
                     <div>
                         {{ results|length }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Ephemeris Dataset
+                    </label>
+
+                    <div>
+                        {% if ephemeris_source %}
+                            {{ ephemeris_source.dataset or "Unavailable" }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Provider
+                    </label>
+
+                    <div>
+                        {% if ephemeris_source %}
+                            {{ ephemeris_source.provider or "Unavailable" }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
                     </div>
 
                 </div>
@@ -388,7 +425,7 @@
                 onclick="window.location.href='/'"
             >
 
-                ← Back to Analysis
+                ← Back to Analysis
 
             </button>
 

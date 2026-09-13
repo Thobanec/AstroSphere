@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
 
 from flask import Flask, render_template, request
 
@@ -17,6 +17,21 @@ from astrosphere.astronomy.planets import (
     PLANET_LOOKUP,
 )
 
+from astrosphere.astronomy.spacecraft import (
+    SpacecraftNotFoundError,
+    SpacecraftServiceError,
+    track_spacecraft_by_norad,
+)
+
+from astrosphere.scientific.service import (
+    get_scientific_data,
+    get_ephemeris_data_source,
+)
+
+from astrosphere.scientific.earth import (
+    get_earth_context,
+)
+
 from astrosphere.analysis_config import (
     AnalysisConfig,
 )
@@ -33,7 +48,17 @@ from web.api import (
     api,
 )
 
+from astrosphere.navigation import (
+    get_celestial_object_url,
+)
+
 app = Flask(__name__)
+
+
+@app.template_global()
+def celestial_url(object_id):
+    return get_celestial_object_url(object_id)
+
 
 app.register_blueprint(api)
 
@@ -46,6 +71,18 @@ def index():
         planets=PLANET_LOOKUP,
     )
 
+@app.route("/galaxy")
+def galaxy():
+
+    return render_template(
+        "galaxy.html"
+    )
+
+@app.route("/solar-system")
+def solar_system():
+    return render_template(
+        "solar_system.html"
+    )
 
 @app.route("/overview")
 def overview():
@@ -58,16 +95,92 @@ def overview():
         "overview.html",
         now=now,
         results=results,
+        ephemeris_source=get_ephemeris_data_source(),
+    )
+
+@app.route("/spacecraft")
+def spacecraft_tracking_page():
+
+    norad_id = request.args.get(
+        "norad_id",
+        "",
+    ).strip()
+
+    if not norad_id.isdigit():
+
+        return render_template(
+            "error.html",
+            message="NORAD ID must be numeric.",
+        )
+
+    try:
+
+        result = track_spacecraft_by_norad(
+            norad_id
+        )
+
+    except SpacecraftNotFoundError:
+
+        return render_template(
+            "error.html",
+            message="Spacecraft was not found.",
+        )
+
+    except SpacecraftServiceError:
+
+        return render_template(
+            "error.html",
+            message=(
+                "Spacecraft data service "
+                "is currently unavailable."
+            ),
+        )
+
+    return render_template(
+        "spacecraft.html",
+        spacecraft=result,
+        norad_id=norad_id,
+    )
+
+@app.route("/asteroid")
+def asteroid_tracking_page():
+
+    designation = request.args.get(
+        "designation",
+        "",
+    ).strip()
+
+    if not designation:
+
+        return render_template(
+            "error.html",
+            message="Asteroid designation is required.",
+        )
+
+    try:
+
+        from astrosphere.astronomy.asteroids import (
+            track_asteroid,
+        )
+
+        result = track_asteroid(
+            designation
+        )
+
+    except Exception as error:
+
+        return render_template(
+            "error.html",
+            message=str(error),
+        )
+
+    return render_template(
+        "asteroid.html",
+        asteroid=result,
     )
 
 @app.route("/planet/<planet_name>")
 def planet_detail(planet_name):
-
-    planet_name = (
-        planet_name
-        .strip()
-        .lower()
-    )
 
     if planet_name not in PLANET_LOOKUP:
 
@@ -97,6 +210,19 @@ def planet_detail(planet_name):
 
     body_position = body.at(now)
 
+    scientific_data = get_scientific_data(
+        planet.name,
+        observation_time=now,
+    )
+
+    earth_context = (
+        get_earth_context(
+            observation_time=now,
+        )
+        if planet.name == "Earth"
+        else None
+    )
+
 
     distance_from_sun = calculate_distance_km(
         body_position,
@@ -124,6 +250,10 @@ def planet_detail(planet_name):
         planet=planet,
 
         now=now,
+
+        scientific_data=scientific_data,
+
+        earth_context=earth_context,
 
         distance_from_sun=distance_from_sun,
 

@@ -1,0 +1,27 @@
+﻿<nav class="global-nav" aria-label="Primary navigation">
+
+    <a href="{{ url_for('index') }}"
+       class="global-nav-link{% if request.endpoint == 'index' %} active{% endif %}"
+       {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>
+        ⌂ Home
+    </a>
+
+    <a href="{{ url_for('galaxy') }}"
+       class="global-nav-link{% if request.endpoint == 'galaxy' %} active{% endif %}"
+       {% if request.endpoint == 'galaxy' %}aria-current="page"{% endif %}>
+        🌌 Milky Way
+    </a>
+
+    <a href="{{ url_for('solar_system') }}"
+       class="global-nav-link{% if request.endpoint == 'solar_system' %} active{% endif %}"
+       {% if request.endpoint == 'solar_system' %}aria-current="page"{% endif %}>
+        ☀️ Solar System
+    </a>
+
+    <a href="{{ url_for('overview') }}"
+       class="global-nav-link{% if request.endpoint == 'overview' %} active{% endif %}"
+       {% if request.endpoint == 'overview' %}aria-current="page"{% endif %}>
+        ◉ Overview
+    </a>
+
+</nav>

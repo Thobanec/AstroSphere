@@ -1,0 +1,5608 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>AstroSphere — Solar System Explorer V5.2.1</title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        html,
+        body {
+
+            margin: 0;
+
+            min-height: 100%;
+
+            background:
+                radial-gradient(
+                    circle at 50% 45%,
+                    #081522 0%,
+                    #02060d 45%,
+                    #000107 100%
+                );
+
+            color: #f8fafc;
+
+            font-family:
+                Inter,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+
+        body {
+            overflow-x: hidden;
+        }
+
+
+        /* ========================================================
+           TOP BAR
+        ======================================================== */
+
+        .topbar {
+
+            height: 58px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0 30px;
+
+            border-bottom:
+                1px solid rgba(255,255,255,.10);
+
+            background:
+                rgba(1,4,10,.90);
+
+            backdrop-filter:
+                blur(14px);
+
+            position: relative;
+
+            z-index: 50;
+        }
+
+
+        .brand {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+        }
+
+
+        .brand-icon {
+
+            width: 34px;
+
+            height: 34px;
+
+            border-radius: 50%;
+
+            display: grid;
+
+            place-items: center;
+
+            background:
+                radial-gradient(
+                    circle at 35% 30%,
+                    #7dd3fc,
+                    #2563eb 55%,
+                    #0f172a
+                );
+
+            border:
+                1px solid rgba(255,255,255,.25);
+
+            box-shadow:
+                0 0 20px rgba(37,99,235,.35);
+
+            font-size: 17px;
+        }
+
+
+        .brand-name {
+
+            font-size: 15px;
+
+            font-weight: 800;
+        }
+
+
+        .brand-subtitle {
+
+            color: #8290a5;
+
+            font-size: 10px;
+
+            margin-top: 2px;
+        }
+
+
+        .live-status {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            color: #9aa8bc;
+
+            font-size: 10px;
+
+            letter-spacing: 1px;
+
+            text-transform: uppercase;
+        }
+
+
+        .live-dot {
+
+            width: 7px;
+
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #5eead4;
+
+            box-shadow:
+                0 0 12px rgba(94,234,212,.85);
+
+            animation:
+                pulse 1.7s infinite;
+        }
+
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: .35;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+
+        /* ========================================================
+           HERO
+        ======================================================== */
+
+        .hero {
+
+            text-align: center;
+
+            padding:
+                27px 20px 18px;
+        }
+
+
+        .hero-kicker {
+
+            color: #7dd3fc;
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing: 2px;
+
+            text-transform: uppercase;
+
+            margin-bottom: 8px;
+        }
+
+
+        .hero h1 {
+
+            margin: 0;
+
+            font-size:
+                clamp(32px, 4vw, 49px);
+
+            line-height: 1;
+
+            font-weight: 850;
+
+            letter-spacing: -1.6px;
+        }
+
+
+        .hero p {
+
+            max-width: 790px;
+
+            margin:
+                12px auto 0;
+
+            color: #93a1b6;
+
+            font-size: 13px;
+
+            line-height: 1.55;
+        }
+
+
+        /* ========================================================
+           SIMULATION
+        ======================================================== */
+
+        .simulation-shell {
+
+            width:
+                min(1550px, calc(100% - 28px));
+
+            margin: 0 auto;
+        }
+
+
+        .simulation {
+
+            position: relative;
+
+            width: 100%;
+
+            height:
+                min(69vh, 740px);
+
+            min-height: 590px;
+
+            overflow: hidden;
+
+            border-radius: 18px;
+
+            border:
+                1px solid rgba(255,255,255,.14);
+
+            background:
+                radial-gradient(
+                    ellipse at center,
+                    rgba(9,25,45,.40),
+                    rgba(1,4,11,.98) 75%
+                );
+
+            box-shadow:
+                0 25px 90px rgba(0,0,0,.55),
+
+                inset
+                0 0 110px
+                rgba(0,0,0,.48);
+        }
+
+
+        canvas {
+
+            display: block;
+
+            width: 100%;
+
+            height: 100%;
+
+            cursor: grab;
+        }
+
+
+        canvas.dragging {
+            cursor: grabbing;
+        }
+
+
+        /* ========================================================
+           HUD
+        ======================================================== */
+
+        .hud {
+
+            position: absolute;
+
+            top: 15px;
+
+            left: 15px;
+
+            right: 15px;
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items: flex-start;
+
+            pointer-events: none;
+
+            z-index: 20;
+        }
+
+
+        .hud-left,
+        .hud-right {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+        }
+
+
+        .hud-right {
+
+            align-items: flex-end;
+        }
+
+
+        .hud-chip {
+
+            padding:
+                8px 11px;
+
+            border-radius: 8px;
+
+            background:
+                rgba(2,7,16,.82);
+
+            border:
+                1px solid rgba(255,255,255,.12);
+
+            backdrop-filter:
+                blur(12px);
+
+            color: #cbd5e1;
+
+            font-size: 9px;
+
+            font-weight: 800;
+
+            letter-spacing: .7px;
+
+            text-transform: uppercase;
+        }
+
+
+        .hud-chip.version {
+
+            color: #7dd3fc;
+
+            border-color:
+                rgba(125,211,252,.22);
+        }
+
+
+        .hud-date {
+
+            color: #7dd3fc;
+
+            margin-left: 5px;
+        }
+
+
+        /* ========================================================
+           OBJECT PANEL
+        ======================================================== */
+
+        .object-panel {
+
+            position: absolute;
+
+            left: 18px;
+
+            bottom: 18px;
+
+            width: 315px;
+
+            padding: 17px;
+
+            border-radius: 14px;
+
+            background:
+                rgba(2,6,15,.91);
+
+            border:
+                1px solid rgba(255,255,255,.13);
+
+            backdrop-filter:
+                blur(16px);
+
+            box-shadow:
+                0 15px 45px rgba(0,0,0,.45);
+
+            z-index: 20;
+        }
+
+
+        .object-kicker {
+
+            color: #64748b;
+
+            font-size: 9px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 1px;
+
+            margin-bottom: 5px;
+        }
+
+
+        .object-name {
+
+            font-size: 21px;
+
+            font-weight: 800;
+
+            margin-bottom: 7px;
+        }
+
+
+        .object-description {
+
+            color: #94a3b8;
+
+            font-size: 11px;
+
+            line-height: 1.55;
+        }
+
+
+        .object-divider {
+
+            height: 1px;
+
+            margin:
+                13px 0;
+
+            background:
+                rgba(255,255,255,.08);
+        }
+
+
+        .object-stats {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 8px;
+        }
+
+
+        .stat {
+
+            padding: 8px;
+
+            border-radius: 8px;
+
+            background:
+                rgba(255,255,255,.035);
+
+            border:
+                1px solid rgba(255,255,255,.06);
+        }
+
+
+        .stat-label {
+
+            color: #64748b;
+
+            font-size: 8px;
+
+            text-transform: uppercase;
+
+            letter-spacing: .7px;
+        }
+
+
+        .stat-value {
+
+            color: #dbe5f1;
+
+            font-size: 10px;
+
+            font-weight: 750;
+
+            margin-top: 3px;
+        }
+
+
+
+
+        .object-explore-link {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            margin-top: 12px;
+
+            padding: 7px 10px;
+
+            border:
+                1px solid rgba(120,160,255,.35);
+
+            border-radius: 7px;
+
+            background:
+                rgba(70,100,180,.12);
+
+            color: #b8c8ff;
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            text-decoration: none;
+
+            transition:
+                background .2s ease,
+                border-color .2s ease,
+                color .2s ease;
+        }
+
+
+        .object-explore-link:hover {
+
+            background:
+                rgba(70,100,180,.24);
+
+            border-color:
+                rgba(140,175,255,.6);
+
+            color: #ffffff;
+        }
+        .tracked-observation-stat {
+            grid-column: 1 / -1;
+        }
+
+
+        /* ========================================================
+           SCALE PANEL
+        ======================================================== */
+
+        .scale-panel {
+
+            position: absolute;
+
+            right: 18px;
+
+            bottom: 18px;
+
+            width: 305px;
+
+            padding: 14px;
+
+            border-radius: 12px;
+
+            background:
+                rgba(2,6,15,.88);
+
+            border:
+                1px solid rgba(255,255,255,.11);
+
+            backdrop-filter:
+                blur(14px);
+
+            color: #8290a5;
+
+            font-size: 10px;
+
+            line-height: 1.55;
+
+            z-index: 20;
+        }
+
+
+        .scale-title {
+
+            color: #d7dee9;
+
+            font-weight: 750;
+
+            margin-bottom: 4px;
+        }
+
+
+        /* ========================================================
+           CONTROLS
+        ======================================================== */
+
+        .control-bar {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            gap: 7px;
+
+            padding:
+                13px 0 8px;
+        }
+
+
+        button,
+        .nav-button {
+
+            appearance: none;
+
+            border:
+                1px solid rgba(255,255,255,.13);
+
+            background:
+                rgba(8,14,26,.94);
+
+            color: #dce5ef;
+
+            padding:
+                9px 12px;
+
+            border-radius: 8px;
+
+            font-size: 10px;
+
+            font-weight: 750;
+
+            cursor: pointer;
+
+            text-decoration: none;
+
+            transition:
+                transform .15s ease,
+                border-color .15s ease,
+                background .15s ease;
+        }
+
+
+        button:hover,
+        .nav-button:hover {
+
+            transform:
+                translateY(-1px);
+
+            border-color:
+                rgba(125,211,252,.45);
+
+            background:
+                rgba(15,27,46,.96);
+        }
+
+
+        .speed-group {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            flex-wrap: wrap;
+
+            justify-content: center;
+        }
+
+
+        .speed-label {
+
+            color: #64748b;
+
+            font-size: 9px;
+
+            margin-right: 2px;
+        }
+
+
+        .speed-button.active {
+
+            color: #7dd3fc;
+
+            border-color:
+                rgba(125,211,252,.62);
+
+            background:
+                rgba(14,35,55,.96);
+        }
+
+
+        /* ========================================================
+           PLANET CARDS
+        ======================================================== */
+
+        .planet-section {
+
+            width:
+                min(1550px, calc(100% - 28px));
+
+            margin: 0 auto;
+
+            padding-bottom: 35px;
+        }
+
+
+        .section-heading {
+
+            display: flex;
+
+            align-items: flex-end;
+
+            justify-content: space-between;
+
+            margin:
+                12px 0 10px;
+        }
+
+
+        .section-heading h2 {
+
+            margin: 0;
+
+            font-size: 16px;
+        }
+
+
+        .section-heading span {
+
+            color: #64748b;
+
+            font-size: 10px;
+        }
+
+
+        .planet-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(8, minmax(0, 1fr));
+
+            gap: 9px;
+        }
+
+
+        .planet-card {
+
+            min-height: 96px;
+
+            padding: 12px;
+
+            border-radius: 11px;
+
+            background:
+                rgba(6,11,22,.76);
+
+            border:
+                1px solid rgba(255,255,255,.09);
+
+            cursor: pointer;
+
+            transition:
+                transform .15s ease,
+                border-color .15s ease,
+                background .15s ease,
+                box-shadow .15s ease;
+        }
+
+
+        .planet-card:hover {
+
+            transform:
+                translateY(-2px);
+
+            border-color:
+                rgba(125,211,252,.35);
+
+            background:
+                rgba(10,18,32,.92);
+        }
+
+
+        .planet-card.active {
+
+            border-color:
+                rgba(125,211,252,.72);
+
+            box-shadow:
+                0 0 25px
+                rgba(56,189,248,.12);
+        }
+
+
+        .planet-card-name {
+
+            font-size: 11px;
+
+            font-weight: 800;
+        }
+
+
+        .planet-card-description {
+
+            color: #728198;
+
+            font-size: 9px;
+
+            line-height: 1.4;
+
+            margin-top: 5px;
+        }
+
+
+        .planet-card-orbit {
+
+            color: #475569;
+
+            font-size: 8px;
+
+            margin-top: 8px;
+        }
+
+
+        /* ========================================================
+           FOOTER
+        ======================================================== */
+
+        .footer {
+
+            text-align: center;
+
+            padding:
+                0 20px 25px;
+
+            color: #465469;
+
+            font-size: 9px;
+        }
+
+
+        /* ========================================================
+           RESPONSIVE
+        ======================================================== */
+
+        @media (max-width: 1100px) {
+
+            .planet-grid {
+
+                grid-template-columns:
+                    repeat(4, minmax(0, 1fr));
+            }
+
+            .simulation {
+
+                height: 680px;
+            }
+        }
+
+
+        @media (max-width: 700px) {
+
+            .topbar {
+
+                padding:
+                    0 15px;
+            }
+
+
+            .live-status {
+
+                display: none;
+            }
+
+
+            .simulation-shell,
+            .planet-section {
+
+                width:
+                    calc(100% - 14px);
+            }
+
+
+            .simulation {
+
+                min-height: 650px;
+
+                height: 78vh;
+            }
+
+
+            .object-panel {
+
+                left: 12px;
+
+                bottom: 12px;
+
+                width:
+                    calc(100% - 24px);
+            }
+
+
+            .scale-panel {
+
+                display: none;
+            }
+
+
+            .planet-grid {
+
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+
+            .hero {
+
+                padding-top: 22px;
+            }
+
+
+            .speed-group {
+
+                width: 100%;
+            }
+        }
+
+
+        /* ========================================================
+           GLOBAL NAVIGATION
+        ======================================================== */
+
+        .global-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 12px 7%;
+            border-bottom: 1px solid #27305c;
+            background: rgba(10, 15, 35, 0.92);
+        }
+
+        .global-nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 14px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: #cbd3f5;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition:
+                background 0.2s ease,
+                border-color 0.2s ease,
+                color 0.2s ease;
+        }
+
+        .global-nav-link:hover {
+            background: #182044;
+            border-color: #394579;
+            color: #ffffff;
+        }
+
+        .global-nav-link[aria-current="page"] {
+            background: #202a52;
+            border-color: #4b5b9a;
+            color: #ffffff;
+        }
+
+        @media (max-width: 700px) {
+            .global-nav {
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding: 10px 5%;
+            }
+
+            .global-nav-link {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+        }
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- ============================================================
+     TOP BAR
+============================================================= -->
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            ◉
+        </div>
+
+        <div>
+
+            <div class="brand-name">
+                AstroSphere
+            </div>
+
+            <div class="brand-subtitle">
+                Solar System Explorer
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="live-status">
+
+        <span class="live-dot"></span>
+
+        Dynamic astronomical simulation
+
+    </div>
+
+</header>
+
+    {% include "_navigation.html" %}
+
+
+<!-- ============================================================
+     HERO
+============================================================= -->
+
+<section class="hero">
+
+    <div class="hero-kicker">
+        Universe Explorer · V5.2.1
+    </div>
+
+
+    <h1>
+        Our Solar System
+    </h1>
+
+
+    <p>
+        Explore the worlds orbiting our Sun. Watch planets travel
+        through their orbits, rotate on their axes, and follow
+        Earth's Moon and the asteroid belt through time.
+    </p>
+
+</section>
+
+
+<!-- ============================================================
+     SIMULATION
+============================================================= -->
+
+<main class="simulation-shell">
+
+    <div class="simulation">
+
+        <canvas
+            id="solarCanvas"
+        ></canvas>
+
+
+        <!-- HUD -->
+
+        <div class="hud">
+
+            <div class="hud-left">
+
+                <div class="hud-chip version">
+                    SOLAR SYSTEM · V5.2.1
+                </div>
+
+                <div class="hud-chip">
+                    LIVE ORBITAL SIMULATION
+                </div>
+
+            </div>
+
+
+            <div class="hud-right">
+
+                <div class="hud-chip">
+
+                    Simulation:
+
+                    <span
+                        class="hud-date"
+                        id="dateDisplay"
+                    >
+                        Today
+                    </span>
+
+                </div>
+
+
+                <div class="hud-chip">
+
+                    Speed:
+
+                    <span
+                        class="hud-date"
+                        id="speedBadge"
+                    >
+                        1 day / second
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- OBJECT INFORMATION -->
+
+        <aside class="object-panel">
+
+            <div class="object-kicker">
+                Selected object
+            </div>
+
+
+            <div
+                class="object-name"
+                id="selectedName"
+            >
+                Solar System
+            </div>
+
+
+            <div
+                class="object-description"
+                id="selectedDescription"
+            >
+                Select a planet to explore its orbital period,
+                rotation and current simulated position.
+            </div>
+
+
+            <div class="object-divider"></div>
+
+
+            <div class="object-stats">
+
+                <div class="stat">
+
+                    <div
+                        class="stat-label"
+                        id="selectedOrbitLabel"
+                    >
+                        Orbital period
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="selectedOrbit"
+                    >
+                        —
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div
+                        class="stat-label"
+                        id="selectedRotationLabel"
+                    >
+                        Rotation
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="selectedRotation"
+                    >
+                        —
+                    </div>
+
+                </div>
+
+
+
+                <div
+                    class="stat tracked-observation-stat"
+                    id="selectedObservationStat"
+                    style="display: none;"
+                >
+
+                    <div class="stat-label">
+                        Observation time
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="selectedObservation"
+                    >
+                        —
+                    </div>
+
+                </div>
+            </div>
+
+            <a
+                id="selectedExploreLink"
+                class="object-explore-link"
+                href="#"
+                style="display: none;"
+            >
+                Explore object →
+            </a>
+        </aside>
+        <!-- SCALE -->
+
+        <div class="scale-panel">
+
+            <div class="scale-title">
+                Visualization scale
+            </div>
+
+            Planet sizes and orbital distances are intentionally
+            adjusted independently for visibility.
+
+            <br><br>
+
+            <strong>
+                Planetary order, orbital periods and animation
+                timing retain astronomical relationships.
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         CONTROLS
+    ========================================================= -->
+
+    <div class="control-bar">
+
+        <button
+            id="pauseButton"
+        >
+            ⏸ Pause
+        </button>
+
+
+        <div class="speed-group">
+
+            <span class="speed-label">
+                Time:
+            </span>
+
+
+            <button
+                class="speed-button active"
+                data-speed="1"
+            >
+                1 day/s
+            </button>
+
+
+            <button
+                class="speed-button"
+                data-speed="7"
+            >
+                7 days/s
+            </button>
+
+
+            <button
+                class="speed-button"
+                data-speed="30"
+            >
+                30 days/s
+            </button>
+
+
+            <button
+                class="speed-button"
+                data-speed="365.25"
+            >
+                1 year/s
+            </button>
+
+        </div>
+
+
+        <button
+            id="resetButton"
+        >
+            ↻ Today
+        </button>
+
+
+        <button
+            id="fullSystemButton"
+        >
+            ◉ Full System
+        </button>
+
+
+        <a
+            class="nav-button"
+            href="{{ url_for('galaxy') }}"
+        >
+            ← Milky Way
+        </a>
+
+
+        <a
+            class="nav-button"
+            href="{{ url_for('index') }}"
+        >
+            ⌂ AstroSphere
+        </a>
+
+    </div>
+
+</main>
+
+
+<!-- ============================================================
+     PLANET EXPLORER
+============================================================= -->
+
+<section class="planet-section">
+
+    <div class="section-heading">
+
+        <h2>
+            Explore the planets
+        </h2>
+
+        <span>
+            Click a world to focus the camera
+        </span>
+
+    </div>
+
+
+    <div class="planet-grid">
+
+
+        <div
+            class="planet-card"
+            data-planet="Mercury"
+            data-celestial-id="mercury"
+        >
+
+            <div class="planet-card-name">
+                ☿ Mercury
+            </div>
+
+            <div class="planet-card-description">
+                Smallest planet and closest to the Sun.
+            </div>
+
+            <div class="planet-card-orbit">
+                87.97 Earth days
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Venus"
+            data-celestial-id="venus"
+        >
+
+            <div class="planet-card-name">
+                ♀ Venus
+            </div>
+
+            <div class="planet-card-description">
+                Hot terrestrial world beneath a dense atmosphere.
+            </div>
+
+            <div class="planet-card-orbit">
+                224.7 Earth days
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Earth"
+            data-celestial-id="earth"
+        >
+
+            <div class="planet-card-name">
+                🌎 Earth
+            </div>
+
+            <div class="planet-card-description">
+                Our home world accompanied by the Moon.
+            </div>
+
+            <div class="planet-card-orbit">
+                365.25 Earth days
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Mars"
+            data-celestial-id="mars"
+        >
+
+            <div class="planet-card-name">
+                ♂ Mars
+            </div>
+
+            <div class="planet-card-description">
+                Cold desert world with a thin atmosphere.
+            </div>
+
+            <div class="planet-card-orbit">
+                686.98 Earth days
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Jupiter"
+            data-celestial-id="jupiter"
+        >
+
+            <div class="planet-card-name">
+                ♃ Jupiter
+            </div>
+
+            <div class="planet-card-description">
+                The largest planet in the Solar System.
+            </div>
+
+            <div class="planet-card-orbit">
+                11.86 Earth years
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Saturn"
+            data-celestial-id="saturn"
+        >
+
+            <div class="planet-card-name">
+                ♄ Saturn
+            </div>
+
+            <div class="planet-card-description">
+                Giant planet surrounded by a bright ring system.
+            </div>
+
+            <div class="planet-card-orbit">
+                29.45 Earth years
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Uranus"
+            data-celestial-id="uranus"
+        >
+
+            <div class="planet-card-name">
+                ♅ Uranus
+            </div>
+
+            <div class="planet-card-description">
+                Ice giant with an extreme axial tilt.
+            </div>
+
+            <div class="planet-card-orbit">
+                84.02 Earth years
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Neptune"
+            data-celestial-id="neptune"
+        >
+
+            <div class="planet-card-name">
+                ♆ Neptune
+            </div>
+
+            <div class="planet-card-description">
+                The distant blue ice giant.
+            </div>
+
+            <div class="planet-card-orbit">
+                164.8 Earth years
+            </div>
+
+        </div>
+
+
+        <div
+            class="planet-card"
+            data-planet="Pluto"
+            data-celestial-id="pluto"
+        >
+
+            <div class="planet-card-name">
+                ♇ Pluto
+            </div>
+
+            <div class="planet-card-description">
+                Dwarf planet in the Kuiper Belt beyond Neptune.
+            </div>
+
+            <div class="planet-card-orbit">
+                247.9 Earth years
+            </div>
+
+        </div>
+
+
+    </div>
+
+</section>
+
+
+<footer class="footer">
+
+    AstroSphere · Interactive astronomical visualization · V5.2.1
+
+</footer>
+
+
+<script>
+
+/* ================================================================
+   ASTROSPHERE SOLAR SYSTEM EXPLORER V5.2.1
+================================================================ */
+
+
+/* ================================================================
+   CANVAS
+================================================================ */
+
+const canvas =
+    document.getElementById(
+        "solarCanvas"
+    );
+
+
+const ctx =
+    canvas.getContext(
+        "2d"
+    );
+
+
+const simulation =
+    document.querySelector(
+        ".simulation"
+    );
+
+
+/* ================================================================
+   PLANET DATA
+================================================================ */
+
+const planets = [
+
+    {
+        id: "mercury",
+        name: "Mercury",
+        period: 87.97,
+        radius: 10,
+        color: "#9d8f7a",
+        orbitFactor: 0.08,
+        rotation: 58.6,
+        description:
+            "The smallest planet and the world closest to the Sun."
+    },
+
+
+    {
+        id: "venus",
+        name: "Venus",
+        period: 224.7,
+        radius: 14,
+        color: "#d9b77a",
+        orbitFactor: 0.17,
+        rotation: -243,
+        description:
+            "A hot terrestrial world beneath a dense atmosphere."
+    },
+
+
+    {
+        id: "earth",
+        name: "Earth",
+        period: 365.25,
+        radius: 16,
+        color: "#3d91d6",
+        orbitFactor: 0.26,
+        rotation: 1,
+        description:
+            "Our home world accompanied by the Moon."
+    },
+
+
+    {
+        id: "mars",
+        name: "Mars",
+        period: 686.98,
+        radius: 13,
+        color: "#c76f55",
+        orbitFactor: 0.35,
+        rotation: 1.03,
+        description:
+            "A cold desert world with a thin atmosphere."
+    },
+
+
+    {
+        id: "jupiter",
+        name: "Jupiter",
+        period: 4332.6,
+        radius: 31,
+        color: "#c69a68",
+        orbitFactor: 0.50,
+        rotation: 0.414,
+        description:
+            "The largest planet in the Solar System."
+    },
+
+
+    {
+        id: "saturn",
+        name: "Saturn",
+        period: 10759.2,
+        radius: 27,
+        color: "#d5b981",
+        orbitFactor: 0.64,
+        rotation: 0.444,
+        description:
+            "A giant planet surrounded by an extensive ring system."
+    },
+
+
+    {
+        id: "uranus",
+        name: "Uranus",
+        period: 30687,
+        radius: 20,
+        color: "#78cbd1",
+        orbitFactor: 0.78,
+        rotation: -0.718,
+        description:
+            "An ice giant with an extreme axial tilt."
+    },
+
+
+    {
+        id: "neptune",
+        name: "Neptune",
+        period: 60190,
+        radius: 20,
+        color: "#496fc8",
+        orbitFactor: 0.94,
+        rotation: 0.671,
+        description:
+            "The distant blue ice giant."
+    },
+
+
+    {
+        id: "pluto",
+        name: "Pluto",
+        period: 90560,
+        radius: 8,
+        color: "#b99b86",
+        orbitFactor: 1.05,
+        rotation: -6.39,
+        description:
+            "A dwarf planet in the Kuiper Belt beyond Neptune."
+    }
+
+];
+
+
+/* ================================================================
+   STATE
+================================================================ */
+
+let width = 0;
+
+let height = 0;
+
+let centerX = 0;
+
+let centerY = 0;
+
+
+const CELESTIAL_URLS = {
+    mercury: "{{ celestial_url('mercury') }}",
+    venus: "{{ celestial_url('venus') }}",
+    earth: "{{ celestial_url('earth') }}",
+    mars: "{{ celestial_url('mars') }}",
+    jupiter: "{{ celestial_url('jupiter') }}",
+    saturn: "{{ celestial_url('saturn') }}",
+    uranus: "{{ celestial_url('uranus') }}",
+    neptune: "{{ celestial_url('neptune') }}",
+    pluto: "{{ celestial_url('pluto') }}"
+};
+
+let simulationDays = 0;
+
+let speedDaysPerSecond = 1;
+
+let paused = false;
+
+let zoom = 1;
+
+let panX = 0;
+
+let panY = 0;
+
+let selectedPlanet = null;
+
+let selectedCelestialObjectId = null;
+
+/* V5.1 live tracked-object state */
+let trackedApophis = null;
+let trackedObjectLoaded = false;
+let trackedObjectError = null;
+let selectedTrackedObject = null;
+
+/* V5.2 simulation-time synchronization */
+let lastApophisSimulationDateKey = null;
+let lastApophisFetchAt = 0;
+let apophisFetchInProgress = false;
+let apophisFetchSequence = 0;
+let trackedApophisTrajectory = null;
+let apophisTrajectoryFetchInProgress = false;
+let lastApophisTrajectoryCenterTime = 0;
+let lastApophisTrajectoryRefreshAttemptAt = 0;
+let focusMode = false;
+
+let focusPlanet = null;
+
+let dragging = false;
+
+let dragStartX = 0;
+
+let dragStartY = 0;
+
+let startingPanX = 0;
+
+let startingPanY = 0;
+
+let lastFrame =
+    performance.now();
+
+
+/* ================================================================
+   STARS
+================================================================ */
+
+const stars = [];
+
+
+function createStars() {
+
+    stars.length = 0;
+
+
+    const count =
+        Math.max(
+            650,
+            Math.floor(
+                width *
+                height /
+                3000
+            )
+        );
+
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        stars.push({
+
+            x:
+                Math.random(),
+
+            y:
+                Math.random(),
+
+            size:
+                Math.random() *
+                1.55 +
+                .25,
+
+            alpha:
+                Math.random() *
+                .70 +
+                .15,
+
+            twinkle:
+                Math.random() *
+                Math.PI *
+                2
+
+        });
+
+    }
+
+}
+
+
+/* ================================================================
+   ASTEROIDS
+================================================================ */
+
+const asteroids = [];
+
+
+function createAsteroids() {
+
+    asteroids.length = 0;
+
+
+    const count = 1800;
+
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        asteroids.push({
+
+            angle:
+                Math.random() *
+                Math.PI *
+                2,
+
+            distance:
+                .405 +
+                Math.random() *
+                .055,
+
+            size:
+                Math.random() *
+                1.15 +
+                .25,
+
+            speed:
+                .0008 +
+                Math.random() *
+                .0015
+
+        });
+
+    }
+
+}
+
+
+/* ================================================================
+   RESIZE
+================================================================ */
+
+function resizeCanvas() {
+
+    const rect =
+        simulation.getBoundingClientRect();
+
+
+    const dpr =
+        Math.min(
+            window.devicePixelRatio || 1,
+            2
+        );
+
+
+    width =
+        rect.width;
+
+    height =
+        rect.height;
+
+
+    canvas.width =
+        width * dpr;
+
+    canvas.height =
+        height * dpr;
+
+
+    canvas.style.width =
+        `${width}px`;
+
+    canvas.style.height =
+        `${height}px`;
+
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+
+
+    centerX =
+        width / 2;
+
+    centerY =
+        height / 2;
+
+
+    createStars();
+
+}
+
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
+
+
+/* ================================================================
+   ORBIT GEOMETRY
+================================================================ */
+
+/*
+   IMPORTANT V5.2.1 DESIGN:
+
+   The horizontal orbit radius is calculated primarily from
+   canvas WIDTH.
+
+   This is deliberately different from the previous versions.
+
+   The vertical radius is then compressed independently.
+
+   This allows Neptune to occupy the far outer region of the
+   simulation instead of producing a compact central cluster.
+*/
+
+function getOrbitX(
+    factor
+) {
+
+    const minimum =
+        Math.max(
+            55,
+            width * .045
+        );
+
+
+    const maximum =
+        width * .43;
+
+
+    return (
+        minimum +
+        factor *
+        (
+            maximum -
+            minimum
+        )
+    );
+
+}
+
+
+function getOrbitY(
+    orbitX
+) {
+
+    /*
+       Flatten the system vertically while preserving the
+       large horizontal scale.
+    */
+
+    return (
+        orbitX *
+        .31
+    );
+
+}
+
+
+/* ================================================================
+   WORLD CENTRE
+================================================================ */
+
+function getWorldCenter() {
+
+    return {
+
+        x:
+            centerX +
+            panX,
+
+        y:
+            centerY +
+            panY
+
+    };
+
+}
+
+
+/* ================================================================
+   STARFIELD
+================================================================ */
+
+function drawStars(
+    time
+) {
+
+    for (
+        const star of stars
+    ) {
+
+        const twinkle =
+            .78 +
+            Math.sin(
+                time * .001 +
+                star.twinkle
+            ) *
+            .22;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            star.x *
+                width,
+
+            star.y *
+                height,
+
+            star.size,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.fillStyle =
+            `rgba(
+                210,
+                225,
+                255,
+                ${star.alpha * twinkle}
+            )`;
+
+
+        ctx.fill();
+
+    }
+
+}
+
+
+/* ================================================================
+   ORBITS
+================================================================ */
+
+function drawOrbits() {
+
+    const world =
+        getWorldCenter();
+
+
+    ctx.save();
+
+
+    ctx.translate(
+        world.x,
+        world.y
+    );
+
+
+    for (
+        const planet of planets
+    ) {
+
+        const orbitX =
+            getOrbitX(
+                planet.orbitFactor
+            ) *
+            zoom;
+
+
+        const orbitY =
+            getOrbitY(
+                orbitX
+            );
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+
+            0,
+
+            0,
+
+            orbitX,
+
+            orbitY,
+
+            0,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        const selected =
+            selectedPlanet &&
+            selectedPlanet.name ===
+                planet.name;
+
+
+        ctx.strokeStyle =
+            selected
+
+                ? "rgba(125,211,252,.42)"
+
+                : "rgba(110,145,185,.16)";
+
+
+        ctx.lineWidth =
+            selected
+                ? 1.6
+                : 1;
+
+
+        ctx.stroke();
+
+    }
+
+
+    ctx.restore();
+
+}
+
+
+/* ================================================================
+   ASTEROID BELT
+================================================================ */
+
+function drawAsteroidBelt() {
+
+    const world =
+        getWorldCenter();
+
+
+    ctx.save();
+
+
+    ctx.translate(
+        world.x,
+        world.y
+    );
+
+
+    for (
+        const asteroid of asteroids
+    ) {
+
+        const orbitX =
+            getOrbitX(
+                asteroid.distance
+            ) *
+            zoom;
+
+
+        const orbitY =
+            getOrbitY(
+                orbitX
+            );
+
+
+        const angle =
+            asteroid.angle +
+            simulationDays *
+            asteroid.speed;
+
+
+        const x =
+            Math.cos(angle) *
+            orbitX;
+
+
+        const y =
+            Math.sin(angle) *
+            orbitY;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            x,
+
+            y,
+
+            asteroid.size,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.fillStyle =
+            "rgba(190,175,150,.72)";
+
+
+        ctx.fill();
+
+    }
+
+
+    ctx.restore();
+
+}
+
+
+/* ================================================================
+   ASTEROID BELT LABEL
+================================================================ */
+
+function drawAsteroidLabel() {
+
+    const world =
+        getWorldCenter();
+
+
+    const orbitX =
+        getOrbitX(
+            .455
+        ) *
+        zoom;
+
+
+    drawLabel(
+
+        "ASTEROID BELT",
+
+        world.x +
+            orbitX,
+
+        world.y -
+            getOrbitY(
+                orbitX
+            ) -
+            12
+
+    );
+
+}
+
+
+/* ================================================================
+   SUN
+================================================================ */
+
+function drawSun(
+    time
+) {
+
+    const world =
+        getWorldCenter();
+
+
+    const radius =
+        34 *
+        Math.max(
+            .85,
+            zoom
+        );
+
+
+    const glow =
+        ctx.createRadialGradient(
+
+            world.x,
+
+            world.y,
+
+            radius * .3,
+
+            world.x,
+
+            world.y,
+
+            radius * 5
+
+        );
+
+
+    glow.addColorStop(
+        0,
+        "rgba(255,225,100,.58)"
+    );
+
+
+    glow.addColorStop(
+        .25,
+        "rgba(255,175,40,.20)"
+    );
+
+
+    glow.addColorStop(
+        1,
+        "rgba(255,130,0,0)"
+    );
+
+
+    ctx.fillStyle =
+        glow;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        world.x,
+
+        world.y,
+
+        radius * 5,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    const gradient =
+        ctx.createRadialGradient(
+
+            world.x -
+                radius * .35,
+
+            world.y -
+                radius * .38,
+
+            radius * .08,
+
+            world.x,
+
+            world.y,
+
+            radius
+
+        );
+
+
+    gradient.addColorStop(
+        0,
+        "#fffbd0"
+    );
+
+
+    gradient.addColorStop(
+        .35,
+        "#ffd95a"
+    );
+
+
+    gradient.addColorStop(
+        1,
+        "#f59e0b"
+    );
+
+
+    ctx.fillStyle =
+        gradient;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        world.x,
+
+        world.y,
+
+        radius,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    /*
+       Solar surface movement.
+    */
+
+    ctx.save();
+
+
+    ctx.translate(
+        world.x,
+        world.y
+    );
+
+
+    ctx.rotate(
+        time *
+        .00015
+    );
+
+
+    for (
+        let i = 0;
+        i < 12;
+        i++
+    ) {
+
+        const angle =
+            i /
+            12 *
+            Math.PI *
+            2;
+
+
+        const x =
+            Math.cos(angle) *
+            radius *
+            .55;
+
+
+        const y =
+            Math.sin(angle) *
+            radius *
+            .55;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            x,
+
+            y,
+
+            radius *
+            .065,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.fillStyle =
+            "rgba(150,75,5,.20)";
+
+
+        ctx.fill();
+
+    }
+
+
+    ctx.restore();
+
+
+    drawLabel(
+
+        "SUN",
+
+        world.x,
+
+        world.y -
+            radius -
+            18
+
+    );
+
+}
+
+
+/* ================================================================
+   PLANET POSITION
+================================================================ */
+
+function getPlanetPosition(
+    planet
+) {
+
+    const world =
+        getWorldCenter();
+
+
+    const orbitX =
+        getOrbitX(
+            planet.orbitFactor
+        ) *
+        zoom;
+
+
+    const orbitY =
+        getOrbitY(
+            orbitX
+        );
+
+
+    const phase =
+        simulationDays /
+        planet.period *
+        Math.PI *
+        2;
+
+
+    return {
+
+        x:
+            world.x +
+            Math.cos(phase) *
+            orbitX,
+
+        y:
+            world.y +
+            Math.sin(phase) *
+            orbitY
+
+    };
+
+}
+
+
+/* ================================================================
+   PLANET DRAWING
+================================================================ */
+
+function drawPlanet(
+    planet,
+    time
+) {
+
+    const position =
+        getPlanetPosition(
+            planet
+        );
+
+
+    const radius =
+        planet.radius *
+        Math.max(
+            .78,
+            zoom
+        );
+
+
+    /*
+       Selection ring.
+    */
+
+    if (
+        selectedPlanet &&
+        selectedPlanet.name ===
+            planet.name
+    ) {
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            position.x,
+
+            position.y,
+
+            radius + 12,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.strokeStyle =
+            "rgba(125,211,252,.90)";
+
+
+        ctx.lineWidth = 2;
+
+
+        ctx.stroke();
+
+    }
+
+
+    /*
+       Saturn rings.
+    */
+
+    if (
+        planet.name ===
+        "Saturn"
+    ) {
+
+        ctx.save();
+
+
+        ctx.translate(
+
+            position.x,
+
+            position.y
+
+        );
+
+
+        ctx.rotate(
+            -.18
+        );
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+
+            0,
+
+            0,
+
+            radius * 2.2,
+
+            radius * .70,
+
+            0,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.strokeStyle =
+            "rgba(224,205,166,.84)";
+
+
+        ctx.lineWidth = 5;
+
+
+        ctx.stroke();
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+
+            0,
+
+            0,
+
+            radius * 1.60,
+
+            radius * .50,
+
+            0,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.strokeStyle =
+            "rgba(145,120,85,.60)";
+
+
+        ctx.lineWidth = 2;
+
+
+        ctx.stroke();
+
+
+        ctx.restore();
+
+    }
+
+
+    /*
+       Planet glow.
+    */
+
+    const glow =
+        ctx.createRadialGradient(
+
+            position.x -
+                radius * .32,
+
+            position.y -
+                radius * .38,
+
+            radius * .08,
+
+            position.x,
+
+            position.y,
+
+            radius * 2.1
+
+        );
+
+
+    glow.addColorStop(
+        0,
+        "rgba(255,255,255,.22)"
+    );
+
+
+    glow.addColorStop(
+        1,
+        "rgba(255,255,255,0)"
+    );
+
+
+    ctx.fillStyle =
+        glow;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        position.x,
+
+        position.y,
+
+        radius * 2.1,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    /*
+       Planet body.
+    */
+
+    const gradient =
+        ctx.createRadialGradient(
+
+            position.x -
+                radius * .38,
+
+            position.y -
+                radius * .45,
+
+            radius * .08,
+
+            position.x,
+
+            position.y,
+
+            radius
+
+        );
+
+
+    gradient.addColorStop(
+        0,
+        "#ffffff"
+    );
+
+
+    gradient.addColorStop(
+        .10,
+        planet.color
+    );
+
+
+    gradient.addColorStop(
+        1,
+        "#111827"
+    );
+
+
+    ctx.fillStyle =
+        gradient;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        position.x,
+
+        position.y,
+
+        radius,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    /*
+       Surface details.
+    */
+
+    ctx.save();
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        position.x,
+
+        position.y,
+
+        radius,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.clip();
+
+
+    /*
+       Earth.
+    */
+
+    if (
+        planet.name ===
+        "Earth"
+    ) {
+
+        ctx.fillStyle =
+            "rgba(48,177,105,.68)";
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+
+            position.x -
+                radius * .25,
+
+            position.y -
+                radius * .05,
+
+            radius * .43,
+
+            radius * .18,
+
+            -.4,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "rgba(235,250,255,.60)";
+
+
+        for (
+            let i = 0;
+            i < 3;
+            i++
+        ) {
+
+            ctx.beginPath();
+
+
+            ctx.ellipse(
+
+                position.x -
+                    radius * .50 +
+                    i *
+                    radius *
+                    .38,
+
+                position.y +
+                    radius * .34,
+
+                radius * .37,
+
+                radius * .075,
+
+                .1,
+
+                0,
+
+                Math.PI * 2
+
+            );
+
+
+            ctx.fill();
+
+        }
+
+    }
+
+
+    /*
+       Jupiter bands.
+    */
+
+    if (
+        planet.name ===
+        "Jupiter"
+    ) {
+
+        const bands = [
+            -.68,
+            -.43,
+            -.18,
+            .08,
+            .34,
+            .60
+        ];
+
+
+        for (
+            const band of bands
+        ) {
+
+            ctx.fillStyle =
+                "rgba(108,70,45,.40)";
+
+
+            ctx.fillRect(
+
+                position.x -
+                    radius,
+
+                position.y +
+                    band *
+                    radius,
+
+                radius * 2,
+
+                radius * .11
+
+            );
+
+        }
+
+
+        /*
+           Great Red Spot.
+        */
+
+        ctx.fillStyle =
+            "rgba(157,67,48,.72)";
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+
+            position.x +
+                radius * .34,
+
+            position.y +
+                radius * .22,
+
+            radius * .34,
+
+            radius * .17,
+
+            0,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+    }
+
+
+    /*
+       Saturn surface bands.
+    */
+
+    if (
+        planet.name ===
+        "Saturn"
+    ) {
+
+        for (
+            let i = -2;
+            i <= 2;
+            i++
+        ) {
+
+            ctx.fillStyle =
+                "rgba(120,91,56,.22)";
+
+
+            ctx.fillRect(
+
+                position.x -
+                    radius,
+
+                position.y +
+                    i *
+                    radius *
+                    .23,
+
+                radius * 2,
+
+                radius * .085
+
+            );
+
+        }
+
+    }
+
+
+    /*
+       Axial rotation indicator.
+    */
+
+    ctx.save();
+
+
+    const rotationAngle =
+        time *
+        .001 /
+        Math.abs(
+            planet.rotation
+        );
+
+
+    ctx.translate(
+
+        position.x,
+
+        position.y
+
+    );
+
+
+    ctx.rotate(
+
+        planet.rotation < 0
+
+            ? -rotationAngle
+
+            : rotationAngle
+
+    );
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+
+        -radius * .70,
+
+        0
+
+    );
+
+
+    ctx.lineTo(
+
+        radius * .70,
+
+        0
+
+    );
+
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,.50)";
+
+
+    ctx.lineWidth = 1;
+
+
+    ctx.stroke();
+
+
+    ctx.restore();
+
+
+    ctx.restore();
+
+
+    /*
+       Label.
+    */
+
+    drawLabel(
+
+        planet.name,
+
+        position.x,
+
+        position.y -
+            radius -
+            12
+
+    );
+
+}
+
+
+/* ================================================================
+   MOON
+================================================================ */
+
+function drawMoon() {
+
+    const earth =
+        planets.find(
+            planet =>
+                planet.name ===
+                "Earth"
+        );
+
+
+    if (!earth) {
+        return;
+    }
+
+
+    const earthPosition =
+        getPlanetPosition(
+            earth
+        );
+
+
+    const moonOrbit =
+        earth.radius *
+        2.8 *
+        Math.max(
+            .78,
+            zoom
+        );
+
+
+    const moonAngle =
+        simulationDays *
+        .035;
+
+
+    const moonX =
+        earthPosition.x +
+        Math.cos(
+            moonAngle
+        ) *
+        moonOrbit;
+
+
+    const moonY =
+        earthPosition.y +
+        Math.sin(
+            moonAngle
+        ) *
+        moonOrbit *
+        .38;
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+
+        earthPosition.x,
+
+        earthPosition.y,
+
+        moonOrbit,
+
+        moonOrbit * .38,
+
+        0,
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.strokeStyle =
+        "rgba(190,205,225,.18)";
+
+
+    ctx.lineWidth = 1;
+
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        moonX,
+
+        moonY,
+
+        4.5 *
+            Math.max(
+                .78,
+                zoom
+            ),
+
+        0,
+
+        Math.PI * 2
+
+    );
+
+
+    ctx.fillStyle =
+        "#d5dbe3";
+
+
+    ctx.fill();
+
+
+    drawLabel(
+
+        "Moon",
+
+        moonX,
+
+        moonY -
+            10
+
+    );
+
+}
+
+
+/* ================================================================
+   LABEL
+================================================================ */
+
+function drawLabel(
+    text,
+    x,
+    y
+) {
+
+    ctx.save();
+
+
+    ctx.font =
+        "700 9px Segoe UI, Arial";
+
+
+    ctx.textAlign =
+        "center";
+
+
+    ctx.textBaseline =
+        "middle";
+
+
+    const metrics =
+        ctx.measureText(
+            text
+        );
+
+
+    const padding = 4;
+
+
+    ctx.fillStyle =
+        "rgba(1,5,12,.76)";
+
+
+    ctx.fillRect(
+
+        x -
+            metrics.width /
+            2 -
+            padding,
+
+        y - 7,
+
+        metrics.width +
+            padding * 2,
+
+        14
+
+    );
+
+
+    ctx.fillStyle =
+        "#dce6f4";
+
+
+    ctx.fillText(
+
+        text,
+
+        x,
+
+        y
+
+    );
+
+
+    ctx.restore();
+
+}
+
+
+/* ================================================================
+   FOCUS CAMERA
+================================================================ */
+
+function updateFocusCamera() {
+
+    if (
+        !focusMode ||
+        !focusPlanet
+    ) {
+
+        return;
+
+    }
+
+
+    const position =
+        getPlanetPosition(
+            focusPlanet
+        );
+
+
+    const targetX =
+        width / 2;
+
+
+    const targetY =
+        height / 2;
+
+
+    panX +=
+        (
+            targetX -
+            position.x
+        ) *
+        .045;
+
+
+    panY +=
+        (
+            targetY -
+            position.y
+        ) *
+        .045;
+
+}
+
+
+/* ================================================================
+   V5.2.1 LIVE TRACKED OBJECTS · ORBITAL PATH
+================================================================ */
+
+const APHOPHIS_API =
+    "/api/v1/asteroids/99942";
+
+const APHOPHIS_TRAJECTORY_API =
+    "/api/v1/asteroids/99942";
+
+
+function getApophisVisualPosition() {
+
+    /*
+       V5.2 trajectory interpolation.
+
+       The backend provides a long heliocentric trajectory centered
+       on the requested simulation date. The browser interpolates
+       between the surrounding trajectory samples so Apophis follows
+       the simulation clock continuously instead of waiting for the
+       next API telemetry snapshot.
+    */
+
+    const hasTrajectory =
+        trackedApophisTrajectory &&
+        Array.isArray(
+            trackedApophisTrajectory.points
+        ) &&
+        trackedApophisTrajectory.points.length >= 2;
+
+
+    const hasSnapshot =
+        trackedApophis &&
+        trackedApophis.heliocentric_ecliptic_position_au;
+
+
+    if (
+        !hasTrajectory &&
+        !hasSnapshot
+    ) {
+
+        return null;
+
+    }
+
+
+    /*
+       If the trajectory has not loaded yet, retain the
+       authoritative API snapshot as a visual fallback.
+
+       This prevents Apophis from disappearing during
+       trajectory loading or a temporary API failure.
+    */
+    if (!hasTrajectory) {
+
+        const position =
+            trackedApophis.heliocentric_ecliptic_position_au;
+
+        const world =
+            getWorldCenter();
+
+        const earthOrbitX =
+            getOrbitX(0.26);
+
+        const x =
+            Number(position.x);
+
+        const y =
+            Number(position.y);
+
+        const visualX =
+            x *
+            earthOrbitX *
+            zoom;
+
+        const visualY =
+            y *
+            earthOrbitX *
+            0.31 *
+            zoom;
+
+        return {
+
+            x:
+                world.x +
+                visualX,
+
+            y:
+                world.y +
+                visualY
+
+        };
+
+    }
+
+
+    const points =
+        trackedApophisTrajectory.points;
+
+    const simulationDate =
+        getSimulationDate();
+
+    const simulationTime =
+        simulationDate.getTime();
+
+
+    let previousPoint =
+        points[0];
+
+    let nextPoint =
+        points[points.length - 1];
+
+
+    for (
+        let index = 1;
+        index < points.length;
+        index++
+    ) {
+
+        const currentPoint =
+            points[index];
+
+        const currentTime =
+            new Date(
+                currentPoint.observation_time
+            ).getTime();
+
+
+        if (
+            simulationTime <=
+            currentTime
+        ) {
+
+            nextPoint =
+                currentPoint;
+
+            previousPoint =
+                points[index - 1];
+
+            break;
+
+        }
+
+    }
+
+
+    const previousTime =
+        new Date(
+            previousPoint.observation_time
+        ).getTime();
+
+    const nextTime =
+        new Date(
+            nextPoint.observation_time
+        ).getTime();
+
+
+    let interpolationFactor = 0;
+
+
+    if (
+        nextTime >
+        previousTime
+    ) {
+
+        interpolationFactor =
+            (
+                simulationTime -
+                previousTime
+            ) /
+            (
+                nextTime -
+                previousTime
+            );
+
+    }
+
+
+    interpolationFactor =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                interpolationFactor
+            )
+        );
+
+
+    const previousX =
+        Number(previousPoint.x);
+
+    const previousY =
+        Number(previousPoint.y);
+
+    const nextX =
+        Number(nextPoint.x);
+
+    const nextY =
+        Number(nextPoint.y);
+
+
+    const x =
+        previousX +
+        (
+            nextX -
+            previousX
+        ) *
+        interpolationFactor;
+
+
+    const y =
+        previousY +
+        (
+            nextY -
+            previousY
+        ) *
+        interpolationFactor;
+
+
+    const world =
+        getWorldCenter();
+
+    const earthOrbitX =
+        getOrbitX(0.26);
+
+
+    const visualX =
+        x *
+        earthOrbitX *
+        zoom;
+
+
+    const visualY =
+        y *
+        earthOrbitX *
+        0.31 *
+        zoom;
+
+
+    return {
+
+        x:
+            world.x +
+            visualX,
+
+        y:
+            world.y +
+            visualY
+
+    };
+
+}
+
+
+function loadTrackedApophis(
+    simulationDate = null,
+    force = false
+) {
+
+    const date =
+        simulationDate instanceof Date
+            ? simulationDate
+            : getSimulationDate();
+
+    const isoDate =
+        date.toISOString();
+
+    const dateKey =
+        isoDate.slice(
+            0,
+            19
+        );
+
+    /*
+     * Only allow one Apophis telemetry request at a time.
+     * Forced refreshes must not bypass this protection.
+     */
+    if (
+        apophisFetchInProgress
+    ) {
+        return;
+    }
+
+    const requestSequence =
+        ++apophisFetchSequence;
+
+    apophisFetchInProgress =
+        true;
+
+    /*
+     * Record the attempt before starting the request.
+     * This prevents repeated retries every animation frame
+     * when the API/server is temporarily unavailable.
+     */
+    lastApophisFetchAt =
+        performance.now();
+
+    fetch(
+        `${APHOPHIS_API}?observation_time=${encodeURIComponent(isoDate)}`
+    )
+        .then(
+            response => {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Asteroid API returned HTTP ${response.status}`
+                    );
+
+                }
+
+                return response.json();
+
+            }
+        )
+        .then(
+            payload => {
+
+                /*
+                 * Ignore a response if a newer request somehow
+                 * superseded this one.
+                 */
+                if (
+                    requestSequence !==
+                    apophisFetchSequence
+                ) {
+                    return;
+                }
+
+                if (
+                    !payload ||
+                    payload.status !== "success" ||
+                    !payload.data ||
+                    !payload.data.heliocentric_ecliptic_position_au
+                ) {
+
+                    throw new Error(
+                        "Invalid Apophis API response."
+                    );
+
+                }
+
+                trackedApophis =
+                    payload.data;
+
+                trackedObjectLoaded =
+                    true;
+
+                updateSelectedApophisTelemetry();
+
+                trackedObjectError =
+                    null;
+
+                lastApophisSimulationDateKey =
+                    dateKey;
+
+                console.log(
+                    "AstroSphere V5.2: Apophis synchronized",
+                    {
+                        simulationDate:
+                            isoDate,
+                        position:
+                            trackedApophis.heliocentric_ecliptic_position_au
+                    }
+                );
+
+                draw(
+                    performance.now()
+                );
+
+            }
+        )
+        .catch(
+            error => {
+
+                /*
+                 * Keep the last valid Apophis state visible when
+                 * a temporary network/server failure occurs.
+                 */
+                trackedObjectError =
+                    error.message;
+
+                console.error(
+                    "AstroSphere V5.2: Failed to synchronize Apophis",
+                    error
+                );
+
+            }
+        )
+        .finally(
+            () => {
+
+                if (
+                    requestSequence ===
+                    apophisFetchSequence
+                ) {
+                    apophisFetchInProgress =
+                        false;
+                }
+
+            }
+        );
+
+}
+
+function syncTrackedApophisWithSimulationDate() {
+
+    const simulationDate =
+        getSimulationDate();
+
+    const isoDate =
+        simulationDate.toISOString();
+
+    const dateKey =
+        isoDate.slice(
+            0,
+            19
+        );
+
+    const now =
+        performance.now();
+
+    /*
+     * While playing, refresh periodically. Exact synchronization
+     * happens when the user pauses or selects Apophis.
+     */
+    if (
+        dateKey !== lastApophisSimulationDateKey &&
+        !apophisFetchInProgress &&
+        now - lastApophisFetchAt >= 5000
+    ) {
+
+        loadTrackedApophis(
+            simulationDate
+        );
+
+    }
+
+}
+
+
+async function loadApophisTrajectory(
+    simulationDate = null
+) {
+
+    if (
+        apophisTrajectoryFetchInProgress
+    ) {
+        return;
+    }
+
+    const date =
+        simulationDate instanceof Date
+            ? simulationDate
+            : getSimulationDate();
+
+    apophisTrajectoryFetchInProgress =
+        true;
+
+    try {
+
+        const isoDate =
+            date.toISOString();
+
+        const response =
+            await fetch(
+                `${APHOPHIS_TRAJECTORY_API}?observation_time=${encodeURIComponent(isoDate)}&include_trajectory=true`
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Asteroid trajectory API returned HTTP ${response.status}`
+            );
+
+        }
+
+        const payload =
+            await response.json();
+
+        if (
+            !payload ||
+            payload.status !== "success" ||
+            !payload.data ||
+            !payload.data.trajectory ||
+            !Array.isArray(
+                payload.data.trajectory.points
+            )
+        ) {
+
+            throw new Error(
+                "Invalid Apophis trajectory response."
+            );
+
+        }
+
+        trackedApophisTrajectory =
+            payload.data.trajectory;
+
+        lastApophisTrajectoryCenterTime =
+            date.getTime();
+        console.info(
+            "AstroSphere V5.2.1: Apophis orbital path loaded",
+            {
+                observationTime:
+                    payload.data.observation_time,
+                samples:
+                    payload.data.trajectory.points.length
+            }
+        );
+
+        draw(
+            performance.now()
+        );
+
+    } catch (error) {
+
+        console.error(
+            "AstroSphere V5.2.1: Failed to load Apophis orbital path",
+            error
+        );
+
+    } finally {
+
+        apophisTrajectoryFetchInProgress =
+            false;
+
+    }
+
+}
+
+
+function refreshApophisTrajectoryIfNeeded() {
+
+    if (
+        !trackedApophisTrajectory ||
+        !Array.isArray(
+            trackedApophisTrajectory.points
+        ) ||
+        trackedApophisTrajectory.points.length < 2
+    ) {
+        return;
+    }
+
+    if (
+        apophisTrajectoryFetchInProgress
+    ) {
+        return;
+    }
+
+    const points =
+        trackedApophisTrajectory.points;
+
+    const firstPoint =
+        points[0];
+
+    const lastPoint =
+        points[points.length - 1];
+
+    const firstTime =
+        new Date(
+            firstPoint.observation_time
+        ).getTime();
+
+    const lastTime =
+        new Date(
+            lastPoint.observation_time
+        ).getTime();
+
+    if (
+        !Number.isFinite(firstTime) ||
+        !Number.isFinite(lastTime)
+    ) {
+        return;
+    }
+
+    const simulationTime =
+        getSimulationDate().getTime();
+
+    const oneYearMs =
+        365.25 *
+        24 *
+        60 *
+        60 *
+        1000;
+
+    const safetyMarginMs =
+        oneYearMs;
+
+    const nearStart =
+        simulationTime >= firstTime &&
+        simulationTime - firstTime <= safetyMarginMs;
+
+    const nearEnd =
+        simulationTime <= lastTime &&
+        lastTime - simulationTime <= safetyMarginMs;
+
+    const outsideWindow =
+        simulationTime < firstTime ||
+        simulationTime > lastTime;
+
+    if (
+        !nearStart &&
+        !nearEnd &&
+        !outsideWindow
+    ) {
+        return;
+    }
+
+    const now =
+        performance.now();
+
+    /*
+     * Prevent repeated attempts every animation frame if
+     * the API is temporarily unavailable.
+     */
+    if (
+        now -
+        lastApophisTrajectoryRefreshAttemptAt <
+        5000
+    ) {
+        return;
+    }
+
+    /*
+     * After a successful refresh, the new trajectory is
+     * centered on the current simulation date. Do not
+     * immediately request another overlapping window.
+     */
+    const centerDistance =
+        Math.abs(
+            simulationTime -
+            lastApophisTrajectoryCenterTime
+        );
+
+    if (
+        centerDistance < oneYearMs
+    ) {
+        return;
+    }
+
+    lastApophisTrajectoryRefreshAttemptAt =
+        now;
+
+    console.info(
+        "AstroSphere V5.2.1: Apophis trajectory window approaching edge; refreshing",
+        {
+            simulationDate:
+                getSimulationDate().toISOString(),
+            trajectoryStart:
+                firstPoint.observation_time,
+            trajectoryEnd:
+                lastPoint.observation_time
+        }
+    );
+
+    loadApophisTrajectory(
+        getSimulationDate()
+    );
+
+}
+
+function getApophisTrajectoryPoint(
+    point
+) {
+
+    const world =
+        getWorldCenter();
+
+    /*
+     * The calculated trajectory coordinates are heliocentric
+     * ecliptic coordinates in AU.
+     *
+     * The visual Solar System uses Earth's orbit as the
+     * 1 AU reference and intentionally compresses the
+     * vertical axis for readability.
+     */
+    const oneAuX =
+        getOrbitX(0.26);
+
+    const xAu =
+        Number(point.x);
+
+    const yAu =
+        Number(point.y);
+
+    return {
+
+        x:
+            world.x +
+            xAu *
+            oneAuX *
+            zoom,
+
+        y:
+            world.y +
+            yAu *
+            oneAuX *
+            0.31 *
+            zoom
+
+    };
+
+}
+
+
+function drawApophisOrbitPath() {
+
+    if (
+        !trackedApophisTrajectory ||
+        !Array.isArray(
+            trackedApophisTrajectory.points
+        ) ||
+        trackedApophisTrajectory.points.length < 2
+    ) {
+
+        return;
+
+    }
+
+    const points =
+        trackedApophisTrajectory.points;
+
+    ctx.save();
+
+    ctx.beginPath();
+
+    points.forEach(
+        (
+            point,
+            index
+        ) => {
+
+            const position =
+                getApophisTrajectoryPoint(
+                    point
+                );
+
+            if (index === 0) {
+
+                ctx.moveTo(
+                    position.x,
+                    position.y
+                );
+
+            } else {
+
+                ctx.lineTo(
+                    position.x,
+                    position.y
+                );
+
+            }
+
+        }
+    );
+
+    ctx.strokeStyle =
+        "rgba(255,150,105,.55)";
+
+    ctx.lineWidth =
+        1.5;
+
+    ctx.setLineDash(
+        [6, 5]
+    );
+
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    ctx.restore();
+
+}
+
+function drawTrackedApophis() {
+
+    if (
+        !trackedApophis ||
+        !trackedObjectLoaded
+    ) {
+
+        return;
+
+    }
+
+
+    const position =
+        getApophisVisualPosition();
+
+    if (!position) {
+        return;
+    }
+
+    drawApophisOrbitPath();
+
+
+    const selected =
+        selectedTrackedObject ===
+        "Apophis";
+
+
+    ctx.save();
+
+
+    /* Outer glow */
+    const glow =
+        ctx.createRadialGradient(
+            position.x,
+            position.y,
+            2,
+            position.x,
+            position.y,
+            selected ? 24 : 18
+        );
+
+
+    glow.addColorStop(
+        0,
+        "rgba(255,120,80,.95)"
+    );
+
+    glow.addColorStop(
+        .35,
+        "rgba(255,120,80,.35)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(255,120,80,0)"
+    );
+
+
+    ctx.fillStyle =
+        glow;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        position.x,
+        position.y,
+        selected ? 24 : 18,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Selection ring */
+    if (selected) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+            position.x,
+            position.y,
+            12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.strokeStyle =
+            "rgba(255,190,130,.95)";
+
+        ctx.lineWidth =
+            2;
+
+        ctx.stroke();
+
+    }
+
+
+    /* Marker */
+    ctx.fillStyle =
+        "#ff7850";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        position.x,
+        position.y,
+        5,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "#ffffff";
+
+    ctx.lineWidth =
+        1.5;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        position.x,
+        position.y,
+        8,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.stroke();
+
+
+    /* Label */
+    ctx.font =
+        "bold 12px Arial";
+
+    ctx.textAlign =
+        "left";
+
+    ctx.textBaseline =
+        "middle";
+
+    ctx.fillStyle =
+        "#ffffff";
+
+    ctx.fillText(
+        "Apophis | 99942",
+        position.x + 13,
+        position.y - 18
+    );
+
+
+    ctx.font =
+        "10px Arial";
+
+    ctx.fillStyle =
+        "rgba(255,255,255,.70)";
+
+    ctx.fillText(
+        "LIVE TRACKED OBJECT",
+        position.x + 13,
+        position.y - 3
+    );
+
+
+    ctx.restore();
+
+}
+
+
+function formatTrackedNumber(
+    value,
+    decimals = 2
+) {
+
+    if (
+        !Number.isFinite(
+            Number(value)
+        )
+    ) {
+
+        return "—";
+
+    }
+
+
+    return Number(value).toLocaleString(
+        undefined,
+        {
+            maximumFractionDigits:
+                decimals
+        }
+    );
+
+}
+
+
+function formatTrackedObservationTime(
+    value
+) {
+
+    if (!value) {
+        return "—";
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return value;
+
+    }
+
+
+    return date.toLocaleString();
+
+}
+
+
+function updateSelectedApophisTelemetry() {
+
+    if (
+        selectedTrackedObject !== "Apophis" ||
+        !trackedApophis
+    ) {
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "selectedOrbit"
+    ).textContent =
+        trackedApophis.distance_from_earth_km == null
+            ? "Unavailable"
+            : `${formatTrackedNumber(
+                trackedApophis.distance_from_earth_km,
+                0
+            )} km`;
+
+
+    document.getElementById(
+        "selectedRotation"
+    ).textContent =
+        trackedApophis.relative_velocity_km_s == null
+            ? "Unavailable"
+            : `${formatTrackedNumber(
+                trackedApophis.relative_velocity_km_s,
+                3
+            )} km/s`;
+
+
+    document.getElementById(
+        "selectedObservation"
+    ).textContent =
+        formatTrackedObservationTime(
+            trackedApophis.observation_time ||
+            trackedApophis.observed_at ||
+            trackedApophis.observationTime ||
+            trackedApophis.epoch
+        );
+
+}
+
+function selectApophis() {
+
+    if (
+        !trackedApophis ||
+        !trackedObjectLoaded
+    ) {
+
+        return;
+
+    }
+
+
+    selectedTrackedObject =
+        "Apophis";
+
+
+    selectedPlanet =
+        null;
+
+
+    loadTrackedApophis(
+        getSimulationDate(),
+        true
+    );
+
+    loadApophisTrajectory(
+        getSimulationDate()
+    );
+
+
+    focusPlanet =
+        null;
+
+
+    focusMode =
+        false;
+
+
+    document.getElementById(
+        "selectedName"
+    ).textContent =
+        "Apophis";
+
+
+    document.getElementById(
+        "selectedDescription"
+    ).textContent =
+        "Near-Earth asteroid 99942 Apophis. Live telemetry and its calculated heliocentric position are shown using MPC orbital elements and Skyfield.";
+
+
+    document.getElementById(
+        "selectedOrbitLabel"
+    ).textContent =
+        "Distance from Earth";
+
+
+    document.getElementById(
+        "selectedOrbit"
+    ).textContent =
+        `${formatTrackedNumber(
+            trackedApophis.distance_from_earth_km,
+            0
+        )} km`;
+
+
+    document.getElementById(
+        "selectedRotationLabel"
+    ).textContent =
+        "Relative velocity";
+
+
+    document.getElementById(
+        "selectedRotation"
+    ).textContent =
+        `${formatTrackedNumber(
+            trackedApophis.relative_velocity_km_s,
+            3
+        )} km/s`;
+
+
+    document.getElementById(
+        "selectedObservation"
+    ).textContent =
+        formatTrackedObservationTime(
+            trackedApophis.observation_time ||
+            trackedApophis.observed_at ||
+            trackedApophis.observationTime ||
+            trackedApophis.epoch
+        );
+
+
+    document.getElementById(
+        "selectedObservationStat"
+    ).style.display =
+        "block";
+
+
+    document.querySelectorAll(
+        ".planet-card"
+    ).forEach(
+        card =>
+            card.classList.remove(
+                "active"
+            )
+    );
+
+
+    draw(
+        performance.now()
+    );
+
+}
+
+
+function isApophisHit(
+    mouseX,
+    mouseY
+) {
+
+    if (
+        !trackedApophis ||
+        !trackedObjectLoaded
+    ) {
+
+        return false;
+
+    }
+
+
+    const position =
+        getApophisVisualPosition();
+
+
+    const distance =
+        Math.hypot(
+            mouseX - position.x,
+            mouseY - position.y
+        );
+
+
+    return distance <= 24;
+
+}
+
+
+/* ================================================================
+   DRAW FRAME
+================================================================ */
+
+
+function draw(
+    time
+) {
+
+    ctx.clearRect(
+
+        0,
+
+        0,
+
+        width,
+
+        height
+
+    );
+
+
+    drawStars(
+        time
+    );
+
+
+    drawOrbits();
+
+
+    drawAsteroidBelt();
+
+
+    drawAsteroidLabel();
+
+
+    drawSun(
+        time
+    );
+
+
+    for (
+        const planet of planets
+    ) {
+
+        drawPlanet(
+
+            planet,
+
+            time
+
+        );
+
+    }
+
+
+    drawMoon();
+
+
+    /* V5.2 live tracked-object layer */
+    drawTrackedApophis();
+
+
+    updateFocusCamera();
+
+}
+
+
+/* ================================================================
+   SIMULATION DATE
+================================================================ */
+
+const simulationStartDate =
+    new Date();
+
+
+function getSimulationDate() {
+
+    const date =
+        new Date(
+            simulationStartDate
+        );
+
+
+    date.setUTCDate(
+
+        date.getUTCDate() +
+        simulationDays
+
+    );
+
+
+    return date;
+
+}
+
+
+function updateDate() {
+
+    const date =
+        getSimulationDate();
+
+
+    document.getElementById(
+        "dateDisplay"
+    ).textContent =
+        date.toLocaleDateString(
+
+            undefined,
+
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                timeZone: "UTC"
+            }
+
+        );
+
+}
+
+
+/* ================================================================
+   SPEED UI
+================================================================ */
+
+function formatSpeed(
+    speed
+) {
+
+    if (
+        speed === 1
+    ) {
+
+        return "1 day / second";
+
+    }
+
+
+    if (
+        speed === 7
+    ) {
+
+        return "7 days / second";
+
+    }
+
+
+    if (
+        speed === 30
+    ) {
+
+        return "30 days / second";
+
+    }
+
+
+    if (
+        speed === 365.25
+    ) {
+
+        return "1 year / second";
+
+    }
+
+
+    return `${speed} days / second`;
+
+}
+
+
+function updateSpeedUI() {
+
+    const text =
+        formatSpeed(
+            speedDaysPerSecond
+        );
+
+
+    document.getElementById(
+        "speedBadge"
+    ).textContent =
+        text;
+
+
+    document.querySelectorAll(
+        ".speed-button"
+    ).forEach(
+        button => {
+
+            button.classList.toggle(
+
+                "active",
+
+                Number(
+                    button.dataset.speed
+                ) ===
+                speedDaysPerSecond
+
+            );
+
+        }
+    );
+
+}
+
+
+/* ================================================================
+   SPEED CONTROLS
+================================================================ */
+
+document.querySelectorAll(
+    ".speed-button"
+).forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                speedDaysPerSecond =
+                    Number(
+                        button.dataset.speed
+                    );
+
+
+                updateSpeedUI();
+
+            }
+        );
+
+    }
+);
+
+
+/* ================================================================
+   PAUSE
+================================================================ */
+
+document.getElementById(
+    "pauseButton"
+).addEventListener(
+    "click",
+    () => {
+
+        paused =
+            !paused;
+
+
+        document.getElementById(
+            "pauseButton"
+        ).textContent =
+
+            paused
+
+                ? "▶ Resume"
+
+                : "⏸ Pause";
+
+    }
+);
+
+
+/* ================================================================
+   RESET
+================================================================ */
+
+document.getElementById(
+    "resetButton"
+).addEventListener(
+    "click",
+    () => {
+
+        simulationDays =
+            0;
+
+
+        zoom =
+            1;
+
+
+        panX =
+            0;
+
+
+        panY =
+            0;
+
+
+        paused =
+            false;
+
+
+        selectedPlanet =
+            null;
+
+
+
+        selectedCelestialObjectId =
+            null;
+
+        updateSelectedExploreLink();
+
+        selectedTrackedObject =
+            null;
+
+        focusPlanet =
+            null;
+
+
+        focusMode =
+            false;
+
+
+        document.getElementById(
+            "pauseButton"
+        ).textContent =
+            "⏸ Pause";
+
+        if (paused) {
+
+            loadTrackedApophis(
+                getSimulationDate(),
+                true
+            );
+
+        }
+
+
+        document.getElementById(
+            "selectedName"
+        ).textContent =
+            "Solar System";
+
+
+        document.getElementById(
+            "selectedDescription"
+        ).textContent =
+            "Select a planet to explore its orbital period, rotation and current simulated position.";
+
+
+        document.getElementById(
+            "selectedOrbit"
+        ).textContent =
+            "—";
+
+
+        document.getElementById(
+            "selectedRotation"
+        ).textContent =
+            "—";
+
+
+        document.querySelectorAll(
+            ".planet-card"
+        ).forEach(
+            card =>
+                card.classList.remove(
+                    "active"
+                )
+        );
+
+
+        updateDate();
+
+        loadTrackedApophis(
+            getSimulationDate(),
+            true
+        );
+
+    }
+);
+
+
+/* ================================================================
+   FULL SYSTEM
+================================================================ */
+
+document.getElementById(
+    "fullSystemButton"
+).addEventListener(
+    "click",
+    () => {
+
+        focusMode =
+            false;
+
+
+        focusPlanet =
+            null;
+
+
+        zoom =
+            1;
+
+
+        panX =
+            0;
+
+
+        panY =
+            0;
+
+    }
+);
+
+
+/* ================================================================
+   PLANET SELECTION
+================================================================ */
+
+function selectPlanet(
+    name
+) {
+
+    const planet =
+        planets.find(
+            item =>
+                item.id === name ||
+                item.name === name
+        );
+
+
+    if (!planet) {
+        return;
+    }
+
+
+    selectedPlanet =
+        planet;
+
+
+    selectedCelestialObjectId =
+        planet.id;
+    updateSelectedExploreLink();
+    selectedTrackedObject =
+        null;
+
+    focusPlanet =
+        planet;
+
+
+    focusMode =
+        true;
+
+
+    /*
+       Focus zoom.
+    */
+
+    zoom =
+        1.65;
+
+
+    document.getElementById(
+        "selectedName"
+    ).textContent =
+        planet.name;
+
+
+    document.getElementById(
+        "selectedDescription"
+    ).textContent =
+        planet.description;
+
+
+    document.getElementById(
+        "selectedOrbit"
+    ).textContent =
+        formatPeriod(
+            planet.period
+        );
+
+
+    document.getElementById(
+        "selectedRotation"
+    ).textContent =
+        formatRotation(
+            planet.rotation
+        );
+
+
+    document.querySelectorAll(
+        ".planet-card"
+    ).forEach(
+        card => {
+
+            card.classList.toggle(
+
+                "active",
+
+                card.dataset.planet ===
+                    name
+
+            );
+
+        }
+    );
+
+}
+
+
+
+
+function updateSelectedExploreLink() {
+
+    const link =
+        document.getElementById(
+            "selectedExploreLink"
+        );
+
+    if (!link) {
+        return;
+    }
+
+    const url =
+        CELESTIAL_URLS[
+            selectedCelestialObjectId
+        ];
+
+    if (!url) {
+        link.style.display = "none";
+        link.removeAttribute("href");
+        return;
+    }
+
+    link.href = url;
+    link.style.display = "inline-flex";
+}
+function formatPeriod(
+    days
+) {
+
+    if (
+        days < 365
+    ) {
+
+        return `${days} days`;
+
+    }
+
+
+    return `${(
+        days /
+        365.25
+    ).toFixed(2)} years`;
+
+}
+
+
+function formatRotation(
+    days
+) {
+
+    return `${Math.abs(days).toFixed(2)} days`;
+
+}
+
+
+/* ================================================================
+   PLANET CARDS
+================================================================ */
+
+document.querySelectorAll(
+    ".planet-card"
+).forEach(
+    card => {
+
+        card.addEventListener(
+            "click",
+            () => {
+
+                selectPlanet(
+                    card.dataset.celestialId ||
+                    card.dataset.planet
+                );
+
+            }
+        );
+
+    }
+);
+
+
+/* ================================================================
+   CANVAS CLICK
+================================================================ */
+
+canvas.addEventListener(
+    "click",
+    event => {
+
+        if (dragging) {
+            return;
+        }
+
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        const mouseX =
+            event.clientX -
+            rect.left;
+
+
+        const mouseY =
+            event.clientY -
+            rect.top;
+
+        /*
+         * V5.1 tracked objects have priority over planets.
+         * Canvas drawing coordinates are CSS/display coordinates
+         * because resizeCanvas() applies the device-pixel-ratio
+         * transform to the rendering context.
+         */
+        if (
+            typeof isApophisHit === "function" &&
+            isApophisHit(mouseX, mouseY)
+        ) {
+
+            selectApophis();
+
+            return;
+
+        }
+
+
+        for (
+            const planet of planets
+        ) {
+
+            const position =
+                getPlanetPosition(
+                    planet
+                );
+
+
+            const radius =
+                planet.radius *
+                Math.max(
+                    .78,
+                    zoom
+                );
+
+
+            const distance =
+                Math.hypot(
+
+                    mouseX -
+                        position.x,
+
+                    mouseY -
+                        position.y
+
+                );
+
+
+            if (
+                distance <=
+                radius + 12
+            ) {
+
+                selectPlanet(
+                    planet.id
+                );
+
+
+                return;
+
+            }
+
+        }
+
+    }
+);
+
+
+/* ================================================================
+   DRAG / PAN
+================================================================ */
+
+canvas.addEventListener(
+    "pointerdown",
+    event => {
+
+        dragging =
+            true;
+
+
+        canvas.classList.add(
+            "dragging"
+        );
+
+
+        dragStartX =
+            event.clientX;
+
+
+        dragStartY =
+            event.clientY;
+
+
+        startingPanX =
+            panX;
+
+
+        startingPanY =
+            panY;
+
+
+        canvas.setPointerCapture(
+            event.pointerId
+        );
+
+    }
+);
+
+
+canvas.addEventListener(
+    "pointermove",
+    event => {
+
+        if (!dragging) {
+            return;
+        }
+
+
+        panX =
+            startingPanX +
+            (
+                event.clientX -
+                dragStartX
+            );
+
+
+        panY =
+            startingPanY +
+            (
+                event.clientY -
+                dragStartY
+            );
+
+    }
+);
+
+
+canvas.addEventListener(
+    "pointerup",
+    event => {
+
+        dragging =
+            false;
+
+
+        canvas.classList.remove(
+            "dragging"
+        );
+
+
+        try {
+
+            canvas.releasePointerCapture(
+                event.pointerId
+            );
+
+        } catch (error) {
+
+            /*
+               Pointer capture may already
+               have been released.
+            */
+
+        }
+
+    }
+);
+
+
+canvas.addEventListener(
+    "pointercancel",
+    () => {
+
+        dragging =
+            false;
+
+
+        canvas.classList.remove(
+            "dragging"
+        );
+
+    }
+);
+
+
+/* ================================================================
+   ZOOM
+================================================================ */
+
+canvas.addEventListener(
+    "wheel",
+    event => {
+
+        event.preventDefault();
+
+
+        const multiplier =
+            event.deltaY < 0
+
+                ? 1.12
+
+                : .89;
+
+
+        zoom =
+            Math.max(
+
+                .55,
+
+                Math.min(
+
+                    3.2,
+
+                    zoom *
+                    multiplier
+
+                )
+
+            );
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+/* ================================================================
+   ANIMATION
+================================================================ */
+
+function animate(
+    time
+) {
+
+    const deltaSeconds =
+        Math.min(
+
+            (
+                time -
+                lastFrame
+            ) / 1000,
+
+            .1
+
+        );
+
+
+    lastFrame =
+        time;
+
+
+    if (!paused) {
+
+        simulationDays +=
+            deltaSeconds *
+            speedDaysPerSecond;
+
+    }
+
+
+    updateDate();
+
+    syncTrackedApophisWithSimulationDate();
+
+    refreshApophisTrajectoryIfNeeded();
+
+    draw(
+        time
+    );
+
+
+    requestAnimationFrame(
+        animate
+    );
+
+}
+
+
+/* ================================================================
+   INITIALIZE
+================================================================ */
+
+createAsteroids();
+
+resizeCanvas();
+
+updateSpeedUI();
+
+/* Start V5.2 Apophis telemetry at the current simulation date */
+loadTrackedApophis(
+    getSimulationDate()
+);
+
+loadApophisTrajectory(
+    getSimulationDate()
+);
+
+updateDate();
+
+requestAnimationFrame(
+    animate
+);
+
+</script>
+
+
+</body>
+</html>

@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html lang="en">
 
 <head>
 
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <meta charset="UTF-8">
 
     <meta
@@ -58,6 +59,8 @@
 
     </header>
 
+    {% include "_navigation.html" %}
+
 
     <!-- =====================================================
          MAIN
@@ -76,7 +79,7 @@
 
                 {{ reference_body.name }}
 
-                →
+                ←’
 
                 {{ target_body.name }}
 
@@ -360,15 +363,15 @@
 
                     {% if distance_change_km < 0 %}
 
-                        ↘️
+                        ↘️
 
                     {% elif distance_change_km > 0 %}
 
-                        ↗️
+                        ↗️
 
                     {% else %}
 
-                        ➡️
+                        ➡️
 
                     {% endif %}
 
@@ -567,15 +570,15 @@
 
                     {% if velocity_change_km_s < 0 %}
 
-                        ↘️
+                        ↘️
 
                     {% elif velocity_change_km_s > 0 %}
 
-                        ↗️
+                        ↗️
 
                     {% else %}
 
-                        ➡️
+                        ➡️
 
                     {% endif %}
 
@@ -677,7 +680,7 @@
                 onclick="window.location.href='/'"
             >
 
-                ← New Analysis
+                ← New Analysis
 
             </button>
 
@@ -760,7 +763,7 @@
             mode: "lines+markers",
 
             name:
-                "{{ reference_body.name }} → {{ target_body.name }}",
+                "{{ reference_body.name }} ←’ {{ target_body.name }}",
 
             line: {
 
@@ -792,7 +795,7 @@
         title: {
 
             text:
-                "{{ reference_body.name }} → {{ target_body.name }} Distance Over Time"
+                "{{ reference_body.name }} ←’ {{ target_body.name }} Distance Over Time"
 
         },
 
@@ -876,7 +879,7 @@
             mode: "lines+markers",
 
             name:
-                "{{ reference_body.name }} → {{ target_body.name }}",
+                "{{ reference_body.name }} ←’ {{ target_body.name }}",
 
             line: {
 
@@ -908,7 +911,7 @@
         title: {
 
             text:
-                "{{ reference_body.name }} → {{ target_body.name }} Relative Velocity Over Time"
+                "{{ reference_body.name }} ←’ {{ target_body.name }} Relative Velocity Over Time"
 
         },
 

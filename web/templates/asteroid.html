@@ -1,0 +1,1093 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | Asteroid Tracking
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                ☄️
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Asteroid Tracking
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    {% include "_navigation.html" %}
+
+
+    <main class="main">
+
+
+        <section class="hero">
+
+            <h2>
+                Asteroid Tracking
+            </h2>
+
+            <p>
+                Current orbital tracking information
+                retrieved from the Minor Planet Center.
+            </p>
+
+        </section>
+
+
+        <!-- =====================================================
+             ASTEROID INFORMATION
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Asteroid Information
+                </h3>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Designation
+                    </label>
+
+                    <div>
+                        {{ asteroid.designation }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Name
+                    </label>
+
+                    <div>
+                        {% if asteroid.name %}
+                            {{ asteroid.name }}
+                        {% else %}
+                            Not available
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Permanent Designation
+                    </label>
+
+                    <div>
+                        {{ asteroid.permanent_designation }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Observation Time
+                    </label>
+
+                    <div>
+                        {{ asteroid.observation_time }}
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             EARTH DISTANCE
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Earth Distance
+                </h3>
+
+                <p>
+                    Current calculated distance between
+                    Earth and the asteroid.
+                </p>
+
+            </div>
+
+
+            <div class="status-card">
+
+                <div class="status-icon">
+                    🌍
+                </div>
+
+                <div>
+
+                    <h3>
+                        {{ '%.3f'|format(asteroid.distance_from_earth_km) }}
+                        km
+                    </h3>
+
+                    <p>
+                        Distance from Earth
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             RELATIVE VELOCITY
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Relative Velocity
+                </h3>
+
+                <p>
+                    Calculated velocity relative to Earth.
+                </p>
+
+            </div>
+
+
+            <div class="status-card">
+
+                <div class="status-icon">
+                    🚀
+                </div>
+
+                <div>
+
+                    <h3>
+                        {{ '%.6f'|format(asteroid.relative_velocity_km_s) }}
+                        km/s
+                    </h3>
+
+                    <p>
+                        Relative velocity
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             SCIENTIFIC DATA
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Scientific Data
+                </h3>
+
+                <p>
+                    Orbital state and scientific properties
+                    retrieved from the Minor Planet Center.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Canonical Object ID
+                    </label>
+
+                    <div id="scientificObjectId">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Source
+                    </label>
+
+                    <div id="scientificSource">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Provider
+                    </label>
+
+                    <div id="scientificProvider">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Reference Frame
+                    </label>
+
+                    <div id="scientificFrame">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position
+                    </label>
+
+                    <div id="scientificPosition">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity
+                    </label>
+
+                    <div id="scientificVelocity">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Orbital Period
+                    </label>
+
+                    <div id="scientificOrbitalPeriod">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Eccentricity
+                    </label>
+
+                    <div id="scientificEccentricity">
+                        Loading...
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Dataset
+                    </label>
+
+                    <div id="scientificDataset">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Observation Time
+                    </label>
+
+                    <div id="scientificObservationTime">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Epoch
+                    </label>
+
+                    <div id="scientificEpoch">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Epoch Time System
+                    </label>
+
+                    <div id="scientificEpochTimeSystem">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Perihelion Distance
+                    </label>
+
+                    <div id="scientificPerihelionDistance">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Semimajor Axis
+                    </label>
+
+                    <div id="scientificSemimajorAxis">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Inclination
+                    </label>
+
+                    <div id="scientificInclination">
+                        Loading...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             CLOSE APPROACHES
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Close Approaches
+                </h3>
+
+                <p>
+                    Earth close-approach events provided by
+                    NASA/JPL CNEOS.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Close Approach
+                    </label>
+
+                    <div id="closeApproachTime">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Distance from Earth
+                    </label>
+
+                    <div id="closeApproachDistance">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Minimum Distance
+                    </label>
+
+                    <div id="closeApproachMinDistance">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Maximum Distance
+                    </label>
+
+                    <div id="closeApproachMaxDistance">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Relative Velocity
+                    </label>
+
+                    <div id="closeApproachVelocity">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        JPL Orbit ID
+                    </label>
+
+                    <div id="closeApproachOrbitId">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Source
+                    </label>
+
+                    <div id="closeApproachSource">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Provider
+                    </label>
+
+                    <div id="closeApproachProvider">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Dataset
+                    </label>
+
+                    <div id="closeApproachDataset">
+                        Loading...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             NAVIGATION
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="actions">
+
+                <button
+                    type="button"
+                    class="btn-primary"
+                    onclick="window.location.href='/'"
+                >
+                    Back to AstroSphere
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="window.location.href='/galaxy'"
+                >
+                    ☀️ Solar System Overview
+                </button>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <footer>
+
+        <p>
+            AstroSphere · Asteroid Tracking
+        </p>
+
+    </footer>
+
+
+</div>
+
+
+<script>
+(function () {
+
+    const designation =
+        "{{ asteroid.permanent_designation }}";
+
+    const apiUrl =
+        "/api/v1/asteroids/" +
+        encodeURIComponent(designation) +
+        "/scientific-data";
+
+    function setValue(
+        elementId,
+        value
+    ) {
+
+        const element =
+            document.getElementById(elementId);
+
+        if (!element) {
+            return;
+        }
+
+        element.textContent =
+            value ?? "Unavailable";
+    }
+
+    function formatNumber(
+        value,
+        decimals
+    ) {
+
+        if (
+            typeof value !== "number" ||
+            !Number.isFinite(value)
+        ) {
+            return "Unavailable";
+        }
+
+        return value.toFixed(decimals);
+    }
+
+    function loadScientificData() {
+
+        fetch(apiUrl)
+            .then(function (response) {
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Scientific data request failed."
+                    );
+                }
+
+                return response.json();
+
+            })
+            .then(function (payload) {
+
+                if (
+                    payload.status !== "success" ||
+                    !payload.data
+                ) {
+                    throw new Error(
+                        "Invalid scientific data response."
+                    );
+                }
+
+                const data =
+                    payload.data;
+
+                const position =
+                    data.position || {};
+
+                const velocity =
+                    data.velocity || {};
+
+                const orbital =
+                    data.orbital_properties || {};
+
+                const provenance =
+                    data.provenance || {};
+
+                const sources =
+                    provenance.sources || [];
+
+                const source =
+                    sources.length > 0
+                        ? sources[0]
+                        : null;
+
+                setValue(
+                    "scientificObjectId",
+                    data.object_id
+                );
+
+                setValue(
+                    "scientificSource",
+                    source
+                        ? source.name
+                        : null
+                );
+
+                setValue(
+                    "scientificProvider",
+                    source
+                        ? source.provider
+                        : null
+                );
+
+                setValue(
+                    "scientificFrame",
+                    position.frame
+                );
+
+                setValue(
+                    "scientificPosition",
+                    [
+                        "X " +
+                        formatNumber(
+                            position.x,
+                            6
+                        ),
+                        "Y " +
+                        formatNumber(
+                            position.y,
+                            6
+                        ),
+                        "Z " +
+                        formatNumber(
+                            position.z,
+                            6
+                        ),
+                        position.unit
+                            ? "(" +
+                              position.unit +
+                              ")"
+                            : ""
+                    ].join(" ")
+                );
+
+                setValue(
+                    "scientificVelocity",
+                    [
+                        "X " +
+                        formatNumber(
+                            velocity.x,
+                            8
+                        ),
+                        "Y " +
+                        formatNumber(
+                            velocity.y,
+                            8
+                        ),
+                        "Z " +
+                        formatNumber(
+                            velocity.z,
+                            8
+                        ),
+                        velocity.unit
+                            ? "(" +
+                              velocity.unit +
+                              ")"
+                            : ""
+                    ].join(" ")
+                );
+
+                setValue(
+                    "scientificOrbitalPeriod",
+                    orbital.orbital_period_days != null
+                        ? formatNumber(
+                            orbital.orbital_period_days,
+                            3
+                        ) +
+                        " days"
+                        : null
+                );
+
+                setValue(
+                    "scientificEccentricity",
+                    orbital.eccentricity != null
+                        ? formatNumber(
+                            orbital.eccentricity,
+                            6
+                        )
+                        : null
+                );
+
+                setValue(
+                    "scientificDataset",
+                    source
+                        ? source.dataset
+                        : null
+                );
+
+                setValue(
+                    "scientificObservationTime",
+                    data.observation
+                        ? data.observation.observation_time
+                        : null
+                );
+
+                setValue(
+                    "scientificEpoch",
+                    orbital.epoch_mjd != null
+                        ? formatNumber(
+                            orbital.epoch_mjd,
+                            3
+                        ) + " MJD"
+                        : null
+                );
+
+                setValue(
+                    "scientificEpochTimeSystem",
+                    orbital.epoch_timesystem
+                );
+
+                setValue(
+                    "scientificPerihelionDistance",
+                    orbital.perihelion_distance_au != null
+                        ? formatNumber(
+                            orbital.perihelion_distance_au,
+                            6
+                        ) + " AU"
+                        : null
+                );
+
+                setValue(
+                    "scientificSemimajorAxis",
+                    orbital.semimajor_axis_au != null
+                        ? formatNumber(
+                            orbital.semimajor_axis_au,
+                            6
+                        ) + " AU"
+                        : null
+                );
+
+                setValue(
+                    "scientificInclination",
+                    orbital.inclination_degrees != null
+                        ? formatNumber(
+                            orbital.inclination_degrees,
+                            6
+                        ) + String.fromCharCode(176)
+                        : null
+                );
+
+            })
+            .catch(function (error) {
+
+                console.error(
+                    "AstroSphere: failed to load asteroid scientific data.",
+                    error
+                );
+
+                [
+                    "scientificObjectId",
+                    "scientificSource",
+                    "scientificProvider",
+                    "scientificFrame",
+                    "scientificPosition",
+                    "scientificVelocity",
+                    "scientificOrbitalPeriod",
+                    "scientificEccentricity"
+                ].forEach(function (elementId) {
+
+                    setValue(
+                        elementId,
+                        "Unavailable"
+                    );
+
+                });
+
+            });
+    }
+
+
+
+
+    function loadCloseApproachData() {
+
+        const apiUrl =
+            "/api/v1/asteroids/" +
+            encodeURIComponent(designation) +
+            "/close-approaches" +
+            "?date-min=2029-01-01" +
+            "&date-max=2030-01-01";
+
+        fetch(apiUrl)
+            .then(function (response) {
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Close-approach data request failed."
+                    );
+                }
+
+                return response.json();
+
+            })
+            .then(function (payload) {
+
+                if (
+                    payload.status !== "success" ||
+                    !Array.isArray(payload.data)
+                ) {
+                    throw new Error(
+                        "Invalid close-approach response."
+                    );
+                }
+
+                if (payload.data.length === 0) {
+
+                    [
+                        "closeApproachTime",
+                        "closeApproachDistance",
+                        "closeApproachMinDistance",
+                        "closeApproachMaxDistance",
+                        "closeApproachVelocity",
+                        "closeApproachOrbitId",
+                        "closeApproachSource",
+                        "closeApproachProvider",
+                        "closeApproachDataset"
+                    ].forEach(function (elementId) {
+
+                        setValue(
+                            elementId,
+                            "No close approach found."
+                        );
+
+                    });
+
+                    return;
+                }
+
+                const approach =
+                    payload.data[0];
+
+                const source =
+                    approach.source || {};
+
+                setValue(
+                    "closeApproachTime",
+                    approach.close_approach_time
+                );
+
+                setValue(
+                    "closeApproachDistance",
+                    approach.distance_km != null
+                        ? formatNumber(
+                            approach.distance_km,
+                            2
+                        ) + " km"
+                        : null
+                );
+
+                setValue(
+                    "closeApproachMinDistance",
+                    approach.distance_min_km != null
+                        ? formatNumber(
+                            approach.distance_min_km,
+                            2
+                        ) + " km"
+                        : null
+                );
+
+                setValue(
+                    "closeApproachMaxDistance",
+                    approach.distance_max_km != null
+                        ? formatNumber(
+                            approach.distance_max_km,
+                            2
+                        ) + " km"
+                        : null
+                );
+
+                setValue(
+                    "closeApproachVelocity",
+                    approach.relative_velocity_km_s != null
+                        ? formatNumber(
+                            approach.relative_velocity_km_s,
+                            6
+                        ) + " km/s"
+                        : null
+                );
+
+                setValue(
+                    "closeApproachOrbitId",
+                    approach.orbit_id
+                );
+
+                setValue(
+                    "closeApproachSource",
+                    source.name
+                );
+
+                setValue(
+                    "closeApproachProvider",
+                    source.provider
+                );
+
+                setValue(
+                    "closeApproachDataset",
+                    source.dataset
+                );
+
+            })
+            .catch(function (error) {
+
+                console.error(
+                    "AstroSphere: failed to load close-approach data.",
+                    error
+                );
+
+                [
+                    "closeApproachTime",
+                    "closeApproachDistance",
+                    "closeApproachMinDistance",
+                    "closeApproachMaxDistance",
+                    "closeApproachVelocity",
+                    "closeApproachOrbitId",
+                    "closeApproachSource",
+                    "closeApproachProvider",
+                    "closeApproachDataset"
+                ].forEach(function (elementId) {
+
+                    setValue(
+                        elementId,
+                        "Unavailable"
+                    );
+
+                });
+
+            });
+    }
+
+    loadScientificData();
+    loadCloseApproachData();
+
+})();
+</script>
+
+</body>
+
+</html>

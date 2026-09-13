@@ -1,8 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <meta charset="UTF-8">
 
     <meta
@@ -52,6 +54,8 @@
     </header>
 
 
+    {% include "_navigation.html" %}
+
     <main class="main">
 
 
@@ -69,8 +73,11 @@
         </section>
 
 
-        <section class="analysis-card">
+        <!-- =====================================================
+             ORBITAL ANALYSIS
+             ===================================================== -->
 
+        <section class="analysis-card">
 
             <div class="card-header">
 
@@ -90,7 +97,6 @@
                 action="{{ url_for('analyze') }}"
                 method="POST"
             >
-
 
                 <div class="form-grid">
 
@@ -252,20 +258,16 @@
                         type="submit"
                         class="btn-primary"
                     >
-
                         🚀 Run Analysis
-
                     </button>
 
 
-                    <button
+                                        <button
                         type="button"
                         class="btn-secondary"
-                        onclick="window.location.href='/overview'"
+                        onclick="window.location.href='/galaxy'"
                     >
-
-                        ☀ Solar System Overview
-
+                        Enter Universe Explorer
                     </button>
 
                 </div>
@@ -273,9 +275,12 @@
 
             </form>
 
-
         </section>
 
+
+        <!-- =====================================================
+             STATUS
+             ===================================================== -->
 
         <section class="status-card">
 
@@ -295,6 +300,132 @@
                 </p>
 
             </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             SPACECRAFT TRACKING
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Spacecraft Tracking
+                </h3>
+
+                <p>
+                    Track a spacecraft using its
+                    NORAD catalog identification number.
+                </p>
+
+            </div>
+
+
+            <form
+                action="{{ url_for('spacecraft_tracking_page') }}"
+                method="GET"
+            >
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="norad_id">
+                            NORAD ID
+                        </label>
+
+                        <input
+                            type="text"
+                            id="norad_id"
+                            name="norad_id"
+                            placeholder="e.g. 25544"
+                            inputmode="numeric"
+                            pattern="[0-9]+"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="actions">
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                    >
+                        🚀 Track Spacecraft
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- =====================================================
+             ASTEROID TRACKING
+             ===================================================== -->
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Asteroid Tracking
+                </h3>
+
+                <p>
+                    Track an asteroid using its
+                    Minor Planet Center designation.
+                </p>
+
+            </div>
+
+
+            <form
+                action="{{ url_for('asteroid_tracking_page') }}"
+                method="GET"
+            >
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="designation">
+                            Asteroid Designation
+                        </label>
+
+                        <input
+                            type="text"
+                            id="designation"
+                            name="designation"
+                            placeholder="e.g. 99942"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="actions">
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                    >
+                        ☄️ Track Asteroid
+                    </button>
+
+                </div>
+
+            </form>
 
         </section>
 

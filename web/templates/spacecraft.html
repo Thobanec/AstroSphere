@@ -1,0 +1,552 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | Spacecraft Tracking
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                [ISS]
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Spacecraft Tracking
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    {% include "_navigation.html" %}
+
+
+    <main class="main">
+
+
+        <section class="hero">
+
+            <h2>
+                Spacecraft Tracking
+            </h2>
+
+            <p>
+                Current position and velocity derived
+                from the spacecraft's orbital data.
+            </p>
+
+        </section>
+
+
+        <section class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    {{ spacecraft.name }}
+                </h3>
+
+                <p>
+                    Observation time:
+                    {{ spacecraft.observation_time }}
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position X
+                    </label>
+
+                    <input
+                        type="text"
+                        value="{{ '%.3f'|format(spacecraft.position_km.x) }} km"
+                        readonly
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position Y
+                    </label>
+
+                    <input
+                        type="text"
+                        value="{{ '%.3f'|format(spacecraft.position_km.y) }} km"
+                        readonly
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position Z
+                    </label>
+
+                    <input
+                        type="text"
+                        value="{{ '%.3f'|format(spacecraft.position_km.z) }} km"
+                        readonly
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity X
+                    </label>
+
+                    <input
+                        type="text"
+                        value="{{ '%.6f'|format(spacecraft.velocity_km_s.x) }} km/s"
+                        readonly
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity Y
+                    </label>
+
+                    <input
+                        type="text"
+                        value="{{ '%.6f'|format(spacecraft.velocity_km_s.y) }} km/s"
+                        readonly
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity Z
+                    </label>
+
+                    <input
+                        type="text"
+                        value="{{ '%.6f'|format(spacecraft.velocity_km_s.z) }} km/s"
+                        readonly
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <div class="actions">
+
+                <button
+                    type="button"
+                    class="btn-primary"
+                    onclick="window.location.href='/'"
+                >
+
+                    Back to AstroSphere
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="window.location.href='/galaxy'"
+                >
+
+                    ☀️ Solar System Overview
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="status-card">
+
+            <div class="status-icon">
+                [ISS]
+            </div>
+
+            <div>
+
+                <h3>
+                    Live orbital data
+                </h3>
+
+                <p>
+                    The spacecraft position and velocity
+                    were calculated from its current TLE data.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <section class="analysis-card">
+            <div class="card-header">
+                <h3>Scientific Data</h3>
+                <p>
+                    Standardized spacecraft tracking data
+                    with source and provenance information.
+                </p>
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Canonical Object ID</label>
+                    <input
+                        id="scientificObjectId"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Data Source</label>
+                    <input
+                        id="scientificSource"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Data Provider</label>
+                    <input
+                        id="scientificProvider"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Dataset</label>
+                    <input
+                        id="scientificDataset"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Upstream Source</label>
+                    <input
+                        id="scientificUpstreamSource"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Reference Frame</label>
+                    <input
+                        id="scientificFrame"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Observation Time</label>
+                    <input
+                        id="scientificObservationTime"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Position</label>
+                    <input
+                        id="scientificPosition"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Velocity</label>
+                    <input
+                        id="scientificVelocity"
+                        type="text"
+                        value="Loading..."
+                        readonly
+                    >
+                </div>
+
+            </div>
+        </section>
+
+
+    </main>
+
+
+    <footer>
+
+        <p>
+            AstroSphere · Spacecraft Tracking
+        </p>
+
+    </footer>
+
+
+</div>
+
+<script>
+(function () {
+    const noradId =
+        "{{ norad_id }}";
+
+    const apiUrl =
+        "/api/v1/spacecraft/" +
+        encodeURIComponent(noradId) +
+        "/scientific-data";
+
+    function setValue(elementId, value) {
+        const element =
+            document.getElementById(elementId);
+
+        if (!element) {
+            return;
+        }
+
+        element.value = value;
+    }
+
+    function formatNumber(value, decimals) {
+        if (
+            typeof value !== "number" ||
+            !Number.isFinite(value)
+        ) {
+            return "Unavailable";
+        }
+
+        return value.toFixed(decimals);
+    }
+
+    function loadScientificData() {
+        fetch(apiUrl)
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error(
+                        "Scientific data request failed."
+                    );
+                }
+
+                return response.json();
+            })
+            .then(function (payload) {
+                if (
+                    payload.status !== "success" ||
+                    !payload.data
+                ) {
+                    throw new Error(
+                        "Invalid scientific data response."
+                    );
+                }
+
+                const data = payload.data;
+                const position =
+                    data.position || {};
+                const velocity =
+                    data.velocity || {};
+                const provenance =
+                    data.provenance || {};
+                const sources =
+                    provenance.sources || [];
+
+                const source =
+                    sources.length > 0
+                        ? sources[0]
+                        : null;
+
+                setValue(
+                    "scientificObjectId",
+                    data.object_id
+                );
+
+                setValue(
+                    "scientificSource",
+                    source
+                        ? source.name
+                        : null
+                );
+
+                setValue(
+                    "scientificProvider",
+                    source
+                        ? source.provider
+                        : null
+                );
+
+                setValue(
+                    "scientificDataset",
+                    source
+                        ? source.dataset
+                        : null
+                );
+
+                setValue(
+                    "scientificUpstreamSource",
+                    source
+                        ? source.upstream_source
+                        : null
+                );
+
+                setValue(
+                    "scientificFrame",
+                    position.frame
+                );
+
+                setValue(
+                    "scientificObservationTime",
+                    data.observation
+                        ? data.observation.observation_time
+                        : null
+                );
+
+                setValue(
+                    "scientificPosition",
+                    [
+                        "X " +
+                            formatNumber(
+                                position.x,
+                                3
+                            ),
+                        "Y " +
+                            formatNumber(
+                                position.y,
+                                3
+                            ),
+                        "Z " +
+                            formatNumber(
+                                position.z,
+                                3
+                            ),
+                        position.unit
+                            ? "(" +
+                              position.unit +
+                              ")"
+                            : ""
+                    ].join(" ")
+                );
+
+                setValue(
+                    "scientificVelocity",
+                    [
+                        "X " +
+                            formatNumber(
+                                velocity.x,
+                                6
+                            ),
+                        "Y " +
+                            formatNumber(
+                                velocity.y,
+                                6
+                            ),
+                        "Z " +
+                            formatNumber(
+                                velocity.z,
+                                6
+                            ),
+                        velocity.unit
+                            ? "(" +
+                              velocity.unit +
+                              ")"
+                            : ""
+                    ].join(" ")
+                );
+            })
+            .catch(function (error) {
+                console.error(
+                    "AstroSphere: failed to load spacecraft scientific data.",
+                    error
+                );
+
+                [
+                    "scientificObjectId",
+                    "scientificSource",
+                    "scientificProvider",
+                    "scientificDataset",
+                    "scientificFrame",
+                    "scientificObservationTime",
+                    "scientificPosition",
+                    "scientificVelocity"
+                ].forEach(function (elementId) {
+                    setValue(
+                        elementId,
+                        "Unavailable"
+                    );
+                });
+            });
+    }
+
+    loadScientificData();
+})();
+</script>
+
+
+</body>
+
+</html>

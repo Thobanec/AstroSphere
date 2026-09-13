@@ -1,50 +1,334 @@
-from astrosphere.analysis_config import AnalysisConfig
+from datetime import datetime, timezone
+
+from flask import Flask, render_template, request
 
 from astrosphere.astronomy.orbital_analysis import (
     analyze_body_distance,
 )
 
-from astrosphere.cli import (
-    select_analysis_date,
-    select_analysis_interval,
-    select_analysis_period,
-    select_planet,
-    select_reference_body,
-    show_main_menu,
+from astrosphere.astronomy.calculations import (
+    calculate_distance_km,
+    calculate_relative_velocity_km_s,
+    get_current_time,
+    load_solar_system,
 )
 
-from astrosphere.overview import generate_solar_system_overview
-from astrosphere.overview_report import print_solar_system_overview
+from astrosphere.astronomy.planets import (
+    PLANET_LOOKUP,
+)
 
-from astrosphere.reporting import print_orbital_report
-from astrosphere.visualization import plot_distance
+from astrosphere.analysis_config import (
+    AnalysisConfig,
+)
+
+from astrosphere.overview import (
+    generate_solar_system_overview,
+)
+
+from astrosphere.config import (
+    AppConfig,
+)
+
+from web.api import (
+    api,
+)
 
 
-def analyze_selected_planet():
-    planet = select_planet()
+app = Flask(__name__)
 
-    if planet is None:
-        return
+app.register_blueprint(api)
 
-    reference_body = select_reference_body(planet)
 
-    if reference_body is None:
-        return
+@app.route("/")
+def index():
 
-    analysis_date = select_analysis_date()
+    return render_template(
+        "index.html",
+        planets=PLANET_LOOKUP,
+    )
 
-    if analysis_date is None:
-        return
 
-    months = select_analysis_period()
+@app.route("/overview")
+def overview():
 
-    if months is None:
-        return
+    now, results = (
+        generate_solar_system_overview()
+    )
 
-    interval_days = select_analysis_interval()
+    return render_template(
+        "overview.html",
+        now=now,
+        results=results,
+    )
 
-    if interval_days is None:
-        return
+
+@app.route("/spacecraft")
+def spacecraft_tracking_page():
+
+    norad_id = request.args.get(
+        "norad_id",
+        "",
+    ).strip()
+
+    if not norad_id.isdigit():
+
+        return render_template(
+            "error.html",
+            message="NORAD ID must be numeric.",
+        )
+
+    try:
+
+        from astrosphere.astronomy.spacecraft import (
+            track_spacecraft_by_norad,
+        )
+
+        result = track_spacecraft_by_norad(
+            norad_id
+        )
+
+    except Exception as error:
+
+        return render_template(
+            "error.html",
+            message=str(error),
+        )
+
+    return render_template(
+        "spacecraft.html",
+        spacecraft=result,
+    )
+
+
+@app.route("/asteroid")
+def asteroid_tracking_page():
+
+    designation = request.args.get(
+        "designation",
+        "",
+    ).strip()
+
+    if not designation:
+
+        return render_template(
+            "error.html",
+            message="Asteroid designation is required.",
+        )
+
+    try:
+
+        from astrosphere.astronomy.asteroids import (
+            track_asteroid,
+        )
+
+        result = track_asteroid(
+            designation
+        )
+
+    except Exception as error:
+
+        return render_template(
+            "error.html",
+            message=str(error),
+        )
+
+    return render_template(
+        "asteroid.html",
+        asteroid=result,
+    )
+
+
+@app.route("/planet/<planet_name>")
+def planet_detail(planet_name):
+
+    planet_name = (
+        planet_name
+        .strip()
+        .lower()
+    )
+
+    if planet_name not in PLANET_LOOKUP:
+
+        return render_template(
+            "error.html",
+            message="Invalid planetary body.",
+        )
+
+    planet = PLANET_LOOKUP[
+        planet_name
+    ]
+
+    solar_system = load_solar_system()
+
+    now = get_current_time()
+
+    sun = solar_system["sun"]
+
+    earth = solar_system["earth"]
+
+    body = solar_system[
+        planet.skyfield_name
+    ]
+
+    sun_position = sun.at(now)
+
+    earth_position = earth.at(now)
+
+    body_position = body.at(now)
+
+    distance_from_sun = calculate_distance_km(
+        body_position,
+        sun_position,
+    )
+
+    distance_from_earth = calculate_distance_km(
+        body_position,
+        earth_position,
+    )
+
+    velocity_relative_to_earth = (
+        calculate_relative_velocity_km_s(
+            earth_position,
+            body_position,
+        )
+    )
+
+    return render_template(
+        "planet.html",
+
+        planet=planet,
+
+        now=now,
+
+        distance_from_sun=distance_from_sun,
+
+        distance_from_earth=distance_from_earth,
+
+        velocity_relative_to_earth=(
+            velocity_relative_to_earth
+        ),
+    )
+
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
+
+    reference_name = request.form.get(
+        "reference",
+        "",
+    ).strip().lower()
+
+    target_name = request.form.get(
+        "target",
+        "",
+    ).strip().lower()
+
+    start_date_text = request.form.get(
+        "start_date",
+        "",
+    ).strip()
+
+    months_text = request.form.get(
+        "period",
+        "",
+    ).strip()
+
+    interval_text = request.form.get(
+        "interval",
+        "",
+    ).strip()
+
+    # ---------------------------------------------------------
+    # VALIDATE REFERENCE BODY
+    # ---------------------------------------------------------
+
+    if reference_name not in PLANET_LOOKUP:
+
+        return render_template(
+            "error.html",
+            message="Invalid reference body.",
+        )
+
+    # ---------------------------------------------------------
+    # VALIDATE TARGET BODY
+    # ---------------------------------------------------------
+
+    if target_name not in PLANET_LOOKUP:
+
+        return render_template(
+            "error.html",
+            message="Invalid target body.",
+        )
+
+    # ---------------------------------------------------------
+    # VALIDATE REFERENCE / TARGET
+    # ---------------------------------------------------------
+
+    if reference_name == target_name:
+
+        return render_template(
+            "error.html",
+            message=(
+                "Reference body and target body "
+                "cannot be the same."
+            ),
+        )
+
+    # ---------------------------------------------------------
+    # PARSE START DATE
+    # ---------------------------------------------------------
+
+    try:
+
+        analysis_date = datetime.strptime(
+            start_date_text,
+            "%Y-%m-%d",
+        ).replace(
+            tzinfo=timezone.utc
+        )
+
+    except ValueError:
+
+        return render_template(
+            "error.html",
+            message=(
+                "Invalid date. "
+                "Please provide a valid date."
+            ),
+        )
+
+    # ---------------------------------------------------------
+    # PARSE ANALYSIS PARAMETERS
+    # ---------------------------------------------------------
+
+    try:
+
+        months = int(months_text)
+
+        interval_days = int(interval_text)
+
+    except ValueError:
+
+        return render_template(
+            "error.html",
+            message="Invalid analysis parameters.",
+        )
+
+    # ---------------------------------------------------------
+    # GET PLANETARY OBJECTS
+    # ---------------------------------------------------------
+
+    reference_body = PLANET_LOOKUP[
+        reference_name
+    ]
+
+    target_body = PLANET_LOOKUP[
+        target_name
+    ]
+
+    # ---------------------------------------------------------
+    # CREATE ANALYSIS CONFIGURATION
+    # ---------------------------------------------------------
 
     config = AnalysisConfig(
         start_date=analysis_date,
@@ -53,93 +337,246 @@ def analyze_selected_planet():
         reference_body=reference_body,
     )
 
-    print()
-    print(
-        f"Analyzing "
-        f"{config.reference_body.name} "
-        f"-> {planet.name}..."
+    # ---------------------------------------------------------
+    # RUN ORBITAL ANALYSIS
+    # ---------------------------------------------------------
+
+    try:
+
+        results = analyze_body_distance(
+            reference_body_name=(
+                config.reference_body.skyfield_name
+            ),
+            target_body_name=(
+                target_body.skyfield_name
+            ),
+            start_date=config.start_date,
+            months=config.months,
+            interval_days=config.interval_days,
+        )
+
+    except ValueError as error:
+
+        return render_template(
+            "error.html",
+            message=str(error),
+        )
+
+    # ---------------------------------------------------------
+    # CHECK RESULTS
+    # ---------------------------------------------------------
+
+    if not results:
+
+        return render_template(
+            "error.html",
+            message="No orbital data was returned.",
+        )
+
+    # ---------------------------------------------------------
+    # CLOSEST / FARTHEST
+    # ---------------------------------------------------------
+
+    closest = min(
+        results,
+        key=lambda result: result["distance_km"],
     )
 
-    print(
-        f"Analysis period: "
-        f"{config.months} months"
+    farthest = max(
+        results,
+        key=lambda result: result["distance_km"],
     )
 
-    print(
-        f"Interval: every "
-        f"{config.interval_days} day(s)"
+    # ---------------------------------------------------------
+    # BASIC DISTANCE STATISTICS
+    # ---------------------------------------------------------
+
+    initial_km = results[0]["distance_km"]
+
+    final_km = results[-1]["distance_km"]
+
+    minimum_km = closest["distance_km"]
+
+    maximum_km = farthest["distance_km"]
+
+    variation_km = (
+        maximum_km - minimum_km
     )
 
-    print("Please wait...")
+    average_km = sum(
+        result["distance_km"]
+        for result in results
+    ) / len(results)
 
-    results = analyze_body_distance(
-        reference_body_name=(
-            config.reference_body.skyfield_name
+    # ---------------------------------------------------------
+    # DISTANCE CHANGE
+    # ---------------------------------------------------------
+
+    distance_change_km = (
+        final_km - initial_km
+    )
+
+    # ---------------------------------------------------------
+    # PERCENTAGE CHANGE
+    # ---------------------------------------------------------
+
+    if initial_km != 0:
+
+        percentage_change = (
+            distance_change_km
+            / initial_km
+        ) * 100
+
+    else:
+
+        percentage_change = 0.0
+
+    # ---------------------------------------------------------
+    # DETERMINE TREND
+    # ---------------------------------------------------------
+
+    if distance_change_km < 0:
+
+        trend = "Getting closer"
+
+    elif distance_change_km > 0:
+
+        trend = "Getting farther apart"
+
+    else:
+
+        trend = "No overall change"
+
+    # ---------------------------------------------------------
+    # RELATIVE VELOCITY STATISTICS
+    # ---------------------------------------------------------
+
+    initial_velocity_km_s = (
+        results[0]["relative_velocity_km_s"]
+    )
+
+    final_velocity_km_s = (
+        results[-1]["relative_velocity_km_s"]
+    )
+
+    minimum_velocity_km_s = min(
+        result["relative_velocity_km_s"]
+        for result in results
+    )
+
+    maximum_velocity_km_s = max(
+        result["relative_velocity_km_s"]
+        for result in results
+    )
+
+    average_velocity_km_s = sum(
+        result["relative_velocity_km_s"]
+        for result in results
+    ) / len(results)
+
+    velocity_change_km_s = (
+        final_velocity_km_s
+        - initial_velocity_km_s
+    )
+
+    if initial_velocity_km_s != 0:
+
+        velocity_percentage_change = (
+            velocity_change_km_s
+            / initial_velocity_km_s
+        ) * 100
+
+    else:
+
+        velocity_percentage_change = 0.0
+
+    if velocity_change_km_s < 0:
+
+        velocity_trend = "Slowing down"
+
+    elif velocity_change_km_s > 0:
+
+        velocity_trend = "Speeding up"
+
+    else:
+
+        velocity_trend = "No overall change"
+
+    # ---------------------------------------------------------
+    # PREPARE CHART DATA
+    # ---------------------------------------------------------
+
+    chart_dates = [
+        result["date"].strftime("%Y-%m-%d")
+        for result in results
+    ]
+
+    chart_distances = [
+        result["distance_km"] / 1_000_000
+        for result in results
+    ]
+
+    chart_velocities = [
+        result["relative_velocity_km_s"]
+        for result in results
+    ]
+
+    # ---------------------------------------------------------
+    # RENDER RESULTS PAGE
+    # ---------------------------------------------------------
+
+    return render_template(
+        "results.html",
+
+        reference_body=reference_body,
+        target_body=target_body,
+
+        config=config,
+
+        results=results,
+
+        closest=closest,
+        farthest=farthest,
+
+        initial_km=initial_km,
+        final_km=final_km,
+
+        minimum_km=minimum_km,
+        maximum_km=maximum_km,
+
+        variation_km=variation_km,
+        average_km=average_km,
+
+        distance_change_km=distance_change_km,
+        percentage_change=percentage_change,
+
+        trend=trend,
+
+        initial_velocity_km_s=initial_velocity_km_s,
+        final_velocity_km_s=final_velocity_km_s,
+
+        minimum_velocity_km_s=minimum_velocity_km_s,
+        maximum_velocity_km_s=maximum_velocity_km_s,
+
+        average_velocity_km_s=average_velocity_km_s,
+
+        velocity_change_km_s=velocity_change_km_s,
+        velocity_percentage_change=(
+            velocity_percentage_change
         ),
-        target_body_name=planet.skyfield_name,
-        start_date=config.start_date,
-        months=config.months,
-        interval_days=config.interval_days,
+
+        velocity_trend=velocity_trend,
+
+        chart_dates=chart_dates,
+        chart_distances=chart_distances,
+        chart_velocities=chart_velocities,
     )
-
-    print_orbital_report(
-        results,
-        planet.name,
-        reference_body=config.reference_body.name,
-        interval_days=config.interval_days,
-    )
-
-    print()
-    print("Generating visualization...")
-
-    plot_distance(
-        results,
-        planet.name,
-        reference_body=config.reference_body.name,
-    )
-
-
-def main():
-    while True:
-        show_main_menu()
-
-        selection = input(
-            "Select an option: "
-        ).strip()
-
-        if selection == "1":
-            analyze_selected_planet()
-
-        elif selection == "2":
-            now, results = (
-                generate_solar_system_overview()
-            )
-
-            print_solar_system_overview(
-                now,
-                results,
-            )
-
-            input(
-                "Press Enter to return "
-                "to the main menu..."
-            )
-
-        elif selection == "3":
-            print()
-            print(
-                "Thank you for using AstroSphere."
-            )
-            print()
-            break
-
-        else:
-            print()
-            print(
-                "Invalid selection. "
-                "Please try again."
-            )
 
 
 if __name__ == "__main__":
-    main()
+
+    app.run(
+        debug=AppConfig.DEBUG,
+        host=AppConfig.HOST,
+        port=AppConfig.PORT,
+    )

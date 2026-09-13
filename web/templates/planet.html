@@ -3,6 +3,7 @@
 
 <head>
 
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <meta charset="UTF-8">
 
     <meta
@@ -55,6 +56,8 @@
 
     </header>
 
+    {% include "_navigation.html" %}
+
 
     <!-- =====================================================
          MAIN
@@ -82,10 +85,44 @@
 
 
         <!-- =================================================
+             PLANET PAGE TABS
+             ================================================= -->
+
+        <nav class="planet-tabs" aria-label="Planet information">
+
+            <button
+                type="button"
+                class="planet-tab active"
+                data-tab="overview"
+            >
+                Overview
+            </button>
+
+            <button
+                type="button"
+                class="planet-tab"
+                data-tab="scientific"
+            >
+                Scientific Data
+            </button>
+
+            {% if earth_context %}
+            <button
+                type="button"
+                class="planet-tab"
+                data-tab="earth-context"
+            >
+                Earth Context
+            </button>
+            {% endif %}
+
+        </nav>
+
+        <!-- =================================================
              CALCULATION INFORMATION
              ================================================= -->
 
-        <section class="analysis-card">
+        <section id="planetOverviewCalculation" class="analysis-card">
 
             <div class="card-header">
 
@@ -138,10 +175,919 @@
 
 
         <!-- =================================================
-             CURRENT DISTANCES
+             SCIENTIFIC DATA
              ================================================= -->
 
-        <section class="analysis-card">
+        <section id="planetScientificData" class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Scientific Data
+                </h3>
+
+                <p>
+                    Scientific position and velocity data
+                    from the DE440S ephemeris.
+                </p>
+
+            </div>
+
+
+            {% if scientific_data and scientific_data.observation %}
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Observation Time
+                    </label>
+
+                    <div>
+                        {{ scientific_data.observation.observation_time }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Ephemeris Data Source
+                    </label>
+
+                    <div>
+                        {% if scientific_data.observation.source %}
+                            {{ scientific_data.observation.source.name }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Ephemeris Provider
+                    </label>
+
+                    <div>
+                        {% if scientific_data.observation.source %}
+                            {{ scientific_data.observation.source.provider or "Unavailable" }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                {% if scientific_data.position %}
+
+                <div class="form-group">
+
+                    <label>
+                        Reference Frame
+                    </label>
+
+                    <div>
+                        {{ scientific_data.position.frame }}
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if scientific_data.position %}
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Position X
+                    </label>
+
+                    <div>
+                        {{ "%.9f"|format(scientific_data.position.x) }}
+                        {{ scientific_data.position.unit }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position Y
+                    </label>
+
+                    <div>
+                        {{ "%.9f"|format(scientific_data.position.y) }}
+                        {{ scientific_data.position.unit }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position Z
+                    </label>
+
+                    <div>
+                        {{ "%.9f"|format(scientific_data.position.z) }}
+                        {{ scientific_data.position.unit }}
+                    </div>
+
+                </div>
+
+                {% if scientific_data.velocity %}
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity X
+                    </label>
+
+                    <div>
+                        {{ "%.9f"|format(scientific_data.velocity.x) }}
+                        {{ scientific_data.velocity.unit }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity Y
+                    </label>
+
+                    <div>
+                        {{ "%.9f"|format(scientific_data.velocity.y) }}
+                        {{ scientific_data.velocity.unit }}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity Z
+                    </label>
+
+                    <div>
+                        {{ "%.9f"|format(scientific_data.velocity.z) }}
+                        {{ scientific_data.velocity.unit }}
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            {% else %}
+
+            <div class="form-group">
+                <label>
+                    Position
+                </label>
+                <div>
+                    Unavailable
+                </div>
+            </div>
+
+            {% endif %}
+
+            {% else %}
+
+            <div class="form-group">
+                <label>
+                    Scientific Data
+                </label>
+                <div>
+                    Unavailable
+                </div>
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- =================================================
+        <!-- =================================================
+             PLANETARY SCIENTIFIC PROPERTIES
+             ================================================= -->
+
+        {% if scientific_data and (scientific_data.physical_properties or scientific_data.orbital_properties) %}
+
+        <section id="planetScientificProperties" class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Planetary Scientific Properties
+                </h3>
+
+                <p>
+                    Physical and orbital parameters from
+                    NASA/JPL Solar System Dynamics.
+                </p>
+
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Properties Data Source
+                    </label>
+
+                    <div>
+                        {% if scientific_data.physical_properties_source %}
+                            {{ scientific_data.physical_properties_source.name }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Properties Provider
+                    </label>
+
+                    <div>
+                        {% if scientific_data.physical_properties_source %}
+                            {{ scientific_data.physical_properties_source.provider or "Unavailable" }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% if scientific_data.physical_properties %}
+
+            <div class="card-header">
+
+                <h3>
+                    Physical Properties
+                </h3>
+
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Equatorial Radius
+                    </label>
+
+                    <div>
+                        {{ "%.2f"|format(
+                            scientific_data.physical_properties.equatorial_radius_km
+                        ) }}
+                        km
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Mean Radius
+                    </label>
+
+                    <div>
+                        {{ "%.2f"|format(
+                            scientific_data.physical_properties.mean_radius_km
+                        ) }}
+                        km
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Mass
+                    </label>
+
+                    <div>
+                        {{ "%.6e"|format(
+                            scientific_data.physical_properties.mass_kg
+                        ) }}
+                        kg
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Bulk Density
+                    </label>
+
+                    <div>
+                        {{ "%.4f"|format(
+                            scientific_data.physical_properties.bulk_density_g_cm3
+                        ) }}
+                        g/cm3
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Equatorial Gravity
+                    </label>
+
+                    <div>
+                        {{ "%.2f"|format(
+                            scientific_data.physical_properties.equatorial_gravity_m_s2
+                        ) }}
+                        m/s2
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Escape Velocity
+                    </label>
+
+                    <div>
+                        {{ "%.2f"|format(
+                            scientific_data.physical_properties.escape_velocity_km_s
+                        ) }}
+                        km/s
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Geometric Albedo
+                    </label>
+
+                    <div>
+                        {{ "%.3f"|format(
+                            scientific_data.physical_properties.geometric_albedo
+                        ) }}
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+            {% if scientific_data.orbital_properties %}
+
+            <div class="card-header">
+
+                <h3>
+                    Orbital Properties
+                </h3>
+
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Sidereal Rotation Period
+                    </label>
+
+                    <div>
+                        {{ "%.6f"|format(
+                            scientific_data.orbital_properties.sidereal_rotation_period_days
+                        ) }}
+                        days
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        Sidereal Orbital Period
+                    </label>
+
+                    <div>
+                        {{ "%.8f"|format(
+                            scientific_data.orbital_properties.sidereal_orbital_period_years
+                        ) }}
+                        years
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+        {% endif %}
+        {% if earth_context %}
+
+        <!-- =================================================
+             EARTH OBSERVATION HUB
+             ================================================= -->
+
+        <section id="earthContext" class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Earth Observation Hub
+                </h3>
+
+                <p>
+                    Canonical Earth context and connected
+                    objects within the AstroSphere hierarchy.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Canonical Object
+                    </label>
+
+                    <div>
+                        {{ earth_context.object.name }}
+                        ({{ earth_context.object.id }})
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Parent
+                    </label>
+
+                    <div>
+
+                        {% if earth_context.object.parent_id == "sun" %}
+                            Sun
+                        {% elif earth_context.object.parent_id %}
+                            {{ earth_context.object.parent_id }}
+                        {% else %}
+                            None
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        System
+                    </label>
+
+                    <div>
+                        {% if earth_context.object.system_id == "solar-system" %}
+                            Solar System
+                        {% elif earth_context.object.system_id %}
+                            {{ earth_context.object.system_id }}
+                        {% else %}
+                            None
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Reference Frame
+                    </label>
+
+                    <div>
+
+                        {% if earth_context.scientific_data.position %}
+                            {{ earth_context.scientific_data.position.frame }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-header">
+
+                <h3>
+                    Scientific Snapshot
+                </h3>
+
+                <p>
+                    Current Earth position and velocity from the
+                    canonical scientific data layer.
+                </p>
+
+            </div>
+
+
+            {% if earth_context.scientific_data %}
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Observation Time
+                    </label>
+
+                    <div>
+                        {% if earth_context.scientific_data.observation %}
+                            {{ earth_context.scientific_data.observation.observation_time }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Source
+                    </label>
+
+                    <div>
+                        {% if earth_context.scientific_data.observation
+                              and earth_context.scientific_data.observation.source %}
+                            {{ earth_context.scientific_data.observation.source.name }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position
+                    </label>
+
+                    <div>
+                        {% if earth_context.scientific_data.position %}
+                            <div>
+                                X {{ "%.6f"|format(earth_context.scientific_data.position.x) }}
+                                {{ earth_context.scientific_data.position.unit }}
+                            </div>
+                            <div>
+                                Y {{ "%.6f"|format(earth_context.scientific_data.position.y) }}
+                                {{ earth_context.scientific_data.position.unit }}
+                            </div>
+                            <div>
+                                Z {{ "%.6f"|format(earth_context.scientific_data.position.z) }}
+                                {{ earth_context.scientific_data.position.unit }}
+                            </div>
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity
+                    </label>
+
+                    <div>
+                        {% if earth_context.scientific_data.velocity %}
+                            <div>
+                                X {{ "%.9f"|format(earth_context.scientific_data.velocity.x) }}
+                                {{ earth_context.scientific_data.velocity.unit }}
+                            </div>
+                            <div>
+                                Y {{ "%.9f"|format(earth_context.scientific_data.velocity.y) }}
+                                {{ earth_context.scientific_data.velocity.unit }}
+                            </div>
+                            <div>
+                                Z {{ "%.9f"|format(earth_context.scientific_data.velocity.z) }}
+                                {{ earth_context.scientific_data.velocity.unit }}
+                            </div>
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- =================================================
+                 EARTH SPACE WEATHER
+                 ================================================= -->
+
+            <div class="card-header">
+
+                <h3>
+                    Space Weather
+                </h3>
+
+                <p>
+                    Live solar-wind, magnetic-field, and geomagnetic
+                    conditions from the NOAA SWPC data layer.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Observation Time
+                    </label>
+
+                    <div id="earthSpaceWeatherObservationTime">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Source
+                    </label>
+
+                    <div id="earthSpaceWeatherSource">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Solar Wind Speed
+                    </label>
+
+                    <div id="earthSpaceWeatherSpeed">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Proton Density
+                    </label>
+
+                    <div id="earthSpaceWeatherDensity">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Proton Temperature
+                    </label>
+
+                    <div id="earthSpaceWeatherTemperature">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Magnetic Field Bt
+                    </label>
+
+                    <div id="earthSpaceWeatherBt">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Magnetic Field Bz (GSM)
+                    </label>
+
+                    <div id="earthSpaceWeatherBz">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Planetary Kp
+                    </label>
+
+                    <div id="earthSpaceWeatherKp">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Provider
+                    </label>
+
+                    <div id="earthSpaceWeatherProvider">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Dataset
+                    </label>
+
+                    <div id="earthSpaceWeatherDataset">
+                        Loading...
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Reference Frame
+                    </label>
+
+                    <div id="earthSpaceWeatherFrame">
+                        Loading...
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-header">
+
+                <h3>
+                    Hierarchy
+                </h3>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Ancestors
+                    </label>
+
+                    <div>
+
+                        {% if earth_context.ancestors %}
+
+                            {% for ancestor in earth_context.ancestors %}
+
+                                <a
+                                    href="{{ celestial_url(ancestor.id) }}"
+                                    class="object-explore-link"
+                                >
+                                    {{ ancestor.name }}
+                                </a>
+
+                                {% if not loop.last %}
+                                    /
+                                {% endif %}
+
+                            {% endfor %}
+
+                        {% else %}
+                            None
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Connected Objects
+                    </label>
+
+                    <div>
+
+                        {% if earth_context.children %}
+
+                            {% for child in earth_context.children %}
+
+                                {% set child_url = celestial_url(child.id) %}
+
+                                {% if child_url %}
+
+                                    <a
+                                        href="{{ child_url }}"
+                                        class="object-explore-link"
+                                    >
+                                        {{ child.name }}
+                                    </a>
+
+                                {% else %}
+
+                                    {{ child.name }}
+
+                                {% endif %}
+
+                                {% if not loop.last %}
+                                    ,
+                                {% endif %}
+
+                            {% endfor %}
+
+                        {% else %}
+                            None
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             CURRENT DISTANCES
+             ================================================= -->
+        <section id="planetOverviewDistances" class="analysis-card">
 
             <div class="card-header">
 
@@ -217,7 +1163,7 @@
              RELATIVE VELOCITY
              ================================================= -->
 
-        <section class="analysis-card">
+        <section id="planetOverviewVelocity" class="analysis-card">
 
             <div class="card-header">
 
@@ -226,9 +1172,13 @@
                 </h3>
 
                 <p>
-                    Relative velocity between Earth and
-                    {{ planet.name }}.
-                </p>
+    {% if planet.name == "Earth" %}
+        Relative velocity of Earth with respect to Earth is zero by definition.
+    {% else %}
+        Relative velocity between Earth and
+        {{ planet.name }}.
+    {% endif %}
+</p>
 
             </div>
 
@@ -272,10 +1222,10 @@
             <button
                 type="button"
                 class="btn-primary"
-                onclick="window.location.href='/overview'"
+                onclick="window.location.href='/galaxy'"
             >
 
-                ← Solar System Overview
+                ← Solar System Overview
 
             </button>
 
@@ -286,7 +1236,7 @@
                 onclick="window.location.href='/'"
             >
 
-                ← Orbital Analysis
+                ← Orbital Analysis
 
             </button>
 
@@ -315,3 +1265,365 @@
 </body>
 
 </html>
+
+
+
+<script>
+/* =========================================================
+   PLANET PAGE TABS
+   ========================================================= */
+
+(function () {
+
+    const tabButtons =
+        document.querySelectorAll(".planet-tab");
+
+    const overviewSections = [
+        "planetOverviewCalculation",
+        "planetOverviewDistances",
+        "planetOverviewVelocity"
+    ];
+
+    const scientificSections = [
+        "planetScientificData",
+        "planetScientificProperties"
+    ];
+
+    const earthContextSections = [
+        "earthContext"
+    ];
+
+    function setSectionVisibility(sectionIds, visible) {
+
+        sectionIds.forEach(function (sectionId) {
+
+            const section =
+                document.getElementById(sectionId);
+
+            if (!section) {
+                return;
+            }
+
+            section.hidden = !visible;
+        });
+    }
+
+    function setPlanetTab(tabName) {
+
+        const isOverview =
+            tabName === "overview";
+
+        setSectionVisibility(
+            overviewSections,
+            isOverview
+        );
+
+        const isEarthContext =
+            tabName === "earth-context";
+
+        setSectionVisibility(
+            scientificSections,
+            !isOverview && !isEarthContext
+        );
+
+        setSectionVisibility(
+            earthContextSections,
+            isEarthContext
+        );
+
+        tabButtons.forEach(function (button) {
+
+            const isActive =
+                button.dataset.tab === tabName;
+
+            button.classList.toggle(
+                "active",
+                isActive
+            );
+
+            button.setAttribute(
+                "aria-selected",
+                isActive ? "true" : "false"
+            );
+        });
+    }
+
+    tabButtons.forEach(function (button) {
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                setPlanetTab(
+                    button.dataset.tab
+                );
+
+            }
+        );
+
+    });
+
+    setPlanetTab("overview");
+
+})();
+</script>
+
+
+<script>
+/* =========================================================
+   EARTH SPACE WEATHER
+   ========================================================= */
+
+(function () {
+
+    const observationElement =
+        document.getElementById(
+            "earthSpaceWeatherObservationTime"
+        );
+
+    if (!observationElement) {
+        return;
+    }
+
+    const fields = {
+        observationTime:
+            observationElement,
+        source:
+            document.getElementById(
+                "earthSpaceWeatherSource"
+            ),
+        speed:
+            document.getElementById(
+                "earthSpaceWeatherSpeed"
+            ),
+        density:
+            document.getElementById(
+                "earthSpaceWeatherDensity"
+            ),
+        temperature:
+            document.getElementById(
+                "earthSpaceWeatherTemperature"
+            ),
+        bt:
+            document.getElementById(
+                "earthSpaceWeatherBt"
+            ),
+        bz:
+            document.getElementById(
+                "earthSpaceWeatherBz"
+            ),
+        kp:
+            document.getElementById(
+                "earthSpaceWeatherKp"
+            ),
+        provider:
+            document.getElementById(
+                "earthSpaceWeatherProvider"
+            ),
+        dataset:
+            document.getElementById(
+                "earthSpaceWeatherDataset"
+            ),
+        frame:
+            document.getElementById(
+                "earthSpaceWeatherFrame"
+            )
+    };
+
+    function setValue(element, value) {
+
+        if (!element) {
+            return;
+        }
+
+        element.textContent =
+            value === null ||
+            value === undefined ||
+            value === ""
+                ? "Unavailable"
+                : value;
+    }
+
+    function formatNumber(
+        value,
+        decimals
+    ) {
+
+        if (
+            typeof value !== "number" ||
+            !Number.isFinite(value)
+        ) {
+            return "Unavailable";
+        }
+
+        return value.toFixed(decimals);
+    }
+
+    function formatSignedNumber(
+        value,
+        decimals
+    ) {
+
+        if (
+            typeof value !== "number" ||
+            !Number.isFinite(value)
+        ) {
+            return "Unavailable";
+        }
+
+        return (
+            value >= 0 ? "+" : ""
+        ) + value.toFixed(decimals);
+    }
+
+    fetch(
+        "/api/v1/space-weather"
+    )
+        .then(function (response) {
+
+            if (!response.ok) {
+                throw new Error(
+                    "Space Weather request failed."
+                );
+            }
+
+            return response.json();
+
+        })
+        .then(function (payload) {
+
+            if (
+                payload.status !== "success" ||
+                !payload.data
+            ) {
+                throw new Error(
+                    "Invalid Space Weather response."
+                );
+            }
+
+            const data =
+                payload.data;
+
+            const wind =
+                data.solar_wind || {};
+
+            const magnetic =
+                data.magnetic_field || {};
+
+            const geomagnetic =
+                data.geomagnetic || {};
+
+            const provenance =
+                data.provenance || {};
+
+            const sources =
+                provenance.sources || [];
+
+            const source =
+                sources.length > 0
+                    ? sources[0]
+                    : null;
+
+            setValue(
+                fields.observationTime,
+                data.observation_time
+            );
+
+            setValue(
+                fields.source,
+                source
+                    ? source.name
+                    : null
+            );
+
+            setValue(
+                fields.speed,
+                formatNumber(
+                    wind.speed_km_s,
+                    1
+                ) + " km/s"
+            );
+
+            setValue(
+                fields.density,
+                formatNumber(
+                    wind.density_cm3,
+                    2
+                ) + " cm^-3"
+            );
+
+            setValue(
+                fields.temperature,
+                formatNumber(
+                    wind.temperature_k,
+                    0
+                ) + " K"
+            );
+
+            setValue(
+                fields.bt,
+                formatNumber(
+                    magnetic.bt_nt,
+                    2
+                ) + " nT"
+            );
+
+            setValue(
+                fields.bz,
+                formatSignedNumber(
+                    magnetic.bz_nt,
+                    2
+                ) + " nT"
+            );
+
+            setValue(
+                fields.kp,
+                formatNumber(
+                    geomagnetic.kp,
+                    1
+                )
+            );
+
+            setValue(
+                fields.provider,
+                source
+                    ? source.provider
+                    : null
+            );
+
+            setValue(
+                fields.dataset,
+                source
+                    ? source.dataset
+                    : null
+            );
+
+            setValue(
+                fields.frame,
+                provenance.reference_frames &&
+                provenance.reference_frames.length > 0
+                    ? provenance.reference_frames[0]
+                    : null
+            );
+
+        })
+        .catch(function (error) {
+
+            console.error(
+                "AstroSphere: failed to load Earth Space Weather.",
+                error
+            );
+
+            Object.keys(fields).forEach(
+                function (key) {
+                    setValue(
+                        fields[key],
+                        "Unavailable"
+                    );
+                }
+            );
+
+        });
+
+})();
+</script>

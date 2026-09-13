@@ -195,4 +195,114 @@ footer {
         font-size: 30px;
     }
 
+}/* ============================================================
+   GLOBAL ASTROSPHERE NAVIGATION
+============================================================ */
+
+.global-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 7%;
+    border-bottom: 1px solid #27305c;
+    background: rgba(10, 15, 35, 0.92);
+}
+
+.global-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #cbd3f5;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.global-nav-link:hover {
+    background: #182044;
+    border-color: #394579;
+    color: #ffffff;
+}
+
+.global-nav-link[aria-current="page"] {
+    background: #202a52;
+    border-color: #4b5b9a;
+    color: #ffffff;
+}
+
+@media (max-width: 700px) {
+
+    .global-nav {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding: 10px 5%;
+    }
+
+    .global-nav-link {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}
+
+/* =========================================================
+   PLANET PAGE TABS
+   ========================================================= */
+
+.planet-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 24px 0;
+    padding: 0;
+    border-bottom: 1px solid #27305c;
+}
+
+.planet-tab {
+    appearance: none;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    border-radius: 7px 7px 0 0;
+    background: transparent;
+    color: #9da8d2;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.planet-tab:hover {
+    background: rgba(70, 90, 160, 0.16);
+    color: #ffffff;
+}
+
+.planet-tab.active {
+    background: rgba(70, 100, 180, 0.18);
+    border-color: #394579;
+    border-bottom-color: #7f9cff;
+    color: #ffffff;
+}
+
+@media (max-width: 700px) {
+    .planet-tabs {
+        overflow-x: auto;
+    }
+
+    .planet-tab {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
 }

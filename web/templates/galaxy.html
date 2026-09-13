@@ -1,0 +1,2858 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AstroSphere | Milky Way Explorer
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <style>
+
+        /* =====================================================
+           PAGE
+           ===================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(
+                    circle at 50% 30%,
+                    #111936 0%,
+                    #060918 42%,
+                    #02030b 100%
+                );
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .galaxy-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        /* =====================================================
+           HEADER
+           ===================================================== */
+
+        .galaxy-header {
+            position: relative;
+            z-index: 30;
+            padding: 16px 30px;
+            background:
+                rgba(2, 4, 15, 0.88);
+            border-bottom:
+                1px solid rgba(255,255,255,0.10);
+            backdrop-filter: blur(14px);
+        }
+
+        .galaxy-brand {
+            max-width: 1450px;
+            margin: 0 auto;
+
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .galaxy-logo {
+            font-size: 2rem;
+        }
+
+        .galaxy-brand h1 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .galaxy-brand p {
+            margin: 3px 0 0;
+            font-size: 0.75rem;
+            opacity: 0.65;
+        }
+
+
+        /* =====================================================
+           HERO
+           ===================================================== */
+
+        .galaxy-hero {
+            text-align: center;
+            padding:
+                32px 20px
+                18px;
+        }
+
+        .galaxy-hero h2 {
+            margin: 0 0 8px;
+
+            font-size:
+                clamp(
+                    2rem,
+                    4vw,
+                    3.2rem
+                );
+        }
+
+        .galaxy-hero p {
+            max-width: 850px;
+            margin: 0 auto;
+
+            line-height: 1.6;
+            opacity: 0.72;
+        }
+
+
+        /* =====================================================
+           GALAXY VIEWER
+           ===================================================== */
+
+        .galaxy-wrapper {
+            width:
+                min(
+                    1500px,
+                    96%
+                );
+
+            margin:
+                0 auto;
+
+            position: relative;
+        }
+
+        .galaxy-container {
+            position: relative;
+
+            width: 100%;
+
+            height:
+                min(
+                    76vh,
+                    820px
+                );
+
+            min-height: 570px;
+
+            overflow: hidden;
+
+            border-radius: 22px;
+
+            background:
+                radial-gradient(
+                    ellipse at center,
+                    #03050d 0%,
+                    #010208 72%,
+                    #000105 100%
+                );
+
+            border:
+                1px solid
+                rgba(255,255,255,0.13);
+
+            box-shadow:
+                0 30px 100px
+                rgba(0,0,0,0.65),
+
+                inset 0 0 100px
+                rgba(70,90,180,0.05);
+
+            cursor: grab;
+        }
+
+        .galaxy-container.dragging {
+            cursor: grabbing;
+        }
+
+        #galaxyCanvas {
+            position: absolute;
+
+            inset: 0;
+
+            width: 100%;
+            height: 100%;
+        }
+
+
+        /* =====================================================
+           VIEWER HEADER
+           ===================================================== */
+
+        .viewer-top {
+            position: absolute;
+
+            top: 18px;
+            left: 18px;
+            right: 18px;
+
+            display: flex;
+            justify-content:
+                space-between;
+
+            align-items: center;
+
+            gap: 10px;
+
+            z-index: 10;
+
+            pointer-events: none;
+        }
+
+        .viewer-chip {
+            padding:
+                9px 13px;
+
+            border-radius: 9px;
+
+            background:
+                rgba(0,0,0,0.58);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.12);
+
+            backdrop-filter:
+                blur(12px);
+
+            font-size: 0.75rem;
+
+            letter-spacing:
+                0.03em;
+        }
+
+
+        /* =====================================================
+           INFORMATION PANEL
+           ===================================================== */
+
+        .galaxy-info {
+            position: absolute;
+
+            left: 22px;
+            bottom: 22px;
+
+            width:
+                min(
+                    390px,
+                    calc(100% - 44px)
+                );
+
+            padding: 20px;
+
+            border-radius: 15px;
+
+            background:
+                rgba(3,6,18,0.84);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.14);
+
+            backdrop-filter:
+                blur(16px);
+
+            box-shadow:
+                0 18px 50px
+                rgba(0,0,0,0.45);
+
+            z-index: 15;
+        }
+
+        .galaxy-info h3 {
+            margin:
+                0 0 10px;
+
+            font-size: 1.05rem;
+        }
+
+        .galaxy-info p {
+            margin: 0;
+
+            font-size: 0.85rem;
+
+            line-height: 1.65;
+
+            opacity: 0.82;
+        }
+
+        .galaxy-info .info-distance {
+            margin-top: 13px;
+
+            padding-top: 11px;
+
+            border-top:
+                1px solid
+                rgba(255,255,255,0.08);
+
+            font-size: 0.75rem;
+
+            line-height: 1.5;
+
+            opacity: 0.58;
+        }
+
+
+        /* =====================================================
+           LEGEND
+           ===================================================== */
+
+        .galaxy-legend {
+            position: absolute;
+
+            right: 22px;
+            bottom: 22px;
+
+            width: 235px;
+
+            padding: 17px;
+
+            border-radius: 14px;
+
+            background:
+                rgba(3,6,18,0.78);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.12);
+
+            backdrop-filter:
+                blur(14px);
+
+            z-index: 15;
+        }
+
+        .galaxy-legend h4 {
+            margin:
+                0 0 12px;
+
+            font-size: 0.88rem;
+        }
+
+        .legend-item {
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+
+            margin:
+                8px 0;
+
+            font-size: 0.75rem;
+
+            opacity: 0.78;
+        }
+
+        .legend-symbol {
+            width: 9px;
+            height: 9px;
+
+            border-radius: 50%;
+
+            flex-shrink: 0;
+        }
+
+        .legend-center {
+            background: #ffd48a;
+
+            box-shadow:
+                0 0 12px
+                #ffd48a;
+        }
+
+        .legend-star {
+            background: #e7ecff;
+
+            box-shadow:
+                0 0 8px
+                #e7ecff;
+        }
+
+        .legend-region {
+            background: #65a9ff;
+
+            box-shadow:
+                0 0 10px
+                #65a9ff;
+        }
+
+        .legend-solar {
+            background: #ffd85a;
+
+            box-shadow:
+                0 0 12px
+                #ffd85a;
+        }
+
+
+        /* =====================================================
+           CONTROLS
+           ===================================================== */
+
+        .galaxy-controls {
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            gap: 9px;
+
+            padding:
+                18px 10px
+                25px;
+        }
+
+        .galaxy-control {
+            border:
+                1px solid
+                rgba(255,255,255,0.14);
+
+            background:
+                rgba(18,24,52,0.82);
+
+            color: white;
+
+            padding:
+                10px 15px;
+
+            border-radius: 9px;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease;
+        }
+
+        .galaxy-control:hover {
+            transform:
+                translateY(-2px);
+
+            background:
+                rgba(65,76,145,0.82);
+        }
+
+
+        /* =====================================================
+           FACTS
+           ===================================================== */
+
+        .galaxy-facts {
+            width:
+                min(
+                    1100px,
+                    92%
+                );
+
+            margin:
+                0 auto 35px;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    3,
+                    minmax(0,1fr)
+                );
+
+            gap: 14px;
+        }
+
+        .fact-card {
+            padding: 20px;
+
+            border-radius: 14px;
+
+            background:
+                rgba(255,255,255,0.035);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.08);
+        }
+
+        .fact-card h3 {
+            margin:
+                0 0 8px;
+
+            font-size: 0.92rem;
+        }
+
+        .fact-card p {
+            margin: 0;
+
+            font-size: 0.78rem;
+
+            line-height: 1.6;
+
+            opacity: 0.68;
+        }
+
+
+        /* =====================================================
+           FOOTER
+           ===================================================== */
+
+        .galaxy-footer {
+            margin-top: auto;
+
+            text-align: center;
+
+            padding: 25px;
+
+            border-top:
+                1px solid
+                rgba(255,255,255,0.08);
+
+            font-size: 0.75rem;
+
+            opacity: 0.5;
+        }
+
+
+        /* =====================================================
+           MOBILE
+           ===================================================== */
+
+        @media (max-width: 800px) {
+
+            .galaxy-container {
+                height: 650px;
+                min-height: 540px;
+            }
+
+            .galaxy-legend {
+                display: none;
+            }
+
+            .galaxy-info {
+                left: 14px;
+                right: 14px;
+                bottom: 14px;
+                width: auto;
+            }
+
+            .galaxy-facts {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="galaxy-page">
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="galaxy-header">
+
+        <div class="galaxy-brand">
+
+            <div class="galaxy-logo">
+                🌌
+            </div>
+
+            <div>
+
+                <h1>
+                    AstroSphere
+                </h1>
+
+                <p>
+                    Milky Way Explorer
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    {% include "_navigation.html" %}
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="galaxy-hero">
+
+        <h2>
+            🌌 The Milky Way
+        </h2>
+
+        <p>
+            Explore our galactic home, discover its
+            structure, and see where the Solar System
+            resides within the galaxy.
+        </p>
+
+    </section>
+
+
+    <!-- =====================================================
+         GALAXY VIEWER
+         ===================================================== -->
+
+    <div class="galaxy-wrapper">
+
+        <section
+            class="galaxy-container"
+            id="galaxyContainer"
+        >
+
+            <canvas
+                id="galaxyCanvas"
+            ></canvas>
+
+
+            <div class="viewer-top">
+
+                <div class="viewer-chip">
+                    MILKY WAY · GALACTIC MAP
+                </div>
+
+                <div
+                    class="viewer-chip"
+                    id="viewerStatus"
+                >
+                    Exploring
+                </div>
+
+            </div>
+
+
+            <!-- INFORMATION -->
+
+            <div
+                class="galaxy-info"
+                id="galaxyInfo"
+            >
+
+                <h3 id="infoTitle">
+                    Our Galactic Home
+                </h3>
+
+                <p id="infoText">
+
+                    The Milky Way is a barred spiral
+                    galaxy containing hundreds of
+                    billions of stars. The bright
+                    central region is surrounded by
+                    an enormous stellar disk.
+
+                </p>
+
+                <div
+                    class="info-distance"
+                    id="infoDistance"
+                >
+
+                    Solar System:
+                    approximately 26,000 light-years
+                    from the Galactic Center.
+
+                </div>
+
+            </div>
+
+
+            <!-- LEGEND -->
+
+            <div class="galaxy-legend">
+
+                <h4>
+                    Galactic Map
+                </h4>
+
+
+                <div class="legend-item">
+
+                    <span
+                        class="legend-symbol legend-center"
+                    ></span>
+
+                    Galactic Center
+
+                </div>
+
+
+                <div class="legend-item">
+
+                    <span
+                        class="legend-symbol legend-star"
+                    ></span>
+
+                    Stars
+
+                </div>
+
+
+                <div class="legend-item">
+
+                    <span
+                        class="legend-symbol legend-region"
+                    ></span>
+
+                    Star-forming regions
+
+                </div>
+
+
+                <div class="legend-item">
+
+                    <span
+                        class="legend-symbol legend-solar"
+                    ></span>
+
+                    Solar System
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- =====================================================
+         CONTROLS
+         ===================================================== -->
+
+    <div class="galaxy-controls">
+
+        <button
+            type="button"
+            class="galaxy-control"
+            id="rotationButton"
+        >
+            ⏸ Pause Rotation
+        </button>
+
+
+        <button
+            type="button"
+            class="galaxy-control"
+            id="resetButton"
+        >
+            ↺ Reset View
+        </button>
+
+
+        <button
+            type="button"
+            class="galaxy-control"
+            onclick="window.location.href='/'"
+        >
+            ← AstroSphere Home
+        </button>
+
+
+        <a
+            class="galaxy-control"
+            href="/solar-system"
+            style="
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                font-weight: 700;
+                border-color: rgba(255,216,90,0.45);
+                background: rgba(55,42,12,0.55);
+            "
+        >
+            ☀️ Enter Solar System
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         FACTS
+         ===================================================== -->
+
+    <section class="galaxy-facts">
+
+
+        <article class="fact-card">
+
+            <h3>
+                🌌 Barred Spiral Galaxy
+            </h3>
+
+            <p>
+                The Milky Way has a central bar
+                surrounded by a disk containing
+                curved spiral structures.
+            </p>
+
+        </article>
+
+
+        <article class="fact-card">
+
+            <h3>
+                ☀️ Orion Spur
+            </h3>
+
+            <p>
+                Our Solar System lies in the
+                Orion Spur, a smaller structure
+                between major spiral arms.
+            </p>
+
+        </article>
+
+
+        <article class="fact-card">
+
+            <h3>
+                ✨ Galactic Scale
+            </h3>
+
+            <p>
+                The Milky Way extends roughly
+                100,000 light-years across.
+                The galaxy is vastly larger than
+                our Solar System.
+            </p>
+
+        </article>
+
+
+    </section>
+
+
+    <footer class="galaxy-footer">
+
+        AstroSphere · Milky Way Explorer
+
+    </footer>
+
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   CANVAS SETUP
+   ============================================================ */
+
+const canvas =
+    document.getElementById(
+        "galaxyCanvas"
+    );
+
+const context =
+    canvas.getContext("2d");
+
+const container =
+    document.getElementById(
+        "galaxyContainer"
+    );
+
+
+/* ============================================================
+   UI ELEMENTS
+   ============================================================ */
+
+const rotationButton =
+    document.getElementById(
+        "rotationButton"
+    );
+
+const resetButton =
+    document.getElementById(
+        "resetButton"
+    );
+
+const viewerStatus =
+    document.getElementById(
+        "viewerStatus"
+    );
+
+const infoTitle =
+    document.getElementById(
+        "infoTitle"
+    );
+
+const infoText =
+    document.getElementById(
+        "infoText"
+    );
+
+const infoDistance =
+    document.getElementById(
+        "infoDistance"
+    );
+
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+let width = 0;
+let height = 0;
+
+let centerX = 0;
+let centerY = 0;
+
+let rotation = 0;
+
+let zoom = 1;
+
+let offsetX = 0;
+let offsetY = 0;
+
+let rotationEnabled = true;
+
+let dragging = false;
+
+let previousX = 0;
+let previousY = 0;
+
+let stars = [];
+
+let dust = [];
+
+let nebulae = [];
+
+
+/* ============================================================
+   GALAXY PARAMETERS
+   ============================================================ */
+
+const galaxy = {
+
+    armCount: 4,
+
+    radius: 1,
+
+    armCurve: 5.7,
+
+    thickness: 0.095,
+
+    solarRadius: 0.63,
+
+    solarAngle: -0.25
+
+};
+
+
+/* ============================================================
+   NORMAL DISTRIBUTION
+   ============================================================ */
+
+function randomNormal() {
+
+    let u = 0;
+    let v = 0;
+
+    while (u === 0) {
+        u = Math.random();
+    }
+
+    while (v === 0) {
+        v = Math.random();
+    }
+
+    return Math.sqrt(
+        -2 *
+        Math.log(u)
+    ) *
+    Math.cos(
+        2 *
+        Math.PI *
+        v
+    );
+
+}
+
+
+/* ============================================================
+   RESIZE
+   ============================================================ */
+
+function resizeCanvas() {
+
+    const rectangle =
+        container.getBoundingClientRect();
+
+    const ratio =
+        Math.min(
+            window.devicePixelRatio || 1,
+            2
+        );
+
+    width =
+        rectangle.width;
+
+    height =
+        rectangle.height;
+
+    canvas.width =
+        width * ratio;
+
+    canvas.height =
+        height * ratio;
+
+    canvas.style.width =
+        width + "px";
+
+    canvas.style.height =
+        height + "px";
+
+    context.setTransform(
+        ratio,
+        0,
+        0,
+        ratio,
+        0,
+        0
+    );
+
+    centerX =
+        width / 2;
+
+    centerY =
+        height / 2;
+
+}
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
+
+
+/* ============================================================
+   GENERATE STARS
+   ============================================================ */
+
+function generateStars() {
+
+    stars = [];
+
+    const count =
+        9000;
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        const arm =
+            Math.floor(
+                Math.random() *
+                galaxy.armCount
+            );
+
+        const radius =
+            Math.pow(
+                Math.random(),
+                0.58
+            );
+
+        const baseAngle =
+            (
+                arm *
+                (
+                    Math.PI * 2 /
+                    galaxy.armCount
+                )
+            );
+
+        const spiral =
+            baseAngle +
+            radius *
+            galaxy.armCurve;
+
+        const armSpread =
+            randomNormal() *
+            (
+                galaxy.thickness *
+                (
+                    0.35 +
+                    radius
+                )
+            );
+
+        const angle =
+            spiral +
+            armSpread;
+
+        const x =
+            Math.cos(angle) *
+            radius;
+
+        const y =
+            Math.sin(angle) *
+            radius;
+
+        const random =
+            Math.random();
+
+        stars.push({
+
+            x,
+
+            y,
+
+            size:
+                random > 0.985
+                    ? 2.4
+                    : random > 0.92
+                        ? 1.45
+                        : random > 0.65
+                            ? 0.9
+                            : 0.5,
+
+            brightness:
+                0.25 +
+                random * 0.75,
+
+            warm:
+                Math.random() < 0.13,
+
+            phase:
+                Math.random() *
+                Math.PI *
+                2
+
+        });
+
+    }
+
+
+    /* Dense central population */
+
+    for (
+        let i = 0;
+        i < 2200;
+        i++
+    ) {
+
+        const angle =
+            Math.random() *
+            Math.PI *
+            2;
+
+        const radius =
+            Math.pow(
+                Math.random(),
+                2.5
+            ) *
+            0.34;
+
+        stars.push({
+
+            x:
+                Math.cos(angle) *
+                radius,
+
+            y:
+                Math.sin(angle) *
+                radius,
+
+            size:
+                0.45 +
+                Math.random() *
+                1.4,
+
+            brightness:
+                0.35 +
+                Math.random() *
+                0.65,
+
+            warm:
+                Math.random() < 0.35,
+
+            phase:
+                Math.random() *
+                Math.PI *
+                2
+
+        });
+
+    }
+
+}
+
+
+/* ============================================================
+   GENERATE DUST LANES
+   ============================================================ */
+
+function generateDust() {
+
+    dust = [];
+
+    const count =
+        1100;
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        const arm =
+            Math.floor(
+                Math.random() *
+                galaxy.armCount
+            );
+
+        const radius =
+            0.12 +
+            Math.random() *
+            0.82;
+
+        const baseAngle =
+            (
+                arm *
+                (
+                    Math.PI * 2 /
+                    galaxy.armCount
+                )
+            );
+
+        const angle =
+            baseAngle +
+            radius *
+            galaxy.armCurve +
+            randomNormal() *
+            0.045;
+
+        dust.push({
+
+            x:
+                Math.cos(angle) *
+                radius,
+
+            y:
+                Math.sin(angle) *
+                radius,
+
+            width:
+                0.008 +
+                Math.random() *
+                0.018,
+
+            alpha:
+                0.025 +
+                Math.random() *
+                0.045
+
+        });
+
+    }
+
+}
+
+
+/* ============================================================
+   GENERATE STAR FORMING REGIONS
+   ============================================================ */
+
+function generateNebulae() {
+
+    nebulae = [];
+
+    const count =
+        75;
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        const arm =
+            Math.floor(
+                Math.random() *
+                galaxy.armCount
+            );
+
+        const radius =
+            0.2 +
+            Math.random() *
+            0.72;
+
+        const baseAngle =
+            (
+                arm *
+                (
+                    Math.PI * 2 /
+                    galaxy.armCount
+                )
+            );
+
+        const angle =
+            baseAngle +
+            radius *
+            galaxy.armCurve +
+            randomNormal() *
+            0.065;
+
+        nebulae.push({
+
+            x:
+                Math.cos(angle) *
+                radius,
+
+            y:
+                Math.sin(angle) *
+                radius,
+
+            radius:
+                0.008 +
+                Math.random() *
+                0.018,
+
+            alpha:
+                0.18 +
+                Math.random() *
+                0.25
+
+        });
+
+    }
+
+}
+
+
+/* ============================================================
+   GALACTIC BACKGROUND
+   ============================================================ */
+
+function drawBackground() {
+
+    context.fillStyle =
+        "#010208";
+
+    context.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    const glow =
+        context.createRadialGradient(
+            centerX,
+            centerY,
+            0,
+            centerX,
+            centerY,
+            Math.min(
+                width,
+                height
+            ) * 0.62
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(70,85,150,0.10)"
+    );
+
+    glow.addColorStop(
+        0.45,
+        "rgba(30,45,100,0.035)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+    context.fillStyle =
+        glow;
+
+    context.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+}
+
+
+/* ============================================================
+   DRAW GALACTIC DISK
+   ============================================================ */
+
+function drawDisk() {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    context.save();
+
+    context.translate(
+        centerX + offsetX,
+        centerY + offsetY
+    );
+
+    context.rotate(
+        rotation * 0.35
+    );
+
+    const disk =
+        context.createRadialGradient(
+            0,
+            0,
+            0,
+            0,
+            0,
+            radius
+        );
+
+    disk.addColorStop(
+        0,
+        "rgba(255,210,145,0.12)"
+    );
+
+    disk.addColorStop(
+        0.18,
+        "rgba(130,155,225,0.065)"
+    );
+
+    disk.addColorStop(
+        0.5,
+        "rgba(80,105,180,0.035)"
+    );
+
+    disk.addColorStop(
+        0.82,
+        "rgba(30,45,100,0.015)"
+    );
+
+    disk.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+    context.fillStyle =
+        disk;
+
+    context.beginPath();
+
+    context.ellipse(
+        0,
+        0,
+        radius,
+        radius * 0.56,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    context.fill();
+
+    context.restore();
+
+}
+
+
+/* ============================================================
+   DRAW CENTRAL BAR
+   ============================================================ */
+
+function drawBar() {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    context.save();
+
+    context.translate(
+        centerX + offsetX,
+        centerY + offsetY
+    );
+
+    context.rotate(
+        rotation * 0.35
+    );
+
+    const bar =
+        context.createLinearGradient(
+            -radius * 0.22,
+            0,
+            radius * 0.22,
+            0
+        );
+
+    bar.addColorStop(
+        0,
+        "rgba(255,190,105,0)"
+    );
+
+    bar.addColorStop(
+        0.2,
+        "rgba(255,185,105,0.12)"
+    );
+
+    bar.addColorStop(
+        0.5,
+        "rgba(255,225,175,0.24)"
+    );
+
+    bar.addColorStop(
+        0.8,
+        "rgba(255,185,105,0.12)"
+    );
+
+    bar.addColorStop(
+        1,
+        "rgba(255,190,105,0)"
+    );
+
+    context.fillStyle =
+        bar;
+
+    context.beginPath();
+
+    context.ellipse(
+        0,
+        0,
+        radius * 0.30,
+        radius * 0.075,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    context.fill();
+
+    context.restore();
+
+}
+
+
+/* ============================================================
+   DRAW STARS
+   ============================================================ */
+
+function drawStars(time) {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    const cos =
+        Math.cos(
+            rotation
+        );
+
+    const sin =
+        Math.sin(
+            rotation
+        );
+
+    for (
+        let i = 0;
+        i < stars.length;
+        i++
+    ) {
+
+        const star =
+            stars[i];
+
+        const x =
+            star.x * cos -
+            star.y * sin;
+
+        const y =
+            star.x * sin +
+            star.y * cos;
+
+        const screenX =
+            centerX +
+            offsetX +
+            x *
+            radius;
+
+        const screenY =
+            centerY +
+            offsetY +
+            y *
+            radius *
+            0.56;
+
+        if (
+            screenX < -5 ||
+            screenX > width + 5 ||
+            screenY < -5 ||
+            screenY > height + 5
+        ) {
+            continue;
+        }
+
+        const twinkle =
+            0.88 +
+            Math.sin(
+                time * 0.001 +
+                star.phase
+            ) *
+            0.12;
+
+        const alpha =
+            star.brightness *
+            twinkle;
+
+        const fill =
+            star.warm
+                ? `rgba(255,220,170,${alpha})`
+                : `rgba(220,232,255,${alpha})`;
+
+        context.fillStyle =
+            fill;
+
+        context.beginPath();
+
+        context.arc(
+            screenX,
+            screenY,
+            star.size *
+            zoom,
+            0,
+            Math.PI * 2
+        );
+
+        context.fill();
+
+    }
+
+}
+
+
+/* ============================================================
+   DRAW DUST
+   ============================================================ */
+
+function drawDust() {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    const cos =
+        Math.cos(
+            rotation
+        );
+
+    const sin =
+        Math.sin(
+            rotation
+        );
+
+    for (
+        let i = 0;
+        i < dust.length;
+        i++
+    ) {
+
+        const cloud =
+            dust[i];
+
+        const x =
+            cloud.x * cos -
+            cloud.y * sin;
+
+        const y =
+            cloud.x * sin +
+            cloud.y * cos;
+
+        const screenX =
+            centerX +
+            offsetX +
+            x *
+            radius;
+
+        const screenY =
+            centerY +
+            offsetY +
+            y *
+            radius *
+            0.56;
+
+        context.fillStyle =
+            `rgba(1,3,10,${cloud.alpha})`;
+
+        context.beginPath();
+
+        context.ellipse(
+            screenX,
+            screenY,
+            cloud.width *
+            radius *
+            2.5,
+            cloud.width *
+            radius *
+            0.55,
+            rotation,
+            0,
+            Math.PI * 2
+        );
+
+        context.fill();
+
+    }
+
+}
+
+
+/* ============================================================
+   DRAW NEBULAE
+   ============================================================ */
+
+function drawNebulae() {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    const cos =
+        Math.cos(
+            rotation
+        );
+
+    const sin =
+        Math.sin(
+            rotation
+        );
+
+    for (
+        let i = 0;
+        i < nebulae.length;
+        i++
+    ) {
+
+        const nebula =
+            nebulae[i];
+
+        const x =
+            nebula.x * cos -
+            nebula.y * sin;
+
+        const y =
+            nebula.x * sin +
+            nebula.y * cos;
+
+        const screenX =
+            centerX +
+            offsetX +
+            x *
+            radius;
+
+        const screenY =
+            centerY +
+            offsetY +
+            y *
+            radius *
+            0.56;
+
+        const size =
+            nebula.radius *
+            radius *
+            4;
+
+        const glow =
+            context.createRadialGradient(
+                screenX,
+                screenY,
+                0,
+                screenX,
+                screenY,
+                size
+            );
+
+        glow.addColorStop(
+            0,
+            `rgba(80,160,255,${nebula.alpha})`
+        );
+
+        glow.addColorStop(
+            0.3,
+            `rgba(80,120,255,${nebula.alpha * 0.35})`
+        );
+
+        glow.addColorStop(
+            1,
+            "rgba(0,0,0,0)"
+        );
+
+        context.fillStyle =
+            glow;
+
+        context.beginPath();
+
+        context.arc(
+            screenX,
+            screenY,
+            size,
+            0,
+            Math.PI * 2
+        );
+
+        context.fill();
+
+    }
+
+}
+
+
+/* ============================================================
+   DRAW GALACTIC CORE
+   ============================================================ */
+
+function drawCore() {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    const coreRadius =
+        radius *
+        0.19;
+
+    const glow =
+        context.createRadialGradient(
+            centerX + offsetX,
+            centerY + offsetY,
+            0,
+            centerX + offsetX,
+            centerY + offsetY,
+            coreRadius
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(255,248,220,0.98)"
+    );
+
+    glow.addColorStop(
+        0.04,
+        "rgba(255,225,165,0.9)"
+    );
+
+    glow.addColorStop(
+        0.14,
+        "rgba(255,190,110,0.52)"
+    );
+
+    glow.addColorStop(
+        0.35,
+        "rgba(190,155,110,0.18)"
+    );
+
+    glow.addColorStop(
+        0.75,
+        "rgba(100,120,190,0.045)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+    context.fillStyle =
+        glow;
+
+    context.beginPath();
+
+    context.arc(
+        centerX + offsetX,
+        centerY + offsetY,
+        coreRadius,
+        0,
+        Math.PI * 2
+    );
+
+    context.fill();
+
+
+    /* central point */
+
+    context.fillStyle =
+        "rgba(255,250,230,0.98)";
+
+    context.beginPath();
+
+    context.arc(
+        centerX + offsetX,
+        centerY + offsetY,
+        Math.max(
+            3,
+            5 * zoom
+        ),
+        0,
+        Math.PI * 2
+    );
+
+    context.fill();
+
+}
+
+
+/* ============================================================
+   DRAW SOLAR SYSTEM
+   ============================================================ */
+
+function drawSolarSystem() {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    const angle =
+        galaxy.solarAngle +
+        rotation;
+
+    const x =
+        centerX +
+        offsetX +
+        Math.cos(angle) *
+        galaxy.solarRadius *
+        radius;
+
+    const y =
+        centerY +
+        offsetY +
+        Math.sin(angle) *
+        galaxy.solarRadius *
+        radius *
+        0.56;
+
+
+    /* Orion Spur highlight */
+
+    context.save();
+
+    context.strokeStyle =
+        "rgba(95,155,255,0.24)";
+
+    context.lineWidth =
+        10 *
+        zoom;
+
+    context.lineCap =
+        "round";
+
+    context.beginPath();
+
+    const startAngle =
+        angle - 0.30;
+
+    const endAngle =
+        angle + 0.30;
+
+    const localRadius =
+        galaxy.solarRadius *
+        radius;
+
+    context.arc(
+        centerX + offsetX,
+        centerY + offsetY,
+        localRadius,
+        startAngle,
+        endAngle
+    );
+
+    context.stroke();
+
+    context.restore();
+
+
+    /* Solar glow */
+
+    const glow =
+        context.createRadialGradient(
+            x,
+            y,
+            0,
+            x,
+            y,
+            34 * zoom
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(255,238,145,1)"
+    );
+
+    glow.addColorStop(
+        0.15,
+        "rgba(255,215,80,0.7)"
+    );
+
+    glow.addColorStop(
+        0.45,
+        "rgba(255,200,70,0.2)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(255,200,70,0)"
+    );
+
+    context.fillStyle =
+        glow;
+
+    context.beginPath();
+
+    context.arc(
+        x,
+        y,
+        34 * zoom,
+        0,
+        Math.PI * 2
+    );
+
+    context.fill();
+
+
+    context.fillStyle =
+        "#ffd85a";
+
+    context.beginPath();
+
+    context.arc(
+        x,
+        y,
+        Math.max(
+            3,
+            5 * zoom
+        ),
+        0,
+        Math.PI * 2
+    );
+
+    context.fill();
+
+
+    /* You are here ring */
+
+    context.strokeStyle =
+        "rgba(255,220,100,0.8)";
+
+    context.lineWidth =
+        1.5;
+
+    context.beginPath();
+
+    context.arc(
+        x,
+        y,
+        13 * zoom,
+        0,
+        Math.PI * 2
+    );
+
+    context.stroke();
+
+
+    return {
+        x,
+        y
+    };
+
+}
+
+
+/* ============================================================
+   DRAW LABELS
+   ============================================================ */
+
+function drawLabels(solarPosition) {
+
+    const solarX =
+        solarPosition.x;
+
+    const solarY =
+        solarPosition.y;
+
+
+    context.font =
+        "600 12px Arial";
+
+    context.textBaseline =
+        "middle";
+
+
+    /* Galactic Center */
+
+    drawLabel(
+        centerX +
+        offsetX +
+        18,
+
+        centerY +
+        offsetY -
+        20,
+
+        "GALACTIC CENTER",
+
+        "rgba(255,205,130,0.92)"
+    );
+
+
+    /* Solar System */
+
+    drawLabel(
+        solarX + 20,
+
+        solarY - 18,
+
+        "☀️ YOU ARE HERE · SOLAR SYSTEM",
+
+        "rgba(255,220,105,0.95)"
+    );
+
+
+    /* Orion Spur */
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    const angle =
+        galaxy.solarAngle +
+        rotation;
+
+    const spurX =
+        centerX +
+        offsetX +
+        Math.cos(angle) *
+        galaxy.solarRadius *
+        radius *
+        0.92;
+
+    const spurY =
+        centerY +
+        offsetY +
+        Math.sin(angle) *
+        galaxy.solarRadius *
+        radius *
+        0.52;
+
+    drawLabel(
+        spurX - 45,
+
+        spurY + 25,
+
+        "ORION SPUR",
+
+        "rgba(100,175,255,0.9)"
+    );
+
+}
+
+
+/* ============================================================
+   LABEL HELPER
+   ============================================================ */
+
+function drawLabel(
+    x,
+    y,
+    text,
+    textColor
+) {
+
+    const paddingX = 9;
+
+    const paddingY = 6;
+
+    const metrics =
+        context.measureText(
+            text
+        );
+
+    const width =
+        metrics.width +
+        paddingX * 2;
+
+    const height =
+        24;
+
+    context.fillStyle =
+        "rgba(0,0,0,0.68)";
+
+    context.strokeStyle =
+        "rgba(255,255,255,0.12)";
+
+    context.lineWidth =
+        1;
+
+    context.beginPath();
+
+    context.roundRect(
+        x,
+        y - height / 2,
+        width,
+        height,
+        7
+    );
+
+    context.fill();
+
+    context.stroke();
+
+    context.fillStyle =
+        textColor;
+
+    context.fillText(
+        text,
+        x + paddingX,
+        y
+    );
+
+}
+
+
+/* ============================================================
+   SCALE INDICATOR
+   ============================================================ */
+
+function drawScale() {
+
+    const radius =
+        Math.min(
+            width,
+            height
+        ) *
+        0.44 *
+        zoom;
+
+    const scaleWidth =
+        Math.min(
+            150,
+            radius * 0.42
+        );
+
+    const x =
+        width -
+        scaleWidth -
+        30;
+
+    const y =
+        50;
+
+
+    context.strokeStyle =
+        "rgba(255,255,255,0.5)";
+
+    context.lineWidth =
+        1;
+
+    context.beginPath();
+
+    context.moveTo(
+        x,
+        y
+    );
+
+    context.lineTo(
+        x + scaleWidth,
+        y
+    );
+
+    context.moveTo(
+        x,
+        y - 5
+    );
+
+    context.lineTo(
+        x,
+        y + 5
+    );
+
+    context.moveTo(
+        x + scaleWidth,
+        y - 5
+    );
+
+    context.lineTo(
+        x + scaleWidth,
+        y + 5
+    );
+
+    context.stroke();
+
+
+    context.fillStyle =
+        "rgba(255,255,255,0.55)";
+
+    context.font =
+        "10px Arial";
+
+    context.fillText(
+        "≈ 25,000 light-years",
+        x,
+        y + 17
+    );
+
+}
+
+
+/* ============================================================
+   MAIN DRAW LOOP
+   ============================================================ */
+
+function draw(time) {
+
+    drawBackground();
+
+    drawDisk();
+
+    drawBar();
+
+    drawDust();
+
+    drawNebulae();
+
+    drawStars(time);
+
+    drawCore();
+
+    const solarPosition =
+        drawSolarSystem();
+
+    drawLabels(
+        solarPosition
+    );
+
+    drawScale();
+
+
+    if (
+        rotationEnabled
+    ) {
+
+        rotation +=
+            0.00018;
+
+    }
+
+
+    requestAnimationFrame(
+        draw
+    );
+
+}
+
+
+/* ============================================================
+   DRAG / PAN
+   ============================================================ */
+
+container.addEventListener(
+    "mousedown",
+    function(event) {
+
+        dragging =
+            true;
+
+        previousX =
+            event.clientX;
+
+        previousY =
+            event.clientY;
+
+        container.classList.add(
+            "dragging"
+        );
+
+    }
+);
+
+
+window.addEventListener(
+    "mouseup",
+    function() {
+
+        dragging =
+            false;
+
+        container.classList.remove(
+            "dragging"
+        );
+
+    }
+);
+
+
+window.addEventListener(
+    "mousemove",
+    function(event) {
+
+        if (!dragging) {
+            return;
+        }
+
+        const deltaX =
+            event.clientX -
+            previousX;
+
+        const deltaY =
+            event.clientY -
+            previousY;
+
+        rotation +=
+            deltaX * 0.0025;
+
+        offsetX +=
+            deltaX * 0.18;
+
+        offsetY +=
+            deltaY * 0.18;
+
+        previousX =
+            event.clientX;
+
+        previousY =
+            event.clientY;
+
+    }
+);
+
+
+/* ============================================================
+   ZOOM
+   ============================================================ */
+
+container.addEventListener(
+    "wheel",
+    function(event) {
+
+        event.preventDefault();
+
+        if (
+            event.deltaY < 0
+        ) {
+
+            zoom *=
+                1.08;
+
+        } else {
+
+            zoom *=
+                0.92;
+
+        }
+
+        zoom =
+            Math.max(
+                0.55,
+                Math.min(
+                    zoom,
+                    2.5
+                )
+            );
+
+        viewerStatus.textContent =
+            `Zoom ${zoom.toFixed(1)}×`;
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+/* ============================================================
+   ROTATION
+   ============================================================ */
+
+rotationButton.addEventListener(
+    "click",
+    function() {
+
+        rotationEnabled =
+            !rotationEnabled;
+
+        if (
+            rotationEnabled
+        ) {
+
+            rotationButton.textContent =
+                "⏸ Pause Rotation";
+
+            viewerStatus.textContent =
+                "Exploring";
+
+        } else {
+
+            rotationButton.textContent =
+                "▶ Resume Rotation";
+
+            viewerStatus.textContent =
+                "Rotation Paused";
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+resetButton.addEventListener(
+    "click",
+    function() {
+
+        rotation =
+            0;
+
+        zoom =
+            1;
+
+        offsetX =
+            0;
+
+        offsetY =
+            0;
+
+        viewerStatus.textContent =
+            "Exploring";
+
+        infoTitle.textContent =
+            "Our Galactic Home";
+
+        infoText.textContent =
+            "The Milky Way is a barred spiral " +
+            "galaxy containing hundreds of billions " +
+            "of stars. The bright central region is " +
+            "surrounded by an enormous stellar disk.";
+
+        infoDistance.textContent =
+            "Solar System: approximately 26,000 " +
+            "light-years from the Galactic Center.";
+
+    }
+);
+
+
+/* ============================================================
+   CLICK INTERACTION
+   ============================================================ */
+
+container.addEventListener(
+    "click",
+    function(event) {
+
+        const rectangle =
+            container.getBoundingClientRect();
+
+        const mouseX =
+            event.clientX -
+            rectangle.left;
+
+        const mouseY =
+            event.clientY -
+            rectangle.top;
+
+
+        const radius =
+            Math.min(
+                width,
+                height
+            ) *
+            0.44 *
+            zoom;
+
+
+        /* Solar System */
+
+        const solarAngle =
+            galaxy.solarAngle +
+            rotation;
+
+        const solarX =
+            centerX +
+            offsetX +
+            Math.cos(
+                solarAngle
+            ) *
+            galaxy.solarRadius *
+            radius;
+
+        const solarY =
+            centerY +
+            offsetY +
+            Math.sin(
+                solarAngle
+            ) *
+            galaxy.solarRadius *
+            radius *
+            0.56;
+
+
+        const solarDistance =
+            Math.sqrt(
+                Math.pow(
+                    mouseX -
+                    solarX,
+                    2
+                ) +
+                Math.pow(
+                    mouseY -
+                    solarY,
+                    2
+                )
+            );
+
+
+        if (
+            solarDistance < 30
+        ) {
+
+            infoTitle.textContent =
+                "☀️ Our Solar System";
+
+            infoText.textContent =
+                "You are here. Our Solar System " +
+                "lies within the Orion Spur, a " +
+                "smaller spiral structure between " +
+                "larger arms of the Milky Way.";
+
+            infoDistance.textContent =
+                "Approximately 26,000 light-years " +
+                "from the Galactic Center.";
+
+            viewerStatus.textContent =
+                "Solar System Selected";
+
+            /*
+               Give the visitor a moment to see
+               the selection before entering the
+               next scale of the Universe Explorer.
+            */
+
+            setTimeout(
+                function() {
+
+                    window.location.href =
+                        "/solar-system";
+
+                },
+                700
+            );
+
+            return;
+
+        }
+
+
+        /* Galactic Center */
+
+        const centerDistance =
+            Math.sqrt(
+                Math.pow(
+                    mouseX -
+                    (
+                        centerX +
+                        offsetX
+                    ),
+                    2
+                ) +
+                Math.pow(
+                    mouseY -
+                    (
+                        centerY +
+                        offsetY
+                    ),
+                    2
+                )
+            );
+
+
+        if (
+            centerDistance <
+            45 * zoom
+        ) {
+
+            infoTitle.textContent =
+                "✨ Galactic Center";
+
+            infoText.textContent =
+                "The Galactic Center is the dense " +
+                "central region of the Milky Way. " +
+                "At its heart lies Sagittarius A*, " +
+                "a supermassive black hole.";
+
+            infoDistance.textContent =
+                "Our Solar System is roughly " +
+                "26,000 light-years from this region.";
+
+            viewerStatus.textContent =
+                "Galactic Center Selected";
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   TOUCH SUPPORT
+   ============================================================ */
+
+let touchX = 0;
+let touchY = 0;
+
+container.addEventListener(
+    "touchstart",
+    function(event) {
+
+        if (
+            event.touches.length !== 1
+        ) {
+            return;
+        }
+
+        touchX =
+            event.touches[0].clientX;
+
+        touchY =
+            event.touches[0].clientY;
+
+    }
+);
+
+
+container.addEventListener(
+    "touchmove",
+    function(event) {
+
+        if (
+            event.touches.length !== 1
+        ) {
+            return;
+        }
+
+        const currentX =
+            event.touches[0].clientX;
+
+        const currentY =
+            event.touches[0].clientY;
+
+        const deltaX =
+            currentX -
+            touchX;
+
+        const deltaY =
+            currentY -
+            touchY;
+
+        rotation +=
+            deltaX * 0.002;
+
+        offsetX +=
+            deltaX * 0.12;
+
+        offsetY +=
+            deltaY * 0.12;
+
+        touchX =
+            currentX;
+
+        touchY =
+            currentY;
+
+    }
+);
+
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
+
+resizeCanvas();
+
+generateStars();
+
+generateDust();
+
+generateNebulae();
+
+requestAnimationFrame(
+    draw
+);
+
+</script>
+
+</body>
+
+</html>
