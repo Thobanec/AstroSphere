@@ -1,4 +1,5 @@
 ﻿from astrosphere.ai import (
+    AICapabilityPlanItem,
     AIOrchestrationRequest,
     AIOrchestrationResult,
     orchestrate_ai_request,
@@ -204,4 +205,72 @@ def test_orchestrate_uses_all_available_capabilities_when_unspecified(
     assert result.capabilities == (
         "context",
         "relationships",
+    )
+
+def test_orchestrate_executes_planner_output(monkeypatch):
+    planned = (
+        AICapabilityPlanItem(
+            capability_id="relationships",
+            reason="Test planner selection.",
+            parameters={"test": True},
+            execution_order=1,
+        ),
+    )
+
+    executed = []
+
+    def fake_plan(request):
+        return planned
+
+    def fake_execute(
+        context,
+        capability_id,
+        observation_time=None,
+        parameters=None,
+    ):
+        executed.append(
+            (
+                capability_id,
+                parameters,
+            )
+        )
+
+        return CapabilityExecutionResult(
+            object_id=context.object.id,
+            capability_id=capability_id,
+            result={"status": "mocked"},
+        )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.plan_ai_capabilities",
+        fake_plan,
+    )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.execute_ai_capability",
+        fake_execute,
+    )
+
+    request = AIOrchestrationRequest(
+        question="Test planner authority.",
+        object_id="earth",
+        capability_ids=("scientific-data",),
+    )
+
+    result = orchestrate_ai_request(request)
+
+    assert executed == [
+        (
+            "relationships",
+            {"test": True},
+        )
+    ]
+
+    assert result.capabilities == (
+        "relationships",
+    )
+
+    assert len(result.results) == 1
+    assert result.results[0].capability_id == (
+        "relationships"
     )

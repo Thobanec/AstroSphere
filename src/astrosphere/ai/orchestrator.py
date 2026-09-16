@@ -8,6 +8,9 @@ from astrosphere.ai.orchestration import (
     AIOrchestrationRequest,
     AIOrchestrationResult,
 )
+from astrosphere.ai.planner import (
+    plan_ai_capabilities,
+)
 
 
 def orchestrate_ai_request(request):
@@ -25,49 +28,28 @@ def orchestrate_ai_request(request):
         observation_time=request.observation_time,
     )
 
-    available_capabilities = {
-        capability.id
-        for capability in context.capabilities
-    }
-
-    requested_capabilities = (
-        request.capability_ids
-        if request.capability_ids
-        else tuple(
-            capability.id
-            for capability in context.capabilities
-        )
-    )
-
-    normalized_capabilities = tuple(
-        capability_id.strip().lower()
-        for capability_id in requested_capabilities
-        if isinstance(capability_id, str)
-        and capability_id.strip()
-    )
-
-    for capability_id in normalized_capabilities:
-        if capability_id not in available_capabilities:
-            raise ValueError(
-                f"Capability is not available for the "
-                f"grounded object: {capability_id}"
-            )
+    plan = plan_ai_capabilities(request)
 
     results = []
 
-    for capability_id in normalized_capabilities:
+    for plan_item in plan:
         result = execute_ai_capability(
             context,
-            capability_id,
+            plan_item.capability_id,
             observation_time=request.observation_time,
-            parameters=request.parameters,
+            parameters=plan_item.parameters,
         )
         results.append(result)
+
+    capabilities = tuple(
+        plan_item.capability_id
+        for plan_item in plan
+    )
 
     return AIOrchestrationResult(
         question=context.question,
         object_id=context.object.id,
-        capabilities=normalized_capabilities,
+        capabilities=capabilities,
         results=tuple(results),
         observation_time=context.observation_time,
     )

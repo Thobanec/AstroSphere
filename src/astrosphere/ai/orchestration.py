@@ -7,6 +7,14 @@ from astrosphere.capabilities.results import (
 
 
 @dataclass(frozen=True)
+class AICapabilityPlanItem:
+    capability_id: str
+    reason: str
+    parameters: dict[str, Any] | None = None
+    execution_order: int = 0
+
+
+@dataclass(frozen=True)
 class AIOrchestrationRequest:
     question: str
     object_id: str
