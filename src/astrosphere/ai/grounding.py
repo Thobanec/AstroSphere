@@ -1,4 +1,5 @@
-from astrosphere.ai.context import AIContext
+﻿from astrosphere.ai.context import AIContext
+from astrosphere.ai.time import normalize_observation_time
 from astrosphere.capabilities.registry import (
     get_capabilities_for_object,
 )
@@ -23,6 +24,10 @@ def build_ai_context(
 
     object_id = object_id.strip().lower()
 
+    normalized_time = normalize_observation_time(
+        observation_time
+    )
+
     celestial_object = get_celestial_object(object_id)
 
     if celestial_object is None:
@@ -32,7 +37,7 @@ def build_ai_context(
 
     celestial_context = get_celestial_object_context(
         object_id,
-        observation_time=observation_time,
+        observation_time=normalized_time,
     )
 
     scientific_data = celestial_context.get(
@@ -53,7 +58,7 @@ def build_ai_context(
 
     return AIContext(
         question=question.strip(),
-        observation_time=observation_time,
+        observation_time=normalized_time,
         object=celestial_object,
         scientific_data=scientific_data,
         capabilities=tuple(capabilities),
