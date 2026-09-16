@@ -1,9 +1,12 @@
-﻿from astrosphere.ai.orchestration import (
+﻿from astrosphere.ai.grounding import (
+    build_ai_context,
+)
+from astrosphere.ai.intent_selector import (
+    select_capability_intents,
+)
+from astrosphere.ai.orchestration import (
     AICapabilityPlanItem,
     AIOrchestrationRequest,
-)
-from astrosphere.ai.grounding import (
-    build_ai_context,
 )
 
 
@@ -27,14 +30,22 @@ def plan_ai_capabilities(request):
         for capability in context.capabilities
     }
 
-    requested_capabilities = (
-        request.capability_ids
-        if request.capability_ids
-        else tuple(
+    intents = select_capability_intents(
+        context.question
+    )
+
+    if request.capability_ids:
+        requested_capabilities = request.capability_ids
+    elif intents:
+        requested_capabilities = tuple(
+            intent.capability_id
+            for intent in intents
+        )
+    else:
+        requested_capabilities = tuple(
             capability.id
             for capability in context.capabilities
         )
-    )
 
     normalized_capabilities = tuple(
         capability_id.strip().lower()
@@ -42,6 +53,11 @@ def plan_ai_capabilities(request):
         if isinstance(capability_id, str)
         and capability_id.strip()
     )
+
+    intent_reasons = {
+        intent.capability_id: intent.reason
+        for intent in intents
+    }
 
     plan = []
 
@@ -55,13 +71,16 @@ def plan_ai_capabilities(request):
                 f"grounded object: {capability_id}"
             )
 
+        reason = intent_reasons.get(
+            capability_id,
+            f"Capability selected for the question: "
+            f"{context.question}",
+        )
+
         plan.append(
             AICapabilityPlanItem(
                 capability_id=capability_id,
-                reason=(
-                    f"Capability selected for the question: "
-                    f"{context.question}"
-                ),
+                reason=reason,
                 parameters=request.parameters,
                 execution_order=execution_order,
             )

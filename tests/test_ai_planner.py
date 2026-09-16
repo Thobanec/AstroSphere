@@ -21,7 +21,9 @@ def test_plan_single_capability():
     )
     assert plan[0].capability_id == "scientific-data"
     assert plan[0].execution_order == 1
-    assert "Earth's scientific state" in plan[0].reason
+    assert plan[0].reason == (
+        "Question matched the 'scientific state' intent."
+    )
 
 
 def test_plan_multiple_capabilities_preserves_order():
@@ -138,3 +140,106 @@ def test_plan_returns_immutable_tuple():
     plan = plan_ai_capabilities(request)
 
     assert isinstance(plan, tuple)
+
+def test_plan_question_selects_tracking():
+    request = AIOrchestrationRequest(
+        question="Where is Apophis?",
+        object_id="asteroid:99942",
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == ["tracking"]
+
+    assert plan[0].reason == (
+        "Question matched the 'where is' intent."
+    )
+
+
+def test_plan_question_selects_trajectory():
+    request = AIOrchestrationRequest(
+        question="Show me the trajectory of Apophis.",
+        object_id="asteroid:99942",
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == ["trajectory"]
+
+
+def test_plan_question_selects_close_approaches():
+    request = AIOrchestrationRequest(
+        question="When is Apophis's closest approach to Earth?",
+        object_id="asteroid:99942",
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == ["close-approaches"]
+
+
+def test_plan_question_selects_space_weather():
+    request = AIOrchestrationRequest(
+        question="What is the current solar wind speed?",
+        object_id="earth",
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == ["space-weather"]
+
+
+def test_plan_question_selects_scientific_data():
+    request = AIOrchestrationRequest(
+        question="Show me the position and velocity.",
+        object_id="earth",
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == ["scientific-data"]
+
+
+def test_plan_question_selects_context_for_generic_question():
+    request = AIOrchestrationRequest(
+        question="Tell me about Earth.",
+        object_id="earth",
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == ["context"]
+
+
+def test_plan_rejects_intent_not_supported_by_object():
+    request = AIOrchestrationRequest(
+        question="Show the trajectory of Earth.",
+        object_id="earth",
+    )
+
+    try:
+        plan_ai_capabilities(request)
+    except ValueError as exc:
+        assert "not available" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected unsupported intent to be rejected."
+        )
