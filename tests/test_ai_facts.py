@@ -1,0 +1,529 @@
+﻿from datetime import datetime, timezone
+
+import pytest
+
+from astrosphere.ai.fact_extractor import (
+    extract_ai_facts,
+)
+from astrosphere.capabilities.results import (
+    CapabilityExecutionResult,
+)
+from astrosphere.models.scientific import (
+    DataSource,
+    Geomagnetic,
+    MagneticField,
+    Observation,
+    Position,
+    ScientificData,
+    ScientificProvenance,
+    SolarWind,
+    SpaceWeatherData,
+    Velocity,
+)
+
+
+def test_extract_scientific_position_and_velocity():
+    source = DataSource(
+        name="Test Source",
+        provider="Test Provider",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        observation=Observation(
+            observation_time="2026-09-16T10:00:00+00:00",
+            source=source,
+        ),
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+            reference_frames=("ICRF",),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    assert fact_set.object_id == "earth"
+    assert fact_set.observation_time == (
+        "2026-09-16T10:00:00+00:00"
+    )
+
+    names = [fact.name for fact in fact_set.facts]
+
+    assert names == [
+        "position_x",
+        "position_y",
+        "position_z",
+        "velocity_x",
+        "velocity_y",
+        "velocity_z",
+    ]
+
+    assert fact_set.facts[0].value == 1.0
+    assert fact_set.facts[0].unit == "AU"
+    assert fact_set.facts[0].metadata["frame"] == "ICRF"
+
+    assert fact_set.facts[3].value == 4.0
+    assert fact_set.facts[3].unit == "AU/day"
+
+    assert fact_set.provenance == (source,)
+
+
+def test_extract_space_weather_facts():
+    source = DataSource(
+        name="NOAA SWPC",
+        provider="NOAA",
+    )
+
+    weather = SpaceWeatherData(
+        observation_time="2026-09-16T10:00:00+00:00",
+        solar_wind=SolarWind(
+            speed_km_s=450.0,
+            density_cm3=5.0,
+            temperature_k=100000.0,
+        ),
+        magnetic_field=MagneticField(
+            bt_nt=6.0,
+            bz_nt=-2.5,
+        ),
+        geomagnetic=Geomagnetic(
+            kp=3.0,
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+            reference_frames=("GSM",),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="space-weather",
+        result=weather,
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    names = [fact.name for fact in fact_set.facts]
+
+    assert names == [
+        "solar_wind_speed",
+        "solar_wind_density",
+        "solar_wind_temperature",
+        "magnetic_field_bt",
+        "magnetic_field_bz_gsm",
+        "geomagnetic_kp",
+    ]
+
+    assert fact_set.facts[0].value == 450.0
+    assert fact_set.facts[0].unit == "km/s"
+
+    bz = fact_set.facts[4]
+    assert bz.value == -2.5
+    assert bz.unit == "nT"
+    assert bz.metadata["frame"] == "GSM"
+
+    assert fact_set.provenance == (source,)
+
+
+def test_extract_trajectory_facts():
+    trajectory = {
+        "observation_time": (
+            "2026-09-16T10:00:00+00:00"
+        ),
+        "orbital_period_days": 323.6,
+        "samples": 181,
+        "coordinate_frame": (
+            "heliocentric_ecliptic"
+        ),
+        "points": [
+            {
+                "observation_time": (
+                    "2026-09-16T10:00:00+00:00"
+                ),
+                "x": 1.0,
+                "y": 2.0,
+                "z": 3.0,
+            }
+        ],
+    }
+
+    result = CapabilityExecutionResult(
+        object_id="asteroid:99942",
+        capability_id="trajectory",
+        result=trajectory,
+    )
+
+    fact_set = extract_ai_facts(
+        "asteroid:99942",
+        (result,),
+    )
+
+    names = [fact.name for fact in fact_set.facts]
+
+    assert names == [
+        "trajectory_observation_time",
+        "orbital_period",
+        "trajectory_sample_count",
+        "trajectory_coordinate_frame",
+    ]
+
+    assert fact_set.facts[1].value == 323.6
+    assert fact_set.facts[1].unit == "days"
+    assert fact_set.facts[2].value == 181
+
+
+def test_extract_orbital_analysis_facts():
+    analysis = [
+        {
+            "date": datetime(
+                2026,
+                9,
+                16,
+            ),
+            "distance_km": 150000000.0,
+            "relative_velocity_km_s": 29.5,
+        },
+    ]
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="orbital-analysis",
+        result=analysis,
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    names = [fact.name for fact in fact_set.facts]
+
+    assert names == [
+        "analysis_date",
+        "body_distance",
+        "relative_velocity",
+    ]
+
+    assert fact_set.facts[1].value == 150000000.0
+    assert fact_set.facts[1].unit == "km"
+
+    assert fact_set.facts[2].value == 29.5
+    assert fact_set.facts[2].unit == "km/s"
+
+
+def test_unknown_capability_produces_no_facts():
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="unknown-capability",
+        result={
+            "secret_value": 123,
+        },
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    assert fact_set.facts == ()
+    assert fact_set.provenance == ()
+
+
+def test_invalid_result_is_rejected():
+    with pytest.raises(ValueError):
+        extract_ai_facts(
+            "earth",
+            ("not-a-capability-result",),
+        )
+
+
+def test_empty_object_id_is_rejected():
+    with pytest.raises(ValueError):
+        extract_ai_facts(
+            " ",
+            (),
+        )
+
+
+def test_multiple_results_preserve_order_and_merge_provenance():
+    source = DataSource(
+        name="Test Source",
+        provider="Test",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+        ),
+    )
+
+    scientific_result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    weather = SpaceWeatherData(
+        observation_time="2026-09-16T10:00:00+00:00",
+        solar_wind=SolarWind(
+            speed_km_s=400.0,
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+        ),
+    )
+
+    weather_result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="space-weather",
+        result=weather,
+    )
+
+    fact_set = extract_ai_facts(
+        "EARTH",
+        (
+            scientific_result,
+            weather_result,
+        ),
+    )
+
+    assert fact_set.object_id == "earth"
+
+    assert fact_set.facts[0].name == "position_x"
+    assert fact_set.facts[3].name == "solar_wind_speed"
+
+    assert fact_set.provenance == (source,)
+
+
+def test_missing_scientific_components_do_not_create_facts():
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=None,
+        velocity=None,
+        provenance=None,
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    assert fact_set.facts == ()
+    assert fact_set.observation_time is None
+    assert fact_set.provenance == ()
+from astrosphere.ai.fact_extractor import (
+    extract_ai_facts,
+)
+from astrosphere.capabilities.results import (
+    CapabilityExecutionResult,
+)
+from astrosphere.models.close_approach import (
+    CloseApproach,
+)
+from astrosphere.models.scientific import (
+    DataSource,
+)
+
+
+def test_extract_close_approach_facts():
+    source = DataSource(
+        name="NASA/JPL SBDB Close Approach Data API",
+        provider="NASA/JPL CNEOS",
+    )
+
+    approach = CloseApproach(
+        object_id="asteroid:99942",
+        designation="99942",
+        fullname="99942 Apophis (2004 MN4)",
+        close_approach_time="2029-Apr-13 21:46",
+        distance_au=0.000254090910419299,
+        distance_min_au=0.000254068999976389,
+        distance_max_au=0.000254112821017663,
+        distance_km=38000.0,
+        distance_min_km=37996.0,
+        distance_max_km=38003.0,
+        relative_velocity_km_s=7.42253895678452,
+        orbit_id="123",
+        source=source,
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="asteroid:99942",
+        capability_id="close-approaches",
+        result=(approach,),
+    )
+
+    fact_set = extract_ai_facts(
+        "asteroid:99942",
+        (result,),
+    )
+
+    names = [
+        fact.name
+        for fact in fact_set.facts
+    ]
+
+    assert names == [
+        "close_approach_time",
+        "close_approach_distance",
+        "close_approach_distance_km",
+        "close_approach_relative_velocity",
+    ]
+
+    assert (
+        fact_set.facts[0].value
+        == "2029-Apr-13 21:46"
+    )
+
+    assert fact_set.facts[1].unit == "AU"
+    assert (
+        fact_set.facts[1].value
+        == 0.000254090910419299
+    )
+
+    assert fact_set.facts[2].unit == "km"
+    assert fact_set.facts[2].value == 38000.0
+
+    assert fact_set.facts[3].unit == "km/s"
+    assert (
+        fact_set.facts[3].value
+        == 7.42253895678452
+    )
+
+    assert (
+        fact_set.provenance
+        == (source,)
+    )
+
+
+def test_close_approach_facts_preserve_event_index():
+    approach_one = CloseApproach(
+        object_id="asteroid:99942",
+        designation="99942",
+        fullname="99942 Apophis",
+        close_approach_time="2029-Apr-13 21:46",
+        distance_au=0.000254,
+        distance_min_au=0.000253,
+        distance_max_au=0.000255,
+        distance_km=38000.0,
+        distance_min_km=37900.0,
+        distance_max_km=38100.0,
+        relative_velocity_km_s=7.4,
+        orbit_id="123",
+        source=None,
+    )
+
+    approach_two = CloseApproach(
+        object_id="asteroid:99942",
+        designation="99942",
+        fullname="99942 Apophis",
+        close_approach_time="2036-Apr-13 12:00",
+        distance_au=0.01,
+        distance_min_au=0.009,
+        distance_max_au=0.011,
+        distance_km=1495978.7,
+        distance_min_km=1346380.0,
+        distance_max_km=1645577.0,
+        relative_velocity_km_s=6.9,
+        orbit_id="124",
+        source=None,
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="asteroid:99942",
+        capability_id="close-approaches",
+        result=(
+            approach_one,
+            approach_two,
+        ),
+    )
+
+    fact_set = extract_ai_facts(
+        "asteroid:99942",
+        (result,),
+    )
+
+    assert len(fact_set.facts) == 8
+
+    first_event = fact_set.facts[:4]
+    second_event = fact_set.facts[4:]
+
+    assert all(
+        fact.metadata["index"] == 0
+        for fact in first_event
+    )
+
+    assert all(
+        fact.metadata["index"] == 1
+        for fact in second_event
+    )
+
+
+def test_close_approach_does_not_invent_missing_source():
+    approach = CloseApproach(
+        object_id="asteroid:99942",
+        designation="99942",
+        fullname="99942 Apophis",
+        close_approach_time="2029-Apr-13 21:46",
+        distance_au=0.000254,
+        distance_min_au=0.000253,
+        distance_max_au=0.000255,
+        distance_km=38000.0,
+        distance_min_km=37900.0,
+        distance_max_km=38100.0,
+        relative_velocity_km_s=7.4,
+        orbit_id=None,
+        source=None,
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="asteroid:99942",
+        capability_id="close-approaches",
+        result=(approach,),
+    )
+
+    fact_set = extract_ai_facts(
+        "asteroid:99942",
+        (result,),
+    )
+
+    assert len(fact_set.provenance) == 0

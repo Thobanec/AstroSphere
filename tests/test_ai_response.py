@@ -163,3 +163,134 @@ def test_compose_empty_results():
     assert isinstance(response, AIResponse)
     assert response.results == ()
     assert "No capability results" in response.answer
+
+
+def test_compose_renders_scientific_facts():
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    assert response.facts is not None
+    assert len(response.facts.facts) == 6
+
+    assert "position_x: 1.0 AU" in response.answer
+    assert "position_y: 2.0 AU" in response.answer
+    assert "position_z: 3.0 AU" in response.answer
+    assert "velocity_x: 4.0 AU/day" in response.answer
+
+
+def test_compose_renders_space_weather_facts():
+    context = build_ai_context(
+        "What is the current solar wind speed?",
+        "earth",
+    )
+
+    weather = SpaceWeatherData(
+        observation_time=(
+            "2026-09-16T10:00:00+00:00"
+        ),
+        solar_wind=SolarWind(
+            speed_km_s=450.0,
+            density_cm3=5.0,
+        ),
+        magnetic_field=MagneticField(
+            bt_nt=6.0,
+            bz_nt=-2.5,
+        ),
+        geomagnetic=Geomagnetic(
+            kp=3.0,
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="space-weather",
+        result=weather,
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    assert response.facts is not None
+    assert len(response.facts.facts) == 5
+
+    assert "solar_wind_speed: 450.0 km/s" in (
+        response.answer
+    )
+
+    assert "solar_wind_density: 5.0 cm^-3" in (
+        response.answer
+    )
+
+    assert "magnetic_field_bz_gsm: -2.5 nT" in (
+        response.answer
+    )
+
+    assert "geomagnetic_kp: 3.0" in response.answer
+
+
+def test_compose_does_not_invent_facts():
+    context = build_ai_context(
+        "What is Apophis?",
+        "asteroid:99942",
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="asteroid:99942",
+        capability_id="tracking",
+        result={
+            "status": "success",
+        },
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    assert response.facts is not None
+    assert response.facts.facts == ()
+
+    assert "position_x" not in response.answer
+    assert "velocity_x" not in response.answer
+from astrosphere.models.scientific import (
+    Geomagnetic,
+    MagneticField,
+    Position,
+    ScientificData,
+    SolarWind,
+    SpaceWeatherData,
+    Velocity,
+)

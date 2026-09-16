@@ -1,4 +1,7 @@
 ﻿from astrosphere.ai.context import AIContext
+from astrosphere.ai.fact_extractor import (
+    extract_ai_facts,
+)
 from astrosphere.ai.response import AIResponse
 from astrosphere.capabilities.results import (
     CapabilityExecutionResult,
@@ -30,40 +33,64 @@ def compose_ai_response(
                 "CapabilityExecutionResult instances."
             )
 
+    facts = extract_ai_facts(
+        context.object.id,
+        results,
+    )
+
     answer = _compose_answer(
         context,
         results,
+        facts,
     )
 
     provenance = list(context.provenance)
 
-    for result in results:
-        result_value = result.result
-
-        if isinstance(result_value, dict):
-            result_provenance = result_value.get(
-                "provenance"
-            )
-
-            if result_provenance:
-                for source in result_provenance:
-                    if source not in provenance:
-                        provenance.append(source)
+    for source in facts.provenance:
+        if source not in provenance:
+            provenance.append(source)
 
     return AIResponse(
         question=context.question,
         object_id=context.object.id,
         answer=answer,
-        observation_time=context.observation_time,
+        observation_time=(
+            facts.observation_time
+            if facts.observation_time is not None
+            else context.observation_time
+        ),
         results=results,
+        facts=facts,
         provenance=tuple(provenance),
         uncertainties=context.uncertainties,
+    )
+
+
+def _render_fact(fact):
+    if fact.unit:
+        return (
+            f"{fact.name}: "
+            f"{fact.value} "
+            f"{fact.unit}"
+        )
+
+    return (
+        f"{fact.name}: "
+        f"{fact.value}"
+    )
+
+
+def _render_facts(facts):
+    return "\n".join(
+        _render_fact(fact)
+        for fact in facts.facts
     )
 
 
 def _compose_answer(
     context,
     results,
+    facts,
 ):
     object_name = context.object.name
 
@@ -81,18 +108,26 @@ def _compose_answer(
     if len(capability_ids) == 1:
         capability_id = capability_ids[0]
 
-        return (
+        answer = (
             f"AstroSphere retrieved the "
             f"{capability_id} result for "
             f"{object_name}."
         )
+    else:
+        capability_text = ", ".join(
+            capability_ids
+        )
 
-    capability_text = ", ".join(
-        capability_ids
-    )
+        answer = (
+            f"AstroSphere retrieved the following "
+            f"capability results for {object_name}: "
+            f"{capability_text}."
+        )
+
+    if not facts.facts:
+        return answer
 
     return (
-        f"AstroSphere retrieved the following "
-        f"capability results for {object_name}: "
-        f"{capability_text}."
+        f"{answer}\n"
+        f"{_render_facts(facts)}"
     )
