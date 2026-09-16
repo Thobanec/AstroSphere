@@ -27,6 +27,7 @@ class AIOrchestrationRequest:
 class AIOrchestrationResult:
     question: str
     object_id: str
+    answer: str
     capabilities: tuple[str, ...] = ()
     results: tuple[CapabilityExecutionResult, ...] = ()
     observation_time: Any | None = None

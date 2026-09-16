@@ -11,6 +11,9 @@ from astrosphere.ai.orchestration import (
 from astrosphere.ai.planner import (
     plan_ai_capabilities,
 )
+from astrosphere.ai.response_composer import (
+    compose_ai_response,
+)
 
 
 def orchestrate_ai_request(request):
@@ -41,15 +44,21 @@ def orchestrate_ai_request(request):
         )
         results.append(result)
 
+    composed_response = compose_ai_response(
+        context,
+        tuple(results),
+    )
+
     capabilities = tuple(
         plan_item.capability_id
         for plan_item in plan
     )
 
     return AIOrchestrationResult(
-        question=context.question,
-        object_id=context.object.id,
+        question=composed_response.question,
+        object_id=composed_response.object_id,
+        answer=composed_response.answer,
         capabilities=capabilities,
-        results=tuple(results),
-        observation_time=context.observation_time,
+        results=composed_response.results,
+        observation_time=composed_response.observation_time,
     )

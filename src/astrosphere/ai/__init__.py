@@ -14,6 +14,12 @@ from astrosphere.ai.orchestrator import (
 from astrosphere.ai.planner import (
     plan_ai_capabilities,
 )
+from astrosphere.ai.response import (
+    AIResponse,
+)
+from astrosphere.ai.response_composer import (
+    compose_ai_response,
+)
 from astrosphere.ai.time import (
     normalize_observation_time,
 )
@@ -21,10 +27,12 @@ from astrosphere.ai.time import (
 
 __all__ = [
     "AIContext",
+    "AIResponse",
     "AICapabilityPlanItem",
     "AIOrchestrationRequest",
     "AIOrchestrationResult",
     "build_ai_context",
+    "compose_ai_response",
     "execute_ai_capability",
     "normalize_observation_time",
     "orchestrate_ai_request",

@@ -43,6 +43,10 @@ def test_orchestrate_single_capability(monkeypatch):
         "What is Earth's scientific state?"
     )
     assert result.object_id == "earth"
+    assert result.answer == (
+        "AstroSphere retrieved the "
+        "scientific-data result for Earth."
+    )
     assert result.capabilities == (
         "scientific-data",
     )
@@ -91,6 +95,12 @@ def test_orchestrate_multiple_capabilities(monkeypatch):
         "tracking",
         "close-approaches",
     ]
+
+    assert result.answer == (
+        "AstroSphere retrieved the following "
+        "capability results for Apophis: "
+        "scientific-data, tracking, close-approaches."
+    )
 
     assert result.capabilities == (
         "scientific-data",
@@ -207,6 +217,7 @@ def test_orchestrate_uses_all_available_capabilities_when_unspecified(
         "relationships",
     )
 
+
 def test_orchestrate_executes_planner_output(monkeypatch):
     planned = (
         AICapabilityPlanItem(
@@ -265,6 +276,11 @@ def test_orchestrate_executes_planner_output(monkeypatch):
             {"test": True},
         )
     ]
+
+    assert result.answer == (
+        "AstroSphere retrieved the "
+        "relationships result for Earth."
+    )
 
     assert result.capabilities == (
         "relationships",
