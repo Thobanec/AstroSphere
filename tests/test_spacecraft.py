@@ -78,6 +78,11 @@ def test_track_spacecraft():
 
 def test_get_spacecraft_tle(monkeypatch):
 
+    monkeypatch.setattr(
+        "astrosphere.astronomy.spacecraft._CELESTRAK_TLE_CACHE",
+        {},
+    )
+
     class FakeResponse:
 
         def __enter__(self):
