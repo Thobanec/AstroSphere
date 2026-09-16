@@ -1,0 +1,24 @@
+﻿from dataclasses import dataclass
+from typing import Any
+
+from astrosphere.capabilities.results import (
+    CapabilityExecutionResult,
+)
+
+
+@dataclass(frozen=True)
+class AIOrchestrationRequest:
+    question: str
+    object_id: str
+    capability_ids: tuple[str, ...] = ()
+    observation_time: Any | None = None
+    parameters: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class AIOrchestrationResult:
+    question: str
+    object_id: str
+    capabilities: tuple[str, ...] = ()
+    results: tuple[CapabilityExecutionResult, ...] = ()
+    observation_time: Any | None = None
