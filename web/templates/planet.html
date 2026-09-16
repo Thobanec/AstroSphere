@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -37,7 +37,7 @@
         <div class="brand">
 
             <div class="logo">
-                🌌
+                &#127756;
             </div>
 
             <div>
@@ -106,13 +106,13 @@
                 Scientific Data
             </button>
 
-            {% if earth_context %}
+            {% if celestial_context %}
             <button
                 type="button"
                 class="planet-tab"
-                data-tab="earth-context"
+                data-tab="object-context"
             >
-                Earth Context
+                Object Context
             </button>
             {% endif %}
 
@@ -612,217 +612,15 @@
         </section>
 
         {% endif %}
-        {% if earth_context %}
+        {% if celestial_context %}
 
         <!-- =================================================
-             EARTH OBSERVATION HUB
+             Object Context
              ================================================= -->
 
-        <section id="earthContext" class="analysis-card">
+        {% include "_celestial_object_context.html" %}
 
-            <div class="card-header">
-
-                <h3>
-                    Earth Observation Hub
-                </h3>
-
-                <p>
-                    Canonical Earth context and connected
-                    objects within the AstroSphere hierarchy.
-                </p>
-
-            </div>
-
-
-            <div class="form-grid">
-
-                <div class="form-group">
-
-                    <label>
-                        Canonical Object
-                    </label>
-
-                    <div>
-                        {{ earth_context.object.name }}
-                        ({{ earth_context.object.id }})
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Parent
-                    </label>
-
-                    <div>
-
-                        {% if earth_context.object.parent_id == "sun" %}
-                            Sun
-                        {% elif earth_context.object.parent_id %}
-                            {{ earth_context.object.parent_id }}
-                        {% else %}
-                            None
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        System
-                    </label>
-
-                    <div>
-                        {% if earth_context.object.system_id == "solar-system" %}
-                            Solar System
-                        {% elif earth_context.object.system_id %}
-                            {{ earth_context.object.system_id }}
-                        {% else %}
-                            None
-                        {% endif %}
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Reference Frame
-                    </label>
-
-                    <div>
-
-                        {% if earth_context.scientific_data.position %}
-                            {{ earth_context.scientific_data.position.frame }}
-                        {% else %}
-                            Unavailable
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="card-header">
-
-                <h3>
-                    Scientific Snapshot
-                </h3>
-
-                <p>
-                    Current Earth position and velocity from the
-                    canonical scientific data layer.
-                </p>
-
-            </div>
-
-
-            {% if earth_context.scientific_data %}
-
-            <div class="form-grid">
-
-                <div class="form-group">
-
-                    <label>
-                        Observation Time
-                    </label>
-
-                    <div>
-                        {% if earth_context.scientific_data.observation %}
-                            {{ earth_context.scientific_data.observation.observation_time }}
-                        {% else %}
-                            Unavailable
-                        {% endif %}
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Data Source
-                    </label>
-
-                    <div>
-                        {% if earth_context.scientific_data.observation
-                              and earth_context.scientific_data.observation.source %}
-                            {{ earth_context.scientific_data.observation.source.name }}
-                        {% else %}
-                            Unavailable
-                        {% endif %}
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Position
-                    </label>
-
-                    <div>
-                        {% if earth_context.scientific_data.position %}
-                            <div>
-                                X {{ "%.6f"|format(earth_context.scientific_data.position.x) }}
-                                {{ earth_context.scientific_data.position.unit }}
-                            </div>
-                            <div>
-                                Y {{ "%.6f"|format(earth_context.scientific_data.position.y) }}
-                                {{ earth_context.scientific_data.position.unit }}
-                            </div>
-                            <div>
-                                Z {{ "%.6f"|format(earth_context.scientific_data.position.z) }}
-                                {{ earth_context.scientific_data.position.unit }}
-                            </div>
-                        {% else %}
-                            Unavailable
-                        {% endif %}
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Velocity
-                    </label>
-
-                    <div>
-                        {% if earth_context.scientific_data.velocity %}
-                            <div>
-                                X {{ "%.9f"|format(earth_context.scientific_data.velocity.x) }}
-                                {{ earth_context.scientific_data.velocity.unit }}
-                            </div>
-                            <div>
-                                Y {{ "%.9f"|format(earth_context.scientific_data.velocity.y) }}
-                                {{ earth_context.scientific_data.velocity.unit }}
-                            </div>
-                            <div>
-                                Z {{ "%.9f"|format(earth_context.scientific_data.velocity.z) }}
-                                {{ earth_context.scientific_data.velocity.unit }}
-                            </div>
-                        {% else %}
-                            Unavailable
-                        {% endif %}
-                    </div>
-
-                </div>
-
-            </div>
-
-            {% endif %}
-
+{% if celestial_context.object.id == "earth" %}
 
             <!-- =================================================
                  EARTH SPACE WEATHER
@@ -989,95 +787,10 @@
             </div>
 
 
-            <div class="card-header">
-
-                <h3>
-                    Hierarchy
-                </h3>
-
-            </div>
+            {% endif %}
 
 
-            <div class="form-grid">
-
-                <div class="form-group">
-
-                    <label>
-                        Ancestors
-                    </label>
-
-                    <div>
-
-                        {% if earth_context.ancestors %}
-
-                            {% for ancestor in earth_context.ancestors %}
-
-                                <a
-                                    href="{{ celestial_url(ancestor.id) }}"
-                                    class="object-explore-link"
-                                >
-                                    {{ ancestor.name }}
-                                </a>
-
-                                {% if not loop.last %}
-                                    /
-                                {% endif %}
-
-                            {% endfor %}
-
-                        {% else %}
-                            None
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Connected Objects
-                    </label>
-
-                    <div>
-
-                        {% if earth_context.children %}
-
-                            {% for child in earth_context.children %}
-
-                                {% set child_url = celestial_url(child.id) %}
-
-                                {% if child_url %}
-
-                                    <a
-                                        href="{{ child_url }}"
-                                        class="object-explore-link"
-                                    >
-                                        {{ child.name }}
-                                    </a>
-
-                                {% else %}
-
-                                    {{ child.name }}
-
-                                {% endif %}
-
-                                {% if not loop.last %}
-                                    ,
-                                {% endif %}
-
-                            {% endfor %}
-
-                        {% else %}
-                            None
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            </div>
+            {% include "_celestial_relationships.html" %}
 
         </section>
 
@@ -1225,7 +938,7 @@
                 onclick="window.location.href='/galaxy'"
             >
 
-                ← Solar System Overview
+                &#8593; Solar System Overview
 
             </button>
 
@@ -1236,7 +949,7 @@
                 onclick="window.location.href='/'"
             >
 
-                ← Orbital Analysis
+                &#8593; Orbital Analysis
 
             </button>
 
@@ -1254,7 +967,7 @@
     <footer>
 
         <p>
-            AstroSphere · Solar System Analysis
+            AstroSphere &#183; Solar System Analysis
         </p>
 
     </footer>
@@ -1289,8 +1002,8 @@
         "planetScientificProperties"
     ];
 
-    const earthContextSections = [
-        "earthContext"
+    const objectContextSections = [
+        "celestialObjectContext"
     ];
 
     function setSectionVisibility(sectionIds, visible) {
@@ -1318,17 +1031,17 @@
             isOverview
         );
 
-        const isEarthContext =
-            tabName === "earth-context";
+        const isObjectContext =
+            tabName === "object-context";
 
         setSectionVisibility(
             scientificSections,
-            !isOverview && !isEarthContext
+            !isOverview && !isObjectContext
         );
 
         setSectionVisibility(
-            earthContextSections,
-            isEarthContext
+            objectContextSections,
+            isObjectContext
         );
 
         tabButtons.forEach(function (button) {
@@ -1627,3 +1340,4 @@
 
 })();
 </script>
+

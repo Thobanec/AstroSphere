@@ -1,0 +1,358 @@
+<section id="celestialObjectContext" class="analysis-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Object Context
+                </h3>
+
+                <p>
+                    Canonical Object Context and connected
+                    objects within the AstroSphere hierarchy.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Canonical Object
+                    </label>
+
+                    <div>
+                        {{ celestial_context.object.name }}
+                        ({{ celestial_context.object.id }})
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Parent
+                    </label>
+
+                    <div>
+
+                        {% if celestial_context.parent %}
+
+                            {% set parent_url = celestial_url(celestial_context.parent.id) %}
+
+                            {% if parent_url %}
+
+                                <a
+                                    href="{{ parent_url }}"
+                                    class="object-explore-link"
+                                >
+                                    {{ celestial_context.parent.name }}
+                                </a>
+
+                            {% else %}
+
+                                {{ celestial_context.parent.name }}
+
+                            {% endif %}
+
+                        {% else %}
+                            None
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        System
+                    </label>
+
+                    <div>
+
+                        {% if celestial_context.system %}
+
+                            {% set system_url = celestial_url(celestial_context.system.id) %}
+
+                            {% if system_url %}
+
+                                <a
+                                    href="{{ system_url }}"
+                                    class="object-explore-link"
+                                >
+                                    {{ celestial_context.system.name }}
+                                </a>
+
+                            {% else %}
+
+                                {{ celestial_context.system.name }}
+
+                            {% endif %}
+
+                        {% else %}
+                            None
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Reference Frame
+                    </label>
+
+                    <div>
+
+                        {% if celestial_context.scientific_data.position %}
+                            {{ celestial_context.scientific_data.position.frame }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-header">
+
+                <h3>
+                    Scientific Snapshot
+                </h3>
+
+                <p>
+                    Current {{ celestial_context.object.name }} position and velocity
+                    from the canonical scientific data layer.
+                </p>
+
+            </div>
+
+
+            {% if celestial_context.scientific_data %}
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Observation Time
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.observation %}
+                            {{ celestial_context.scientific_data.observation.observation_time }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Data Source
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.observation
+                              and celestial_context.scientific_data.observation.source %}
+                            {{ celestial_context.scientific_data.observation.source.name }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Position
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.position %}
+                            <div>
+                                X {{ "%.6f"|format(celestial_context.scientific_data.position.x) }}
+                                {{ celestial_context.scientific_data.position.unit }}
+                            </div>
+                            <div>
+                                Y {{ "%.6f"|format(celestial_context.scientific_data.position.y) }}
+                                {{ celestial_context.scientific_data.position.unit }}
+                            </div>
+                            <div>
+                                Z {{ "%.6f"|format(celestial_context.scientific_data.position.z) }}
+                                {{ celestial_context.scientific_data.position.unit }}
+                            </div>
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Velocity
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.velocity %}
+                            <div>
+                                X {{ "%.9f"|format(celestial_context.scientific_data.velocity.x) }}
+                                {{ celestial_context.scientific_data.velocity.unit }}
+                            </div>
+                            <div>
+                                Y {{ "%.9f"|format(celestial_context.scientific_data.velocity.y) }}
+                                {{ celestial_context.scientific_data.velocity.unit }}
+                            </div>
+                            <div>
+                                Z {{ "%.9f"|format(celestial_context.scientific_data.velocity.z) }}
+                                {{ celestial_context.scientific_data.velocity.unit }}
+                            </div>
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-header">
+
+                <h3>
+                    Provenance
+                </h3>
+
+                <p>
+                    Source and reference metadata for the canonical
+                    scientific data presented above.
+                </p>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Provider
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.observation
+                              and celestial_context.scientific_data.observation.source
+                              and celestial_context.scientific_data.observation.source.provider %}
+                            {{ celestial_context.scientific_data.observation.source.provider }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Dataset
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.observation
+                              and celestial_context.scientific_data.observation.source
+                              and celestial_context.scientific_data.observation.source.dataset %}
+                            {{ celestial_context.scientific_data.observation.source.dataset }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Version
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.observation
+                              and celestial_context.scientific_data.observation.source
+                              and celestial_context.scientific_data.observation.source.version %}
+                            {{ celestial_context.scientific_data.observation.source.version }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Upstream Source
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.observation
+                              and celestial_context.scientific_data.observation.source
+                              and celestial_context.scientific_data.observation.source.upstream_source %}
+                            {{ celestial_context.scientific_data.observation.source.upstream_source }}
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Reference Frames
+                    </label>
+
+                    <div>
+                        {% if celestial_context.scientific_data.provenance
+                              and celestial_context.scientific_data.provenance.reference_frames %}
+
+                            {% for frame in celestial_context.scientific_data.provenance.reference_frames %}
+
+                                {{ frame }}
+
+                                {% if not loop.last %}
+                                    ,
+                                {% endif %}
+
+                            {% endfor %}
+
+                        {% else %}
+                            Unavailable
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endif %}

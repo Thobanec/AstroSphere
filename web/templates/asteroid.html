@@ -73,6 +73,12 @@
         </section>
 
 
+        {% if celestial_context %}
+            {% include "_celestial_object_context.html" %}
+            {% include "_celestial_relationships.html" %}
+        {% endif %}
+
+
         <!-- =====================================================
              ASTEROID INFORMATION
              ===================================================== -->
@@ -175,7 +181,7 @@
             <div class="status-card">
 
                 <div class="status-icon">
-                    🌍
+                    🌍
                 </div>
 
                 <div>

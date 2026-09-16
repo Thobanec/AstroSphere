@@ -72,6 +72,12 @@
         </section>
 
 
+        {% if celestial_context %}
+            {% include "_celestial_object_context.html" %}
+            {% include "_celestial_relationships.html" %}
+        {% endif %}
+
+
         <section class="analysis-card">
 
             <div class="card-header">

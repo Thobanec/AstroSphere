@@ -28,8 +28,12 @@ from astrosphere.scientific.service import (
     get_ephemeris_data_source,
 )
 
-from astrosphere.scientific.earth import (
-    get_earth_context,
+from astrosphere.scientific.context import (
+    get_celestial_object_context,
+)
+
+from astrosphere.models.celestial_registry import (
+    get_celestial_object,
 )
 
 from astrosphere.analysis_config import (
@@ -136,10 +140,30 @@ def spacecraft_tracking_page():
             ),
         )
 
+    celestial_context = None
+
+    canonical_object_id = (
+        f"spacecraft:{norad_id}"
+    )
+
+    if get_celestial_object(
+        canonical_object_id
+    ) is not None:
+
+        celestial_context = (
+            get_celestial_object_context(
+                canonical_object_id,
+                observation_time=datetime.fromisoformat(
+                    result["observation_time"]
+                ),
+            )
+        )
+
     return render_template(
         "spacecraft.html",
         spacecraft=result,
         norad_id=norad_id,
+        celestial_context=celestial_context,
     )
 
 @app.route("/asteroid")
@@ -174,9 +198,29 @@ def asteroid_tracking_page():
             message=str(error),
         )
 
+    celestial_context = None
+
+    canonical_object_id = (
+        f"asteroid:{designation}"
+    )
+
+    if get_celestial_object(
+        canonical_object_id
+    ) is not None:
+
+        celestial_context = (
+            get_celestial_object_context(
+                canonical_object_id,
+                observation_time=datetime.fromisoformat(
+                    result["observation_time"]
+                ),
+            )
+        )
+
     return render_template(
         "asteroid.html",
         asteroid=result,
+        celestial_context=celestial_context,
     )
 
 @app.route("/planet/<planet_name>")
@@ -210,18 +254,12 @@ def planet_detail(planet_name):
 
     body_position = body.at(now)
 
-    scientific_data = get_scientific_data(
-        planet.name,
+    celestial_context = get_celestial_object_context(
+        planet_name,
         observation_time=now,
     )
 
-    earth_context = (
-        get_earth_context(
-            observation_time=now,
-        )
-        if planet.name == "Earth"
-        else None
-    )
+    scientific_data = celestial_context["scientific_data"]
 
 
     distance_from_sun = calculate_distance_km(
@@ -253,7 +291,7 @@ def planet_detail(planet_name):
 
         scientific_data=scientific_data,
 
-        earth_context=earth_context,
+        celestial_context=celestial_context,
 
         distance_from_sun=distance_from_sun,
 

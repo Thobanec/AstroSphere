@@ -1,0 +1,89 @@
+            <div class="card-header">
+
+                <h3>
+                    Hierarchy
+                </h3>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Ancestors
+                    </label>
+
+                    <div>
+
+                        {% if celestial_context.ancestors %}
+
+                            {% for ancestor in celestial_context.ancestors %}
+
+                                <a
+                                    href="{{ celestial_url(ancestor.id) }}"
+                                    class="object-explore-link"
+                                >
+                                    {{ ancestor.name }}
+                                </a>
+
+                                {% if not loop.last %}
+                                    /
+                                {% endif %}
+
+                            {% endfor %}
+
+                        {% else %}
+                            None
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Children
+                    </label>
+
+                    <div>
+
+                        {% if celestial_context.children %}
+
+                            {% for child in celestial_context.children %}
+
+                                {% set child_url = celestial_url(child.id) %}
+
+                                {% if child_url %}
+
+                                    <a
+                                        href="{{ child_url }}"
+                                        class="object-explore-link"
+                                    >
+                                        {{ child.name }}
+                                    </a>
+
+                                {% else %}
+
+                                    {{ child.name }}
+
+                                {% endif %}
+
+                                {% if not loop.last %}
+                                    ,
+                                {% endif %}
+
+                            {% endfor %}
+
+                        {% else %}
+                            None
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>

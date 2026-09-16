@@ -37,6 +37,9 @@ from astrosphere.models.celestial_registry import (
 from astrosphere.models.celestial_serialization import (
     celestial_object_to_dict,
 )
+from astrosphere.models.celestial_context_serialization import (
+    celestial_object_context_to_dict,
+)
 
 from astrosphere.overview import (
     generate_solar_system_overview,
@@ -60,6 +63,9 @@ from astrosphere.scientific.spacecraft import (
 from astrosphere.scientific.close_approaches import (
     get_close_approach_data,
 )
+from astrosphere.scientific.context import (
+    get_celestial_object_context,
+)
 from astrosphere.scientific.earth import (
     get_earth_context,
 )
@@ -68,6 +74,15 @@ from astrosphere.scientific.space_weather import (
 )
 from astrosphere.scientific.service import (
     get_scientific_data,
+)
+from astrosphere.capabilities import (
+    get_capabilities_for_object,
+)
+from astrosphere.capabilities.execution import (
+    CapabilityExecutionRequest,
+)
+from astrosphere.capabilities.runner import (
+    execute_capability,
 )
 
 
@@ -116,6 +131,173 @@ def celestial_object_detail(object_id):
             "error": "Celestial object was not found.",
         }
     ), 404
+
+
+@api.get("/celestial-objects/<object_id>/capabilities")
+def celestial_object_capabilities(object_id):
+    object_id = object_id.strip().lower()
+
+    obj = get_celestial_object(object_id)
+
+    if obj is None:
+        return jsonify(
+            {
+                "error": "Unknown celestial object.",
+            }
+        ), 404
+
+    capabilities = get_capabilities_for_object(object_id)
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": {
+                "object": celestial_object_to_dict(obj),
+                "count": len(capabilities),
+                "capabilities": [
+                    {
+                        "id": capability.id,
+                        "name": capability.name,
+                        "description": capability.description,
+                    }
+                    for capability in capabilities
+                ],
+            },
+        }
+    )
+
+
+@api.post("/capabilities/execute")
+def capability_execute():
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Request body must be a JSON object.",
+            }
+        ), 400
+
+    object_id = data.get("object_id")
+    capability_id = data.get("capability_id")
+
+    if not isinstance(object_id, str) or not object_id.strip():
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Object ID is required.",
+            }
+        ), 400
+
+    if not isinstance(capability_id, str) or not capability_id.strip():
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Capability ID is required.",
+            }
+        ), 400
+
+    request_object = CapabilityExecutionRequest(
+        object_id=object_id,
+        capability_id=capability_id,
+        observation_time=data.get("observation_time"),
+        parameters=data.get("parameters"),
+    )
+
+    try:
+        execution_result = execute_capability(
+            request_object
+        )
+    except (TypeError, ValueError) as exc:
+        return jsonify(
+            {
+                "status": "error",
+                "error": str(exc),
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": {
+                "object_id": execution_result.object_id,
+                "capability_id": execution_result.capability_id,
+                "result": execution_result.result,
+                "metadata": execution_result.metadata,
+            },
+        }
+    )
+
+
+@api.get("/celestial-objects/<object_id>/context")
+def celestial_object_context(object_id):
+    observation_time = None
+
+    observation_time_text = (
+        request.args.get(
+            "observation_time",
+            "",
+        ).strip()
+    )
+
+    if observation_time_text:
+        try:
+            normalized_time = (
+                observation_time_text.replace(
+                    "Z",
+                    "+00:00",
+                )
+            )
+
+            observation_time = datetime.fromisoformat(
+                normalized_time
+            )
+
+            if observation_time.tzinfo is None:
+                observation_time = (
+                    observation_time.replace(
+                        tzinfo=timezone.utc
+                    )
+                )
+            else:
+                observation_time = (
+                    observation_time.astimezone(
+                        timezone.utc
+                    )
+                )
+
+        except ValueError:
+            return jsonify(
+                {
+                    "error": (
+                        "Invalid observation_time. "
+                        "Use ISO-8601 format."
+                    ),
+                }
+            ), 400
+
+    try:
+        context = get_celestial_object_context(
+            object_id,
+            observation_time=observation_time,
+        )
+
+    except ValueError as exc:
+        return jsonify(
+            {
+                "error": str(exc),
+            }
+        ), 404
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": celestial_object_context_to_dict(
+                context
+            ),
+        }
+    )
 
 
 @api.get("/celestial-objects/<object_id>/relationships")
