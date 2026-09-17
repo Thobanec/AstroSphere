@@ -31,7 +31,8 @@ def plan_ai_capabilities(request):
     }
 
     intents = select_capability_intents(
-        context.question
+        context.question,
+        available_capabilities=available_capabilities,
     )
 
     if request.capability_ids:

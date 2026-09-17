@@ -84,6 +84,15 @@ from astrosphere.capabilities.execution import (
 from astrosphere.capabilities.runner import (
     execute_capability,
 )
+from astrosphere.ai.orchestrator import (
+    orchestrate_ai_request,
+)
+from astrosphere.ai.orchestration import (
+    AIOrchestrationRequest,
+)
+from astrosphere.ai.provider_factory import (
+    create_language_provider,
+)
 
 
 api = Blueprint(
@@ -1283,3 +1292,99 @@ def analysis():
             ],
         }
     )
+
+@api.post("/ai/query")
+def ai_query():
+    payload = request.get_json(silent=True)
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {
+                "status": "error",
+                "error": "JSON object is required.",
+            }
+        ), 400
+
+    question = payload.get("question")
+    object_id = payload.get("object_id")
+
+    if not isinstance(question, str) or not question.strip():
+        return jsonify(
+            {
+                "status": "error",
+                "error": "question is required.",
+            }
+        ), 400
+
+    if not isinstance(object_id, str) or not object_id.strip():
+        return jsonify(
+            {
+                "status": "error",
+                "error": "object_id is required.",
+            }
+        ), 400
+
+    capability_ids = payload.get("capability_ids", ())
+    if not isinstance(capability_ids, (list, tuple)):
+        return jsonify(
+            {
+                "status": "error",
+                "error": "capability_ids must be a list.",
+            }
+        ), 400
+
+    observation_time = payload.get("observation_time")
+    parameters = payload.get("parameters")
+
+    if parameters is not None and not isinstance(parameters, dict):
+        return jsonify(
+            {
+                "status": "error",
+                "error": "parameters must be an object.",
+            }
+        ), 400
+
+    try:
+        orchestration_request = AIOrchestrationRequest(
+            question=question.strip(),
+            object_id=object_id.strip(),
+            capability_ids=tuple(capability_ids),
+            observation_time=observation_time,
+            parameters=parameters,
+        )
+
+        language_provider = create_language_provider()
+
+        result = orchestrate_ai_request(
+            orchestration_request,
+            language_provider=language_provider,
+        )
+
+        return jsonify(
+            {
+                "status": "success",
+                "data": {
+                    "question": result.question,
+                    "object_id": result.object_id,
+                    "answer": result.answer,
+                    "capabilities": list(result.capabilities),
+                    "observation_time": result.observation_time,
+                },
+            }
+        )
+
+    except ValueError as exc:
+        return jsonify(
+            {
+                "status": "error",
+                "error": str(exc),
+            }
+        ), 400
+
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "AI query processing failed.",
+            }
+        ), 500

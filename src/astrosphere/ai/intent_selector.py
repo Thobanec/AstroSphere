@@ -63,7 +63,20 @@ _CAPABILITY_KEYWORDS = {
 }
 
 
-def select_capability_intents(question):
+_POSITION_KEYWORDS = (
+    "where is",
+    "where is it",
+    "where are",
+    "location",
+    "position now",
+    "current position",
+)
+
+
+def select_capability_intents(
+    question,
+    available_capabilities=None,
+):
     if not isinstance(question, str):
         raise ValueError("AI question is required.")
 
@@ -71,6 +84,14 @@ def select_capability_intents(question):
 
     if not normalized_question:
         raise ValueError("AI question is required.")
+
+    available = None
+
+    if available_capabilities is not None:
+        available = {
+            capability
+            for capability in available_capabilities
+        }
 
     intents = []
 
@@ -87,6 +108,50 @@ def select_capability_intents(question):
                     )
                 )
                 break
+
+    if available is not None:
+        tracking_available = (
+            "tracking" in available
+        )
+        scientific_data_available = (
+            "scientific-data" in available
+        )
+
+        position_requested = any(
+            keyword in normalized_question
+            for keyword in _POSITION_KEYWORDS
+        )
+
+        if (
+            position_requested
+            and not tracking_available
+            and scientific_data_available
+        ):
+            intents = [
+                intent
+                for intent in intents
+                if intent.capability_id != "tracking"
+            ]
+
+            intents.append(
+                AICapabilityIntent(
+                    capability_id="scientific-data",
+                    reason=(
+                        "Position intent mapped to "
+                        "'scientific-data' because "
+                        "'tracking' is unavailable."
+                    ),
+                )
+            )
+        else:
+            intents = [
+                intent
+                for intent in intents
+                if (
+                    intent.capability_id != "tracking"
+                    or tracking_available
+                )
+            ]
 
     specific_intents = tuple(
         intent

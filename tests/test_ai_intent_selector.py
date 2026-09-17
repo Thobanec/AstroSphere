@@ -137,3 +137,39 @@ def test_specific_intent_takes_precedence_over_context():
         intent.capability_id
         for intent in intents
     ] == ["tracking"]
+
+def test_position_falls_back_to_scientific_data_when_tracking_unavailable():
+    intents = select_capability_intents(
+        "What is the current position of Earth?",
+        available_capabilities={
+            "context",
+            "scientific-data",
+            "relationships",
+            "space-weather",
+            "orbital-analysis",
+        },
+    )
+
+    assert [
+        intent.capability_id
+        for intent in intents
+    ] == ["scientific-data"]
+
+
+def test_position_keeps_tracking_when_tracking_available():
+    intents = select_capability_intents(
+        "What is the current position of Apophis?",
+        available_capabilities={
+            "context",
+            "scientific-data",
+            "relationships",
+            "tracking",
+            "trajectory",
+            "close-approaches",
+        },
+    )
+
+    assert [
+        intent.capability_id
+        for intent in intents
+    ] == ["tracking"]
