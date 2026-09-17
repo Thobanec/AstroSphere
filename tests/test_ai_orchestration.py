@@ -482,3 +482,101 @@ def test_orchestrate_preserves_fact_provenance(
     assert interpretation.provenance == (
         source,
     )
+
+def test_orchestrate_uses_language_provider(monkeypatch):
+    from astrosphere.ai.llm import (
+        AILanguageResponse,
+    )
+
+    def fake_execute(
+        context,
+        capability_id,
+        observation_time=None,
+        parameters=None,
+    ):
+        return CapabilityExecutionResult(
+            object_id=context.object.id,
+            capability_id=capability_id,
+            result={
+                "status": "success",
+            },
+        )
+
+    class TestProvider:
+        def __init__(self):
+            self.request = None
+
+        def generate(self, request):
+            self.request = request
+
+            return AILanguageResponse(
+                answer="Provider-generated response."
+            )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.execute_ai_capability",
+        fake_execute,
+    )
+
+    provider = TestProvider()
+
+    request = AIOrchestrationRequest(
+        question="What is Earth's scientific state?",
+        object_id="earth",
+        capability_ids=("scientific-data",),
+    )
+
+    result = orchestrate_ai_request(
+        request,
+        language_provider=provider,
+    )
+
+    assert result.answer == (
+        "Provider-generated response."
+    )
+
+    assert provider.request is not None
+    assert provider.request.question == (
+        "What is Earth's scientific state?"
+    )
+    assert provider.request.object.id == "earth"
+    assert provider.request.facts.object_id == "earth"
+    assert provider.request.interpretations.object_id == (
+        "earth"
+    )
+
+
+def test_orchestrate_without_language_provider_preserves_behavior(
+    monkeypatch,
+):
+    def fake_execute(
+        context,
+        capability_id,
+        observation_time=None,
+        parameters=None,
+    ):
+        return CapabilityExecutionResult(
+            object_id=context.object.id,
+            capability_id=capability_id,
+            result={
+                "status": "mocked",
+            },
+        )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.execute_ai_capability",
+        fake_execute,
+    )
+
+    request = AIOrchestrationRequest(
+        question="What is Earth's scientific state?",
+        object_id="earth",
+        capability_ids=("scientific-data",),
+    )
+
+    result = orchestrate_ai_request(request)
+
+    assert result.answer == (
+        "AstroSphere retrieved the "
+        "scientific-data result for Earth."
+    )

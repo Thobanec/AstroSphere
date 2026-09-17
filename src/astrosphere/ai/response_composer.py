@@ -5,6 +5,10 @@ from astrosphere.ai.fact_extractor import (
 from astrosphere.ai.interpreter import (
     interpret_ai_facts,
 )
+from astrosphere.ai.llm import (
+    AILanguageRequest,
+    AILanguageProvider,
+)
 from astrosphere.ai.response import AIResponse
 from astrosphere.capabilities.results import (
     CapabilityExecutionResult,
@@ -14,6 +18,7 @@ from astrosphere.capabilities.results import (
 def compose_ai_response(
     context,
     results,
+    language_provider: AILanguageProvider | None = None,
 ):
     if not isinstance(context, AIContext):
         raise ValueError("AIContext is required.")
@@ -51,6 +56,27 @@ def compose_ai_response(
         results,
         facts,
     )
+
+    if language_provider is not None:
+        language_request = AILanguageRequest(
+            question=context.question,
+            object=context.object,
+            facts=facts,
+            interpretations=interpretations,
+            provenance=tuple(context.provenance),
+            uncertainties=context.uncertainties,
+            observation_time=(
+                facts.observation_time
+                if facts.observation_time is not None
+                else context.observation_time
+            ),
+        )
+
+        language_response = language_provider.generate(
+            language_request,
+        )
+
+        answer = language_response.answer
 
     provenance = list(context.provenance)
 

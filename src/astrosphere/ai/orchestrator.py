@@ -8,6 +8,9 @@ from astrosphere.ai.orchestration import (
     AIOrchestrationRequest,
     AIOrchestrationResult,
 )
+from astrosphere.ai.llm import (
+    AILanguageProvider,
+)
 from astrosphere.ai.planner import (
     plan_ai_capabilities,
 )
@@ -16,7 +19,10 @@ from astrosphere.ai.response_composer import (
 )
 
 
-def orchestrate_ai_request(request):
+def orchestrate_ai_request(
+    request,
+    language_provider: AILanguageProvider | None = None,
+):
     if not isinstance(
         request,
         AIOrchestrationRequest,
@@ -47,6 +53,7 @@ def orchestrate_ai_request(request):
     composed_response = compose_ai_response(
         context,
         tuple(results),
+        language_provider=language_provider,
     )
 
     capabilities = tuple(

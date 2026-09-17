@@ -451,3 +451,147 @@ def test_compose_preserves_fact_provenance():
     assert interpretation.provenance == (
         source,
     )
+
+def test_compose_uses_language_provider():
+    from astrosphere.ai.llm import (
+        AILanguageResponse,
+    )
+
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    class TestProvider:
+        def __init__(self):
+            self.request = None
+
+        def generate(self, request):
+            self.request = request
+
+            return AILanguageResponse(
+                answer="LLM boundary response."
+            )
+
+    provider = TestProvider()
+
+    response = compose_ai_response(
+        context,
+        (result,),
+        language_provider=provider,
+    )
+
+    assert response.answer == (
+        "LLM boundary response."
+    )
+
+    assert provider.request is not None
+    assert provider.request.question == (
+        "What is the current position of Earth?"
+    )
+    assert provider.request.object.id == "earth"
+    assert provider.request.facts.object_id == "earth"
+    assert len(provider.request.facts.facts) == 6
+    assert provider.request.interpretations.object_id == (
+        "earth"
+    )
+
+
+def test_compose_preserves_astrosphere_provenance_with_language_provider():
+    from astrosphere.ai.llm import (
+        AILanguageResponse,
+    )
+
+    source = DataSource(
+        name="Test Source",
+        provider="Test Provider",
+        dataset="Test Dataset",
+    )
+
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    class TestProvider:
+        def generate(self, request):
+            return AILanguageResponse(
+                answer="Generated language."
+            )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+        language_provider=TestProvider(),
+    )
+
+    assert source in response.provenance
+
+
+def test_compose_without_provider_preserves_deterministic_answer():
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result={
+            "status": "success",
+        },
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    assert response.answer == (
+        "AstroSphere retrieved the "
+        "scientific-data result for Earth."
+    )
