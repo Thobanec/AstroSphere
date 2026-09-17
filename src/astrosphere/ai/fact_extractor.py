@@ -120,6 +120,16 @@ def _extract_scientific_data(
             value.observation.observation_time
         )
 
+    provenance = ()
+
+    if value.provenance is not None:
+        provenance = value.provenance.sources
+
+    fact_source = None
+
+    if len(provenance) == 1:
+        fact_source = provenance[0]
+
     if value.position is not None:
         position = value.position
 
@@ -130,6 +140,7 @@ def _extract_scientific_data(
                     value=position.x,
                     unit=position.unit,
                     source_capability=capability_id,
+                    source=fact_source,
                     metadata={
                         "frame": position.frame,
                     },
@@ -139,6 +150,7 @@ def _extract_scientific_data(
                     value=position.y,
                     unit=position.unit,
                     source_capability=capability_id,
+                    source=fact_source,
                     metadata={
                         "frame": position.frame,
                     },
@@ -148,6 +160,7 @@ def _extract_scientific_data(
                     value=position.z,
                     unit=position.unit,
                     source_capability=capability_id,
+                    source=fact_source,
                     metadata={
                         "frame": position.frame,
                     },
@@ -165,6 +178,7 @@ def _extract_scientific_data(
                     value=velocity.x,
                     unit=velocity.unit,
                     source_capability=capability_id,
+                    source=fact_source,
                     metadata={
                         "frame": velocity.frame,
                     },
@@ -174,6 +188,7 @@ def _extract_scientific_data(
                     value=velocity.y,
                     unit=velocity.unit,
                     source_capability=capability_id,
+                    source=fact_source,
                     metadata={
                         "frame": velocity.frame,
                     },
@@ -183,6 +198,7 @@ def _extract_scientific_data(
                     value=velocity.z,
                     unit=velocity.unit,
                     source_capability=capability_id,
+                    source=fact_source,
                     metadata={
                         "frame": velocity.frame,
                     },

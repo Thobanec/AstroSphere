@@ -12,6 +12,7 @@ class AIFact:
     value: Any
     unit: str | None = None
     source_capability: str | None = None
+    source: DataSource | None = None
     metadata: dict[str, Any] | None = None
 
 

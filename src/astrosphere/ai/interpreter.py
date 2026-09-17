@@ -62,11 +62,26 @@ def _interpret_fact(
             f"{value_text}."
         )
 
+    supporting_capabilities = ()
+
+    if fact.source_capability:
+        supporting_capabilities = (
+            fact.source_capability,
+        )
+
+    provenance = ()
+
+    if fact.source is not None:
+        provenance = (
+            fact.source,
+        )
+
     return AIInterpretation(
         subject=subject,
         statement=statement,
         supporting_facts=(fact.name,),
+        supporting_capabilities=supporting_capabilities,
         observation_time=None,
-        provenance=(),
+        provenance=provenance,
         uncertainties=(),
     )

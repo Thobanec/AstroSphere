@@ -527,3 +527,119 @@ def test_close_approach_does_not_invent_missing_source():
     )
 
     assert len(fact_set.provenance) == 0
+def test_scientific_facts_preserve_single_source():
+    source = DataSource(
+        name="Test Source",
+        provider="Test Provider",
+        dataset="Test Dataset",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    assert fact_set.facts[0].source == source
+    assert fact_set.facts[1].source == source
+    assert fact_set.facts[2].source == source
+    assert fact_set.facts[3].source == source
+    assert fact_set.facts[4].source == source
+    assert fact_set.facts[5].source == source
+
+
+def test_scientific_facts_do_not_guess_source_when_multiple_sources_exist():
+    source_one = DataSource(
+        name="Source One",
+    )
+
+    source_two = DataSource(
+        name="Source Two",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(source_one, source_two),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    assert fact_set.facts[0].source is None
+    assert fact_set.facts[1].source is None
+    assert fact_set.facts[2].source is None
+
+    assert fact_set.provenance == (
+        source_one,
+        source_two,
+    )
+
+
+def test_scientific_facts_have_no_source_without_provenance():
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (result,),
+    )
+
+    assert fact_set.facts[0].source is None
+    assert fact_set.provenance == ()

@@ -11,6 +11,9 @@ from astrosphere.ai.interpretation import (
 from astrosphere.ai.interpreter import (
     interpret_ai_facts,
 )
+from astrosphere.models.scientific import (
+    DataSource,
+)
 
 
 def test_interpreter_renders_scientific_facts():
@@ -332,4 +335,151 @@ def test_interpreter_does_not_invent_relationships():
     assert len(result.interpretations) == 1
     assert result.interpretations[0].statement == (
         "Earth position_x is 1.0 AU."
+    )
+def test_interpreter_preserves_supporting_capability():
+    fact_set = AIFactSet(
+        object_id="planet:earth",
+        facts=(
+            AIFact(
+                name="position_x",
+                value=1.0,
+                unit="AU",
+                source_capability="scientific-data",
+            ),
+        ),
+    )
+
+    result = interpret_ai_facts(
+        "Earth",
+        fact_set,
+    )
+
+    interpretation = result.interpretations[0]
+
+    assert interpretation.supporting_facts == (
+        "position_x",
+    )
+
+    assert interpretation.supporting_capabilities == (
+        "scientific-data",
+    )
+
+
+def test_interpreter_handles_fact_without_capability():
+    fact_set = AIFactSet(
+        object_id="planet:earth",
+        facts=(
+            AIFact(
+                name="geomagnetic_kp",
+                value=3.0,
+                unit=None,
+                source_capability=None,
+            ),
+        ),
+    )
+
+    result = interpret_ai_facts(
+        "Earth",
+        fact_set,
+    )
+
+    interpretation = result.interpretations[0]
+
+    assert interpretation.supporting_facts == (
+        "geomagnetic_kp",
+    )
+
+    assert interpretation.supporting_capabilities == ()
+
+
+def test_interpreter_preserves_capability_per_fact():
+    fact_set = AIFactSet(
+        object_id="planet:earth",
+        facts=(
+            AIFact(
+                name="position_x",
+                value=1.0,
+                unit="AU",
+                source_capability="scientific-data",
+            ),
+            AIFact(
+                name="solar_wind_speed",
+                value=450.0,
+                unit="km/s",
+                source_capability="space-weather",
+            ),
+        ),
+    )
+
+    result = interpret_ai_facts(
+        "Earth",
+        fact_set,
+    )
+
+    first = result.interpretations[0]
+    second = result.interpretations[1]
+
+    assert first.supporting_capabilities == (
+        "scientific-data",
+    )
+
+    assert second.supporting_capabilities == (
+        "space-weather",
+    )
+
+
+def test_interpretation_remains_deterministic():
+    fact_set = AIFactSet(
+        object_id="asteroid:99942",
+        facts=(
+            AIFact(
+                name="distance_au",
+                value=0.000254,
+                unit="AU",
+                source_capability="close-approaches",
+            ),
+        ),
+    )
+
+    first = interpret_ai_facts(
+        "Apophis",
+        fact_set,
+    )
+
+    second = interpret_ai_facts(
+        "Apophis",
+        fact_set,
+    )
+
+    assert first == second
+def test_interpreter_preserves_fact_provenance():
+    source = DataSource(
+        name="Test Source",
+        provider="Test Provider",
+        dataset="Test Dataset",
+    )
+
+    fact_set = AIFactSet(
+        object_id="earth",
+        facts=(
+            AIFact(
+                name="position_x",
+                value=1.0,
+                unit="AU",
+                source_capability="scientific-data",
+                source=source,
+            ),
+        ),
+        provenance=(source,),
+    )
+
+    result = interpret_ai_facts(
+        "Earth",
+        fact_set,
+    )
+
+    interpretation = result.interpretations[0]
+
+    assert interpretation.provenance == (
+        source,
     )

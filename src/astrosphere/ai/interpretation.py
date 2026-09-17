@@ -11,6 +11,7 @@ class AIInterpretation:
     subject: str
     statement: str
     supporting_facts: tuple[str, ...] = ()
+    supporting_capabilities: tuple[str, ...] = ()
     observation_time: Any | None = None
     provenance: tuple[DataSource, ...] = ()
     uncertainties: tuple[str, ...] = ()

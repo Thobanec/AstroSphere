@@ -357,3 +357,128 @@ def test_orchestrate_exposes_facts_and_interpretations(monkeypatch):
     assert first.supporting_facts == (
         "position_x",
     )
+def test_orchestrate_preserves_interpretation_traceability(
+    monkeypatch,
+):
+    from astrosphere.models.scientific import (
+        Position,
+        ScientificData,
+        Velocity,
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+    )
+
+    def fake_execute(
+        context,
+        capability_id,
+        observation_time=None,
+        parameters=None,
+    ):
+        return CapabilityExecutionResult(
+            object_id=context.object.id,
+            capability_id=capability_id,
+            result=scientific_data,
+        )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.execute_ai_capability",
+        fake_execute,
+    )
+
+    request = AIOrchestrationRequest(
+        question="What is the current position of Earth?",
+        object_id="earth",
+        capability_ids=("scientific-data",),
+    )
+
+    result = orchestrate_ai_request(request)
+
+    interpretation = (
+        result.interpretations.interpretations[0]
+    )
+
+    assert interpretation.supporting_facts == (
+        "position_x",
+    )
+
+    assert interpretation.supporting_capabilities == (
+        "scientific-data",
+    )
+def test_orchestrate_preserves_fact_provenance(
+    monkeypatch,
+):
+    from astrosphere.models.scientific import (
+        DataSource,
+        Position,
+        ScientificData,
+        ScientificProvenance,
+    )
+
+    source = DataSource(
+        name="Test Source",
+        provider="Test Provider",
+        dataset="Test Dataset",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+        ),
+    )
+
+    def fake_execute(
+        context,
+        capability_id,
+        observation_time=None,
+        parameters=None,
+    ):
+        return CapabilityExecutionResult(
+            object_id=context.object.id,
+            capability_id=capability_id,
+            result=scientific_data,
+        )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.execute_ai_capability",
+        fake_execute,
+    )
+
+    request = AIOrchestrationRequest(
+        question="What is the current position of Earth?",
+        object_id="earth",
+        capability_ids=("scientific-data",),
+    )
+
+    result = orchestrate_ai_request(request)
+
+    interpretation = (
+        result.interpretations.interpretations[0]
+    )
+
+    assert interpretation.provenance == (
+        source,
+    )

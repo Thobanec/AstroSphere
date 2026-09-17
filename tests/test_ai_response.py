@@ -6,6 +6,12 @@
 from astrosphere.capabilities.results import (
     CapabilityExecutionResult,
 )
+from astrosphere.models.scientific import (
+    DataSource,
+    Position,
+    ScientificData,
+    ScientificProvenance,
+)
 
 
 def test_compose_single_capability_response():
@@ -354,4 +360,94 @@ def test_compose_attaches_interpretations():
     )
     assert first.supporting_facts == (
         "position_x",
+    )
+def test_compose_preserves_interpretation_traceability():
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    interpretation = (
+        response.interpretations.interpretations[0]
+    )
+
+    assert interpretation.supporting_facts == (
+        "position_x",
+    )
+
+    assert interpretation.supporting_capabilities == (
+        "scientific-data",
+    )
+def test_compose_preserves_fact_provenance():
+    source = DataSource(
+        name="Test Source",
+        provider="Test Provider",
+        dataset="Test Dataset",
+    )
+
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(source,),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    interpretation = (
+        response.interpretations.interpretations[0]
+    )
+
+    assert interpretation.provenance == (
+        source,
     )
