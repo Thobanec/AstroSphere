@@ -2,6 +2,9 @@
 from astrosphere.ai.fact_extractor import (
     extract_ai_facts,
 )
+from astrosphere.ai.interpreter import (
+    interpret_ai_facts,
+)
 from astrosphere.ai.response import AIResponse
 from astrosphere.capabilities.results import (
     CapabilityExecutionResult,
@@ -38,6 +41,11 @@ def compose_ai_response(
         results,
     )
 
+    interpretations = interpret_ai_facts(
+        context.object.name,
+        facts,
+    )
+
     answer = _compose_answer(
         context,
         results,
@@ -61,6 +69,7 @@ def compose_ai_response(
         ),
         results=results,
         facts=facts,
+        interpretations=interpretations,
         provenance=tuple(provenance),
         uncertainties=context.uncertainties,
     )

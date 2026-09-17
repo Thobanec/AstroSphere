@@ -294,3 +294,64 @@ from astrosphere.models.scientific import (
     SpaceWeatherData,
     Velocity,
 )
+from astrosphere.ai.context import AIContext
+from astrosphere.ai.fact_extractor import extract_ai_facts
+from astrosphere.ai.interpreter import interpret_ai_facts
+from astrosphere.ai.response import AIResponse
+from astrosphere.ai.response_composer import compose_ai_response
+from astrosphere.capabilities.results import CapabilityExecutionResult
+from astrosphere.models.scientific import (
+    Position,
+    ScientificData,
+    Velocity,
+)
+
+
+def test_compose_attaches_interpretations():
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    assert response.interpretations is not None
+    assert response.interpretations.object_id == "earth"
+    assert len(response.interpretations.interpretations) == 6
+
+    first = response.interpretations.interpretations[0]
+
+    assert first.subject == "Earth"
+    assert first.statement == (
+        "Earth position_x is 1.0 AU."
+    )
+    assert first.supporting_facts == (
+        "position_x",
+    )

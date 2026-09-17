@@ -1,6 +1,8 @@
 ﻿from dataclasses import dataclass
 from typing import Any
 
+from astrosphere.ai.facts import AIFactSet
+from astrosphere.ai.interpretation import AIInterpretationSet
 from astrosphere.capabilities.results import (
     CapabilityExecutionResult,
 )
@@ -30,4 +32,6 @@ class AIOrchestrationResult:
     answer: str
     capabilities: tuple[str, ...] = ()
     results: tuple[CapabilityExecutionResult, ...] = ()
+    facts: AIFactSet | None = None
+    interpretations: AIInterpretationSet | None = None
     observation_time: Any | None = None

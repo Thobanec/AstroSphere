@@ -290,3 +290,70 @@ def test_orchestrate_executes_planner_output(monkeypatch):
     assert result.results[0].capability_id == (
         "relationships"
     )
+def test_orchestrate_exposes_facts_and_interpretations(monkeypatch):
+    from astrosphere.models.scientific import (
+        Position,
+        ScientificData,
+        Velocity,
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=4.0,
+            y=5.0,
+            z=6.0,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+    )
+
+    def fake_execute(
+        context,
+        capability_id,
+        observation_time=None,
+        parameters=None,
+    ):
+        return CapabilityExecutionResult(
+            object_id=context.object.id,
+            capability_id=capability_id,
+            result=scientific_data,
+        )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.execute_ai_capability",
+        fake_execute,
+    )
+
+    request = AIOrchestrationRequest(
+        question="What is the current position of Earth?",
+        object_id="earth",
+        capability_ids=("scientific-data",),
+    )
+
+    result = orchestrate_ai_request(request)
+
+    assert result.facts is not None
+    assert result.facts.object_id == "earth"
+    assert len(result.facts.facts) == 6
+
+    assert result.interpretations is not None
+    assert result.interpretations.object_id == "earth"
+    assert len(result.interpretations.interpretations) == 6
+
+    first = result.interpretations.interpretations[0]
+
+    assert first.subject == "Earth"
+    assert first.statement == (
+        "Earth position_x is 1.0 AU."
+    )
+    assert first.supporting_facts == (
+        "position_x",
+    )

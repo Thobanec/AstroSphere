@@ -60,5 +60,7 @@ def orchestrate_ai_request(request):
         answer=composed_response.answer,
         capabilities=capabilities,
         results=composed_response.results,
+        facts=composed_response.facts,
+        interpretations=composed_response.interpretations,
         observation_time=composed_response.observation_time,
     )
