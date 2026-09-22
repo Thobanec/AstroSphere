@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>AstroSphere â€” Solar System Explorer V5.2.1</title>
+    <title>AstroSphere — Solar System Explorer V5.2.1</title>
 
 
     <style>
@@ -1207,25 +1207,68 @@
 .ai-assistant-clear:active {
     transform: translateY(1px);
 }
+/* ============================================================
+   SOLAR SYSTEM + AI ASSISTANT LAYOUT
+   ============================================================ */
+
+.simulation-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 18px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.simulation-layout > .simulation {
+    min-width: 0;
+}
+
+/* ============================================================
+   AI ASSISTANT
+   ============================================================ */
+
 .ai-assistant-panel {
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    z-index: 9999;
+    position: relative;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 420px;
-    min-height: 420px;
-    max-height: 620px;
-    margin-top: 18px;
+    min-width: 0;
+    min-height: 590px;
+    height: min(69vh, 740px);
+    max-height: none;
+    margin: 0;
     padding: 18px;
     border: 1px solid rgba(120, 180, 255, 0.18);
     border-radius: 14px;
     background: rgba(7, 14, 28, 0.92);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.35);
     backdrop-filter: blur(12px);
     box-sizing: border-box;
+}
+@media (max-width: 1180px) {
+    .simulation-layout {
+        grid-template-columns: minmax(0, 1fr) 350px;
+    }
+}
+
+@media (max-width: 900px) {
+    .simulation-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-assistant-panel {
+        height: auto;
+        min-height: 520px;
+    }
+}
+
+@media (max-width: 700px) {
+    .ai-assistant-panel {
+        min-height: 480px;
+    }
 }
 
 .ai-assistant-header {
@@ -1323,8 +1366,9 @@
 
 .ai-message-content {
     font-size: 12px;
-    white-space: pre-wrap;
-    word-break: break-word;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
 }
 
 .ai-assistant-input-area {
@@ -1420,6 +1464,158 @@
 .ai-assistant-panel .ai-message-error .ai-message-content {
     color: #e8f0ff;
 }
+
+/* ============================================================
+   SOLAR SYSTEM VIEWPORT FIT
+   Compact desktop planetarium layout
+   ============================================================ */
+
+@media (min-width: 901px) {
+
+    .simulation-shell {
+        width:
+            min(
+                1550px,
+                calc(100% - 28px)
+            );
+
+        margin-top: 0;
+    }
+
+
+    /* Main simulation + AI workspace */
+
+    .simulation-layout {
+        grid-template-columns:
+            minmax(0, 1fr)
+            350px;
+
+        gap: 12px;
+        align-items: stretch;
+    }
+
+
+    /*
+       Reduce the simulation height so the page can show
+       title + simulation + controls + planet cards together.
+    */
+
+    .simulation,
+    .ai-assistant-panel {
+
+        height:
+            clamp(
+                480px,
+                56vh,
+                590px
+            );
+
+        min-height: 480px;
+        max-height: 590px;
+
+    }
+
+
+    /* Reduce internal panel padding slightly */
+
+    .ai-assistant-panel {
+        padding: 14px;
+    }
+
+
+    /* Compact control bar */
+
+    .control-bar {
+        margin-top: 8px !important;
+        min-height: 40px;
+    }
+
+
+    .control-bar button,
+    .control-bar a {
+        min-height: 38px !important;
+    }
+
+
+    /* Planet section */
+
+    .planet-section,
+    .planets-section,
+    .planet-grid-section {
+        margin-top: 10px !important;
+    }
+
+
+    /*
+       Keep planet cards compact enough that the first row
+       remains visible within the desktop viewport.
+    */
+
+    .planet-card,
+    .planet-item,
+    .planet-tile {
+
+        min-height: 68px !important;
+
+        padding:
+            9px !important;
+
+    }
+
+}
+
+
+/* ============================================================
+   LARGE DESKTOP
+   ============================================================ */
+
+@media (min-width: 1400px) {
+
+    .simulation-layout {
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            360px;
+
+        gap: 14px;
+
+    }
+
+    .simulation,
+    .ai-assistant-panel {
+
+        height:
+            min(
+                60vh,
+                610px
+            );
+
+        max-height: 610px;
+
+    }
+
+}
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .simulation-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .simulation,
+    .ai-assistant-panel {
+        height: auto;
+        min-height: 520px;
+        max-height: none;
+    }
+
+}
+
 </style>
 
 </head>
@@ -1475,7 +1671,7 @@
 <section class="hero">
 
     <div class="hero-kicker">
-        Universe Explorer Â· V5.2.1
+        Universe Explorer · V5.2.1
     </div>
 
 
@@ -1498,6 +1694,7 @@
 ============================================================= -->
 
 <main class="simulation-shell">
+    <div class="simulation-layout">
 
     <div class="simulation">
 
@@ -1513,7 +1710,7 @@
             <div class="hud-left">
 
                 <div class="hud-chip version">
-                    SOLAR SYSTEM Â· V5.2.1
+                    SOLAR SYSTEM · V5.2.1
                 </div>
 
                 <div class="hud-chip">
@@ -1601,7 +1798,7 @@
                         class="stat-value"
                         id="selectedOrbit"
                     >
-                        â€”
+                        —
                     </div>
 
                 </div>
@@ -1620,7 +1817,7 @@
                         class="stat-value"
                         id="selectedRotation"
                     >
-                        â€”
+                        —
                     </div>
 
                 </div>
@@ -1641,7 +1838,7 @@
                         class="stat-value"
                         id="selectedObservation"
                     >
-                        â€”
+                        —
                     </div>
 
                 </div>
@@ -1701,7 +1898,32 @@
             </button>
         </aside>
 
-<aside class="ai-assistant-panel" id="aiAssistantPanel">
+
+
+
+
+<!-- SCALE -->
+
+        <div class="scale-panel">
+
+            <div class="scale-title">
+                Visualization scale
+            </div>
+
+            Planet sizes and orbital distances are intentionally
+            adjusted independently for visibility.
+
+            <br><br>
+
+            <strong>
+                Planetary order, orbital periods and animation
+                timing retain astronomical relationships.
+            </strong>
+
+        </div>
+
+    </div>
+    <aside class="ai-assistant-panel" id="aiAssistantPanel">
     <div class="ai-assistant-header">
         <div>
             <div class="ai-assistant-eyebrow">ASTROSPHERE AI</div>
@@ -1764,26 +1986,6 @@
         </div>
     </div>
 </aside>
-        <!-- SCALE -->
-
-        <div class="scale-panel">
-
-            <div class="scale-title">
-                Visualization scale
-            </div>
-
-            Planet sizes and orbital distances are intentionally
-            adjusted independently for visibility.
-
-            <br><br>
-
-            <strong>
-                Planetary order, orbital periods and animation
-                timing retain astronomical relationships.
-            </strong>
-
-        </div>
-
     </div>
 
 
@@ -1867,7 +2069,7 @@
             class="nav-button"
             href="{{ url_for('index') }}"
         >
-            Â¦ AstroSphere
+            ¦ AstroSphere
         </a>
 
     </div>
@@ -2093,7 +2295,7 @@
 
 <footer class="footer">
 
-    AstroSphere Â· Interactive astronomical visualization Â· V5.2.1
+    AstroSphere · Interactive astronomical visualization · V5.2.1
 
 </footer>
 
@@ -3968,7 +4170,7 @@ function drawLabel(
 
 
     ctx.font =
-        "700 9px Segoe UI, Arial";
+        "700 9px Inter, Segoe UI, Arial, sans-serif";
 
 
     ctx.textAlign =
@@ -4078,7 +4280,7 @@ function updateFocusCamera() {
 
 
 /* ================================================================
-   V5.2.1 LIVE TRACKED OBJECTS Â· ORBITAL PATH
+   V5.2.1 LIVE TRACKED OBJECTS · ORBITAL PATH
 ================================================================ */
 
 const APHOPHIS_API =
@@ -5151,7 +5353,7 @@ function drawTrackedApophis() {
 
     /* Label */
     ctx.font =
-        "bold 12px Arial";
+        "bold 12px Inter, Segoe UI, Arial, sans-serif";
 
     ctx.textAlign =
         "left";
@@ -5170,7 +5372,7 @@ function drawTrackedApophis() {
 
 
     ctx.font =
-        "10px Arial";
+        "10px Inter, Segoe UI, Arial, sans-serif";
 
     ctx.fillStyle =
         "rgba(255,255,255,.70)";
@@ -5198,7 +5400,7 @@ function formatTrackedNumber(
         )
     ) {
 
-        return "â€”";
+        return "—";
 
     }
 
@@ -5219,7 +5421,7 @@ function formatTrackedObservationTime(
 ) {
 
     if (!value) {
-        return "â€”";
+        return "—";
     }
 
 
@@ -6373,13 +6575,13 @@ document.getElementById(
         document.getElementById(
             "selectedOrbit"
         ).textContent =
-            "â€”";
+            "—";
 
 
         document.getElementById(
             "selectedRotation"
         ).textContent =
-            "â€”";
+            "—";
 
 
         document.querySelectorAll(
