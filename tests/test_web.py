@@ -318,3 +318,57 @@ def test_galaxy_visualization_page():
     )
 
     assert response.status_code == 200
+
+def test_generic_celestial_object_page_has_ai_assistant():
+    client = app.test_client()
+
+    response = client.get(
+        "/celestial/sirius"
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        b"ASTROSPHERE AI"
+        in response.data
+    )
+
+    assert (
+        b"celestialAiInput"
+        in response.data
+    )
+
+    assert (
+        b"celestialAiAsk"
+        in response.data
+    )
+
+    assert (
+        b"/api/v1/ai/query"
+        in response.data
+    )
+
+
+def test_generic_celestial_object_ai_is_bound_to_canonical_object():
+    client = app.test_client()
+
+    response = client.get(
+        "/celestial/sirius"
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        b"const objectId"
+        in response.data
+    )
+
+    assert (
+        b'"sirius"'
+        in response.data
+    )
+
+    assert (
+        b"Sirius"
+        in response.data
+    )

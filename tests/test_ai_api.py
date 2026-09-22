@@ -1265,3 +1265,29 @@ def test_ai_query_auto_selects_multiple_capabilities(
         first_sample["z_au"],
         float,
     )
+
+
+def test_ai_query_supports_generic_celestial_object_sirius(monkeypatch):
+    monkeypatch.setenv(
+        "ASTROSPHERE_AI_PROVIDER",
+        "deterministic",
+    )
+
+    client = app.test_client()
+
+    response = client.post(
+        "/api/v1/ai/query",
+        json={
+            "question": "What is Sirius?",
+            "object_id": "sirius",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["object_id"] == "sirius"
+    assert data["data"]["question"] == "What is Sirius?"
+    assert data["data"]["answer"]
