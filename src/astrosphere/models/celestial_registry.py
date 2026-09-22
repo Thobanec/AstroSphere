@@ -1,4 +1,4 @@
-﻿from astrosphere.models.celestial import CelestialObject
+from astrosphere.models.celestial import CelestialObject
 
 
 SOLAR_SYSTEM_ID = "solar-system"
@@ -6,9 +6,23 @@ SOLAR_SYSTEM_ID = "solar-system"
 
 CELESTIAL_OBJECTS = [
     CelestialObject(
+        id="universe",
+        name="Universe",
+        object_type="universe",
+        description="The observable universe containing galaxies and their systems.",
+    ),
+    CelestialObject(
+        id="milky-way",
+        name="Milky Way",
+        object_type="galaxy",
+        parent_id="universe",
+        description="The galaxy containing the Solar System.",
+    ),
+    CelestialObject(
         id="solar-system",
         name="Solar System",
         object_type="system",
+        parent_id="milky-way",
         description="The planetary system centered on the Sun.",
     ),
     CelestialObject(
@@ -17,6 +31,34 @@ CELESTIAL_OBJECTS = [
         object_type="star",
         parent_id="solar-system",
         system_id="solar-system",
+    ),
+    CelestialObject(
+        id="sirius",
+        name="Sirius",
+        object_type="star",
+        parent_id="milky-way",
+        description="Bright star system in the Milky Way.",
+    ),
+    CelestialObject(
+        id="proxima-centauri",
+        name="Proxima Centauri",
+        object_type="star",
+        parent_id="milky-way",
+        description="Nearest known stellar neighbor to the Solar System.",
+    ),
+    CelestialObject(
+        id="betelgeuse",
+        name="Betelgeuse",
+        object_type="star",
+        parent_id="milky-way",
+        description="Red supergiant star in the Milky Way.",
+    ),
+    CelestialObject(
+        id="vega",
+        name="Vega",
+        object_type="star",
+        parent_id="milky-way",
+        description="Bright star in the constellation Lyra.",
     ),
     CelestialObject(
         id="mercury",
@@ -40,11 +82,35 @@ CELESTIAL_OBJECTS = [
         system_id="solar-system",
     ),
     CelestialObject(
+        id="moon",
+        name="Moon",
+        object_type="moon",
+        parent_id="earth",
+        system_id="solar-system",
+        description="Earth's natural satellite.",
+    ),
+    CelestialObject(
         id="mars",
         name="Mars",
         object_type="planet",
         parent_id="sun",
         system_id="solar-system",
+    ),
+    CelestialObject(
+        id="phobos",
+        name="Phobos",
+        object_type="moon",
+        parent_id="mars",
+        system_id="solar-system",
+        description="Natural satellite of Mars.",
+    ),
+    CelestialObject(
+        id="deimos",
+        name="Deimos",
+        object_type="moon",
+        parent_id="mars",
+        system_id="solar-system",
+        description="Natural satellite of Mars.",
     ),
     CelestialObject(
         id="jupiter",
@@ -54,11 +120,59 @@ CELESTIAL_OBJECTS = [
         system_id="solar-system",
     ),
     CelestialObject(
+        id="io",
+        name="Io",
+        object_type="moon",
+        parent_id="jupiter",
+        system_id="solar-system",
+        description="Natural satellite of Jupiter.",
+    ),
+    CelestialObject(
+        id="europa",
+        name="Europa",
+        object_type="moon",
+        parent_id="jupiter",
+        system_id="solar-system",
+        description="Natural satellite of Jupiter.",
+    ),
+    CelestialObject(
+        id="ganymede",
+        name="Ganymede",
+        object_type="moon",
+        parent_id="jupiter",
+        system_id="solar-system",
+        description="Natural satellite of Jupiter.",
+    ),
+    CelestialObject(
+        id="callisto",
+        name="Callisto",
+        object_type="moon",
+        parent_id="jupiter",
+        system_id="solar-system",
+        description="Natural satellite of Jupiter.",
+    ),
+    CelestialObject(
         id="saturn",
         name="Saturn",
         object_type="planet",
         parent_id="sun",
         system_id="solar-system",
+    ),
+    CelestialObject(
+        id="titan",
+        name="Titan",
+        object_type="moon",
+        parent_id="saturn",
+        system_id="solar-system",
+        description="Natural satellite of Saturn.",
+    ),
+    CelestialObject(
+        id="enceladus",
+        name="Enceladus",
+        object_type="moon",
+        parent_id="saturn",
+        system_id="solar-system",
+        description="Natural satellite of Saturn.",
     ),
     CelestialObject(
         id="uranus",
@@ -68,6 +182,30 @@ CELESTIAL_OBJECTS = [
         system_id="solar-system",
     ),
     CelestialObject(
+        id="miranda",
+        name="Miranda",
+        object_type="moon",
+        parent_id="uranus",
+        system_id="solar-system",
+        description="Natural satellite of Uranus.",
+    ),
+    CelestialObject(
+        id="titania",
+        name="Titania",
+        object_type="moon",
+        parent_id="uranus",
+        system_id="solar-system",
+        description="Natural satellite of Uranus.",
+    ),
+    CelestialObject(
+        id="oberon",
+        name="Oberon",
+        object_type="moon",
+        parent_id="uranus",
+        system_id="solar-system",
+        description="Natural satellite of Uranus.",
+    ),
+    CelestialObject(
         id="neptune",
         name="Neptune",
         object_type="planet",
@@ -75,11 +213,27 @@ CELESTIAL_OBJECTS = [
         system_id="solar-system",
     ),
     CelestialObject(
+        id="triton",
+        name="Triton",
+        object_type="moon",
+        parent_id="neptune",
+        system_id="solar-system",
+        description="Natural satellite of Neptune.",
+    ),
+    CelestialObject(
         id="pluto",
         name="Pluto",
         object_type="dwarf_planet",
         parent_id="sun",
         system_id="solar-system",
+    ),
+    CelestialObject(
+        id="charon",
+        name="Charon",
+        object_type="moon",
+        parent_id="pluto",
+        system_id="solar-system",
+        description="Natural satellite of Pluto.",
     ),
     CelestialObject(
         id="asteroid:99942",

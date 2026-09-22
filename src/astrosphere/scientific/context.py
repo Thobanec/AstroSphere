@@ -1,4 +1,4 @@
-﻿from astrosphere.models.celestial_registry import (
+from astrosphere.models.celestial_registry import (
     get_ancestors,
     get_celestial_object,
     get_children,
@@ -25,6 +25,7 @@ def get_celestial_object_context(
     if obj.object_type in {
         "planet",
         "dwarf_planet",
+        "star",
         "asteroid",
         "spacecraft",
     }:

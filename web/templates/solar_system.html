@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 
@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>AstroSphere — Solar System Explorer V5.2.1</title>
+    <title>AstroSphere â€” Solar System Explorer V5.2.1</title>
 
 
     <style>
@@ -531,6 +531,142 @@
 
 
 
+        .object-cosmic-location {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(120,160,255,.12);
+}
+
+.object-cosmic-location-items {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.object-cosmic-location-item {
+    appearance: none;
+    border: 0;
+    padding: 2px 0;
+    background: transparent;
+    color: rgba(175,200,240,.72);
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.object-cosmic-location-item:hover {
+    color: #ffffff;
+}
+
+.object-cosmic-location-current {
+    color: rgba(230,238,255,.95);
+    font-weight: 700;
+    cursor: default;
+}
+
+.object-cosmic-location-separator {
+    color: rgba(130,155,200,.42);
+    font-size: 10px;
+    user-select: none;
+}
+.object-relationships {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(120,160,255,.16);
+        }
+
+        .object-relationship-heading {
+            margin-bottom: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: rgba(170,195,235,.72);
+        }
+
+        .object-relationship-status {
+            margin-bottom: 9px;
+            font-size: 11px;
+            line-height: 1.45;
+            color: rgba(170,190,220,.65);
+        }
+
+        .object-relationship-group {
+            margin-top: 9px;
+        }
+
+        .object-relationship-label {
+            margin-bottom: 5px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(145,175,225,.58);
+        }
+
+        .object-relationship-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .object-clear-selection {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px 10px;
+    border: 1px solid rgba(120,160,255,.22);
+    border-radius: 6px;
+    background: rgba(60,90,150,.08);
+    color: rgba(170,190,220,.72);
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        color .2s ease;
+}
+
+.object-clear-selection:hover {
+    background: rgba(120,160,255,.16);
+    border-color: rgba(140,175,255,.48);
+    color: #ffffff;
+}
+
+.object-clear-selection:focus-visible {
+    outline: 1px solid rgba(150,190,255,.8);
+    outline-offset: 2px;
+}
+.object-relationship-item {
+            appearance: none;
+            border: 1px solid rgba(120,160,255,.28);
+            border-radius: 6px;
+            padding: 5px 8px;
+            background: rgba(60,90,150,.12);
+            color: rgba(220,232,255,.9);
+            font: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            transition:
+                background .2s ease,
+                border-color .2s ease,
+                color .2s ease;
+        }
+
+        .object-relationship-item:hover {
+            background: rgba(80,120,200,.24);
+            border-color: rgba(140,175,255,.58);
+            color: #ffffff;
+        }
+
+        .object-relationship-item:focus-visible {
+            outline: 1px solid rgba(150,190,255,.8);
+            outline-offset: 2px;
+        }
         .object-explore-link {
 
             display: inline-flex;
@@ -1024,6 +1160,266 @@
                 white-space: nowrap;
             }
         }
+
+/* ============================================================
+   AstroSphere AI Assistant
+   ============================================================ */
+
+.ai-assistant-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-assistant-clear {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 76px;
+    height: 30px;
+    padding: 5px 10px;
+    border: 1px solid rgba(120, 180, 255, 0.35) !important;
+    border-radius: 7px;
+    background: rgba(20, 35, 60, 0.95) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ai-assistant-clear:hover {
+    background: rgba(35, 55, 90, 1) !important;
+    border-color: rgba(120, 180, 255, 0.65) !important;
+}
+
+.ai-assistant-clear:active {
+    transform: translateY(1px);
+}.ai-assistant-clear:hover {
+    background: rgba(35, 55, 90, 0.9);
+    border-color: rgba(120, 180, 255, 0.45);
+}
+
+.ai-assistant-clear:active {
+    transform: translateY(1px);
+}
+.ai-assistant-panel {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 420px;
+    min-height: 420px;
+    max-height: 620px;
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid rgba(120, 180, 255, 0.18);
+    border-radius: 14px;
+    background: rgba(7, 14, 28, 0.92);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    box-sizing: border-box;
+}
+
+.ai-assistant-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.ai-assistant-eyebrow {
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    opacity: 0.65;
+}
+
+.ai-assistant-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.ai-assistant-status {
+    padding: 4px 8px;
+    border: 1px solid rgba(100, 220, 160, 0.25);
+    border-radius: 999px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+.ai-assistant-context {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.ai-context-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+
+#aiAssistantObject {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.ai-assistant-messages {
+    flex: 1;
+    min-height: 180px;
+    max-height: 330px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-bottom: 14px;
+}
+
+.ai-message {
+    margin-bottom: 12px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    line-height: 1.5;
+}
+
+.ai-message-system {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ai-message-user {
+    background: rgba(70, 130, 220, 0.12);
+    border: 1px solid rgba(90, 150, 240, 0.16);
+}
+
+.ai-message-assistant {
+    background: rgba(100, 220, 170, 0.07);
+    border: 1px solid rgba(100, 220, 170, 0.12);
+}
+
+.ai-message-label {
+    margin-bottom: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    opacity: 0.55;
+}
+
+.ai-message-content {
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ai-assistant-input-area {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 14px;
+}
+
+.ai-assistant-input {
+    display: block;
+    width: 100%;
+    min-height: 72px;
+    padding: 10px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    outline: none;
+    resize: vertical;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.18);
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.ai-assistant-input:focus {
+    border-color: rgba(100, 170, 255, 0.45);
+}
+
+.ai-assistant-input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 9px;
+}
+
+.ai-assistant-hint {
+    max-width: 220px;
+    font-size: 9px;
+    line-height: 1.35;
+    opacity: 0.45;
+}
+
+.ai-assistant-ask {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(90, 150, 240, 0.85);
+}
+
+.ai-assistant-ask:hover {
+    filter: brightness(1.12);
+}
+
+.ai-assistant-ask:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+/* AI Assistant readability overrides */
+.ai-assistant-panel,
+.ai-assistant-panel h2,
+.ai-assistant-panel .ai-assistant-eyebrow,
+.ai-assistant-panel .ai-assistant-status,
+.ai-assistant-panel .ai-context-label,
+.ai-assistant-panel #aiAssistantObject,
+.ai-assistant-panel .ai-message-label,
+.ai-assistant-panel .ai-message-content,
+.ai-assistant-panel .ai-assistant-hint {
+    color: #e8f0ff;
+}
+
+.ai-assistant-panel .ai-assistant-input {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
+}
+
+.ai-assistant-panel .ai-assistant-input::placeholder {
+    color: #8290aa;
+    opacity: 1;
+}
+
+.ai-assistant-panel .ai-assistant-ask {
+    color: #ffffff;
+}
+
+.ai-assistant-panel .ai-message-user .ai-message-content,
+.ai-assistant-panel .ai-message-assistant .ai-message-content,
+.ai-assistant-panel .ai-message-error .ai-message-content {
+    color: #e8f0ff;
+}
 </style>
 
 </head>
@@ -1041,7 +1437,7 @@
     <div class="brand">
 
         <div class="brand-icon">
-            ◉
+            ?
         </div>
 
         <div>
@@ -1079,7 +1475,7 @@
 <section class="hero">
 
     <div class="hero-kicker">
-        Universe Explorer · V5.2.1
+        Universe Explorer Â· V5.2.1
     </div>
 
 
@@ -1117,7 +1513,7 @@
             <div class="hud-left">
 
                 <div class="hud-chip version">
-                    SOLAR SYSTEM · V5.2.1
+                    SOLAR SYSTEM Â· V5.2.1
                 </div>
 
                 <div class="hud-chip">
@@ -1205,7 +1601,7 @@
                         class="stat-value"
                         id="selectedOrbit"
                     >
-                        —
+                        â€”
                     </div>
 
                 </div>
@@ -1224,7 +1620,7 @@
                         class="stat-value"
                         id="selectedRotation"
                     >
-                        —
+                        â€”
                     </div>
 
                 </div>
@@ -1245,11 +1641,46 @@
                         class="stat-value"
                         id="selectedObservation"
                     >
-                        —
+                        â€”
                     </div>
 
                 </div>
             </div>
+            <section
+                class="object-cosmic-location"
+                id="selectedObjectCosmicLocation"
+                style="display: none;"
+            >
+                <div class="object-relationship-heading">
+                    Cosmic location
+                </div>
+                <div
+                    class="object-cosmic-location-items"
+                    id="selectedObjectCosmicLocationItems"
+                ></div>
+            </section>
+
+            <section
+                class="object-relationships"
+                id="selectedObjectRelationships"
+                style="display: none;"
+            >
+                <div class="object-relationship-heading">
+                    Scientific relationships
+                </div>
+
+                <div
+                    class="object-relationship-status"
+                    id="selectedObjectRelationshipStatus"
+                >
+                    Loading relationship graph...
+                </div>
+
+                <div
+                    class="object-relationship-groups"
+                    id="selectedObjectRelationshipGroups"
+                ></div>
+            </section>
 
             <a
                 id="selectedExploreLink"
@@ -1257,9 +1688,82 @@
                 href="#"
                 style="display: none;"
             >
-                Explore object →
+                Explore object
             </a>
+            <button
+                id="clearSelectedObjectButton"
+                class="object-clear-selection"
+                type="button"
+                style="display: none;"
+                onclick="clearSelectedCelestialObject()"
+            >
+                Clear selection
+            </button>
         </aside>
+
+<aside class="ai-assistant-panel" id="aiAssistantPanel">
+    <div class="ai-assistant-header">
+        <div>
+            <div class="ai-assistant-eyebrow">ASTROSPHERE AI</div>
+            <h2>AI Assistant</h2>
+        </div>
+
+        <div class="ai-assistant-header-actions">
+            <button
+                type="button"
+                id="aiAssistantClear"
+                class="ai-assistant-clear"
+            >
+                Clear Chat
+            </button>
+
+            <span class="ai-assistant-status" id="aiAssistantStatus">
+                Ready
+            </span>
+        </div>
+    </div>
+
+    <div class="ai-assistant-context" id="aiAssistantContext">
+        <span class="ai-context-label">Current context</span>
+        <span id="aiAssistantObject">No object selected</span>
+    </div>
+
+    <div class="ai-assistant-messages" id="aiAssistantMessages">
+        <div class="ai-message ai-message-system">
+            <div class="ai-message-label">ASTROSPHERE AI</div>
+            <div class="ai-message-content">
+                Select a celestial object and ask a question about its
+                position, velocity, trajectory, or other available
+                scientific data.
+            </div>
+        </div>
+    </div>
+
+    <div class="ai-assistant-input-area">
+        <textarea
+            id="aiAssistantInput"
+            class="ai-assistant-input"
+            rows="3"
+            placeholder="Ask AstroSphere AI..."
+            aria-label="Ask AstroSphere AI"
+            style="color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff !important;"
+        ></textarea>
+
+        <div class="ai-assistant-input-footer">
+            <span class="ai-assistant-hint">
+                AI responses are grounded in AstroSphere data.
+            </span>
+
+            <button
+                type="button"
+                id="aiAssistantAsk"
+                class="ai-assistant-ask"
+            >
+                Ask AI
+            </button>
+        </div>
+    </div>
+</aside>
         <!-- SCALE -->
 
         <div class="scale-panel">
@@ -1292,7 +1796,7 @@
         <button
             id="pauseButton"
         >
-            ⏸ Pause
+            ? Pause
         </button>
 
 
@@ -1340,14 +1844,14 @@
         <button
             id="resetButton"
         >
-            ↻ Today
+            ? Today
         </button>
 
 
         <button
             id="fullSystemButton"
         >
-            ◉ Full System
+            ? Full System
         </button>
 
 
@@ -1355,7 +1859,7 @@
             class="nav-button"
             href="{{ url_for('galaxy') }}"
         >
-            ← Milky Way
+            ? Milky Way
         </a>
 
 
@@ -1363,7 +1867,7 @@
             class="nav-button"
             href="{{ url_for('index') }}"
         >
-            ⌂ AstroSphere
+            Â¦ AstroSphere
         </a>
 
     </div>
@@ -1400,7 +1904,7 @@
         >
 
             <div class="planet-card-name">
-                ☿ Mercury
+                ? Mercury
             </div>
 
             <div class="planet-card-description">
@@ -1421,7 +1925,7 @@
         >
 
             <div class="planet-card-name">
-                ♀ Venus
+                ? Venus
             </div>
 
             <div class="planet-card-description">
@@ -1442,7 +1946,7 @@
         >
 
             <div class="planet-card-name">
-                🌎 Earth
+                ?? Earth
             </div>
 
             <div class="planet-card-description">
@@ -1463,7 +1967,7 @@
         >
 
             <div class="planet-card-name">
-                ♂ Mars
+                ? Mars
             </div>
 
             <div class="planet-card-description">
@@ -1484,7 +1988,7 @@
         >
 
             <div class="planet-card-name">
-                ♃ Jupiter
+                ? Jupiter
             </div>
 
             <div class="planet-card-description">
@@ -1505,7 +2009,7 @@
         >
 
             <div class="planet-card-name">
-                ♄ Saturn
+                ? Saturn
             </div>
 
             <div class="planet-card-description">
@@ -1526,7 +2030,7 @@
         >
 
             <div class="planet-card-name">
-                ♅ Uranus
+                ? Uranus
             </div>
 
             <div class="planet-card-description">
@@ -1547,7 +2051,7 @@
         >
 
             <div class="planet-card-name">
-                ♆ Neptune
+                ? Neptune
             </div>
 
             <div class="planet-card-description">
@@ -1568,7 +2072,7 @@
         >
 
             <div class="planet-card-name">
-                ♇ Pluto
+                ? Pluto
             </div>
 
             <div class="planet-card-description">
@@ -1589,7 +2093,7 @@
 
 <footer class="footer">
 
-    AstroSphere · Interactive astronomical visualization · V5.2.1
+    AstroSphere Â· Interactive astronomical visualization Â· V5.2.1
 
 </footer>
 
@@ -1788,6 +2292,38 @@ let panY = 0;
 let selectedPlanet = null;
 
 let selectedCelestialObjectId = null;
+
+let selectedObjectGraph = null;
+let selectedObjectGraphRequestId = 0;
+let selectedObjectGraphLoading = false;
+let selectedObjectGraphError = null;
+
+/* AI Assistant state */
+let aiConversationId = null;
+let aiConversationMessages = [];
+let aiRequestInProgress = false;
+
+/* ============================================================
+   Planetary trajectory visualization state
+   ============================================================ */
+
+let planetaryTrajectory = null;
+let planetaryTrajectoryPlanetId = null;
+let planetaryTrajectoryLoading = false;
+let planetaryTrajectoryError = null;
+
+/*
+ * Cache one calculated trajectory per planet.
+ * This prevents repeated 181-sample API requests
+ * when the same planet is selected again.
+ */
+const planetaryTrajectoryCache = new Map();
+
+/*
+ * Identifies the latest trajectory request so that
+ * late responses cannot overwrite a newer selection.
+ */
+let planetaryTrajectoryRequestId = 0;
 
 /* V5.1 live tracked-object state */
 let trackedApophis = null;
@@ -3242,6 +3778,55 @@ function drawPlanet(
    MOON
 ================================================================ */
 
+
+function getMoonPosition() {
+
+    const earth =
+        planets.find(
+            planet =>
+                planet.name ===
+                "Earth"
+        );
+
+    if (!earth) {
+        return null;
+    }
+
+    const earthPosition =
+        getPlanetPosition(
+            earth
+        );
+
+    const moonOrbit =
+        34 *
+        Math.max(
+            .78,
+            zoom
+        );
+
+    const moonAngle =
+        simulationDays *
+        .035;
+
+    return {
+        x:
+            earthPosition.x +
+            Math.cos(
+                moonAngle
+            ) *
+            moonOrbit,
+
+        y:
+            earthPosition.y +
+            Math.sin(
+                moonAngle
+            ) *
+            moonOrbit *
+            .38
+    };
+
+}
+
 function drawMoon() {
 
     const earth =
@@ -3493,7 +4078,7 @@ function updateFocusCamera() {
 
 
 /* ================================================================
-   V5.2.1 LIVE TRACKED OBJECTS · ORBITAL PATH
+   V5.2.1 LIVE TRACKED OBJECTS Â· ORBITAL PATH
 ================================================================ */
 
 const APHOPHIS_API =
@@ -4267,6 +4852,168 @@ function drawApophisOrbitPath() {
 
 }
 
+function drawPlanetaryTrajectory() {
+
+    if (
+        !planetaryTrajectory ||
+        !Array.isArray(planetaryTrajectory.samples) ||
+        planetaryTrajectory.samples.length < 2 ||
+        !selectedPlanet ||
+        planetaryTrajectoryPlanetId !== selectedPlanet.id
+    ) {
+        return;
+    }
+
+    const samples =
+        planetaryTrajectory.samples;
+
+    const world =
+        getWorldCenter();
+
+    /*
+     * Determine the maximum heliocentric distance
+     * represented by the trajectory.
+     */
+    let maximumRadius = 0;
+
+    for (const sample of samples) {
+
+        const x =
+            Number(sample.x_au);
+
+        const y =
+            Number(sample.y_au);
+
+        if (
+            !Number.isFinite(x) ||
+            !Number.isFinite(y)
+        ) {
+            continue;
+        }
+
+        const radius =
+            Math.sqrt(
+                (x * x) +
+                (y * y)
+            );
+
+        maximumRadius =
+            Math.max(
+                maximumRadius,
+                radius
+            );
+    }
+
+    if (
+        !Number.isFinite(maximumRadius) ||
+        maximumRadius <= 0
+    ) {
+        return;
+    }
+
+    /*
+     * Map the real heliocentric AU coordinates onto
+     * the existing visual orbit scale.
+     */
+    const visualOrbitX =
+        getOrbitX(
+            selectedPlanet.orbitFactor
+        ) *
+        zoom;
+
+    const scale =
+        visualOrbitX /
+        maximumRadius;
+
+    /*
+     * The existing Solar System visualization is
+     * vertically flattened by getOrbitY().
+     */
+    const verticalScale =
+        getOrbitY(
+            visualOrbitX
+        ) /
+        visualOrbitX;
+
+    ctx.save();
+
+    ctx.beginPath();
+
+    let started = false;
+
+    for (const sample of samples) {
+
+        const x =
+            Number(sample.x_au);
+
+        const y =
+            Number(sample.y_au);
+
+        if (
+            !Number.isFinite(x) ||
+            !Number.isFinite(y)
+        ) {
+            continue;
+        }
+
+        const screenX =
+            world.x +
+            (x * scale);
+
+        const screenY =
+            world.y +
+            (y * scale * verticalScale);
+
+        if (!started) {
+
+            ctx.moveTo(
+                screenX,
+                screenY
+            );
+
+            started = true;
+
+        } else {
+
+            ctx.lineTo(
+                screenX,
+                screenY
+            );
+        }
+    }
+
+    if (started) {
+
+        /*
+         * Highlight the calculated scientific trajectory
+         * so it is visually distinct from the existing
+         * stylized orbital paths.
+         */
+        ctx.strokeStyle =
+            "rgba(80, 210, 255, 0.95)";
+
+        ctx.lineWidth =
+            2.2;
+
+        ctx.setLineDash([
+            7,
+            5
+        ]);
+
+        ctx.shadowColor =
+            "rgba(80, 210, 255, 0.65)";
+
+        ctx.shadowBlur =
+            6;
+
+        ctx.stroke();
+
+        ctx.shadowBlur =
+            0;
+    }
+
+    ctx.restore();
+}
 function drawTrackedApophis() {
 
     if (
@@ -4451,7 +5198,7 @@ function formatTrackedNumber(
         )
     ) {
 
-        return "—";
+        return "â€”";
 
     }
 
@@ -4472,7 +5219,7 @@ function formatTrackedObservationTime(
 ) {
 
     if (!value) {
-        return "—";
+        return "â€”";
     }
 
 
@@ -4542,6 +5289,327 @@ function updateSelectedApophisTelemetry() {
 
 }
 
+
+/* ============================================================
+   AstroSphere AI Assistant - Selection Context
+   ============================================================ */
+
+function updateAIAssistantContext() {
+
+    const contextElement =
+        document.getElementById("aiAssistantObject");
+
+    if (!contextElement) {
+        return;
+    }
+
+    if (selectedTrackedObject === "Apophis") {
+
+        contextElement.textContent =
+            "Apophis";
+
+        return;
+    }
+
+    if (selectedPlanet) {
+
+        contextElement.textContent =
+            selectedPlanet.name;
+
+        return;
+    }
+
+    if (
+        selectedObjectGraph &&
+        selectedObjectGraph.name
+    ) {
+
+        contextElement.textContent =
+            selectedObjectGraph.name;
+
+        return;
+    }
+
+    contextElement.textContent =
+        "No object selected";
+}
+async function askAIAssistant() {
+    const input =
+        document.getElementById("aiAssistantInput");
+    const askButton =
+        document.getElementById("aiAssistantAsk");
+    const status =
+        document.getElementById("aiAssistantStatus");
+    const messages =
+        document.getElementById("aiAssistantMessages");
+
+    if (!input || !askButton || !status || !messages) {
+        console.error(
+            "AI Assistant UI elements were not found."
+        );
+        return;
+    }
+
+    const question = input.value.trim();
+
+    if (!question) {
+        status.textContent = "Enter a question";
+        input.focus();
+        return;
+    }
+
+    if (aiRequestInProgress) {
+        return;
+    }
+
+    const objectId =
+        selectedCelestialObjectId ||
+        (
+            selectedTrackedObject
+                ? "asteroid:99942"
+                : null
+        );
+
+    if (!objectId) {
+        status.textContent = "Select an object first";
+        return;
+    }
+
+    aiRequestInProgress = true;
+    askButton.disabled = true;
+    input.disabled = true;
+    status.textContent = "Thinking...";
+
+    const userMessage = {
+        role: "user",
+        content: question,
+        object_id: objectId
+    };
+
+    aiConversationMessages.push(userMessage);
+
+    const userBubble =
+        document.createElement("div");
+    userBubble.className =
+        "ai-message ai-message-user";
+    userBubble.innerHTML = `
+        <div class="ai-message-label">YOU</div>
+        <div class="ai-message-content"></div>
+    `;
+
+    userBubble.querySelector(
+        ".ai-message-content"
+    ).textContent = question;
+
+    messages.appendChild(userBubble);
+    messages.scrollTop = messages.scrollHeight;
+
+    input.value = "";
+
+    if (!aiConversationId) {
+        aiConversationId =
+            `astrosphere-${Date.now()}-${Math.random()
+                .toString(36)
+                .slice(2, 10)}`;
+    }
+
+    try {
+        const response = await fetch(
+            "/api/v1/ai/query",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+                body: JSON.stringify({
+                    message: question,
+                    conversation_id:
+                        aiConversationId,
+                    object_id: objectId,
+                    capability_ids: [],
+                    messages:
+                        aiConversationMessages.slice(
+                            0,
+                            -1
+                        )
+                })
+            }
+        );
+
+        const payload = await response.json();
+
+        if (!response.ok ||
+            payload.status !== "success") {
+            throw new Error(
+                payload.error ||
+                "AI Assistant request failed."
+            );
+        }
+
+        const data = payload.data || {};
+
+        aiConversationId =
+            data.conversation_id ||
+            aiConversationId;
+
+        if (Array.isArray(data.messages)) {
+            aiConversationMessages =
+                data.messages;
+        } else {
+            aiConversationMessages.push({
+                role: "assistant",
+                content: data.answer || "",
+                object_id:
+                    data.object_id || objectId
+            });
+        }
+
+        const assistantBubble =
+            document.createElement("div");
+
+        assistantBubble.className =
+            "ai-message ai-message-assistant";
+
+        assistantBubble.innerHTML = `
+            <div class="ai-message-label">
+                ASTROSPHERE AI
+            </div>
+            <div class="ai-message-content"></div>
+        `;
+
+        assistantBubble.querySelector(
+            ".ai-message-content"
+        ).textContent =
+            data.answer ||
+            "No answer was returned.";
+
+        messages.appendChild(assistantBubble);
+        messages.scrollTop = messages.scrollHeight;
+
+        status.textContent = "Ready";
+    } catch (error) {
+        console.error(
+            "AI Assistant request failed:",
+            error
+        );
+
+        aiConversationMessages =
+            aiConversationMessages.filter(
+                (message, index, array) =>
+                    !(
+                        index === array.length - 1 &&
+                        message.role === "user" &&
+                        message.content === question
+                    )
+            );
+
+        const errorBubble =
+            document.createElement("div");
+
+        errorBubble.className =
+            "ai-message ai-message-error";
+
+        errorBubble.innerHTML = `
+            <div class="ai-message-label">
+                ASTROSPHERE AI
+            </div>
+            <div class="ai-message-content"></div>
+        `;
+
+        errorBubble.querySelector(
+            ".ai-message-content"
+        ).textContent =
+            error.message ||
+            "Unable to process the AI request.";
+
+        messages.appendChild(errorBubble);
+        messages.scrollTop = messages.scrollHeight;
+
+        status.textContent = "Error";
+    } finally {
+        aiRequestInProgress = false;
+        askButton.disabled = false;
+        input.disabled = false;
+        input.focus();
+    }
+}
+
+/* AI Assistant event handlers */
+const aiAssistantAskButton =
+    document.getElementById("aiAssistantAsk");
+
+const aiAssistantInput =
+    document.getElementById("aiAssistantInput");
+
+const aiAssistantClearButton =
+    document.getElementById("aiAssistantClear");
+
+if (aiAssistantClearButton) {
+    aiAssistantClearButton.addEventListener(
+        "click",
+        function () {
+            resetAIAssistantConversation();
+
+            if (aiAssistantInput) {
+                aiAssistantInput.value = "";
+                aiAssistantInput.focus();
+            }
+        }
+    );
+}
+
+if (aiAssistantAskButton) {
+    aiAssistantAskButton.addEventListener(
+        "click",
+        askAIAssistant
+    );
+}
+
+if (aiAssistantInput) {
+    aiAssistantInput.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+                event.preventDefault();
+                askAIAssistant();
+            }
+        }
+    );
+}
+function resetAIAssistantConversation() {
+    aiConversationId = null;
+    aiConversationMessages = [];
+
+    const messages =
+        document.getElementById("aiAssistantMessages");
+
+    const status =
+        document.getElementById("aiAssistantStatus");
+
+    if (messages) {
+        messages.innerHTML = `
+            <div class="ai-message ai-message-system">
+                <div class="ai-message-label">
+                    ASTROSPHERE AI
+                </div>
+                <div class="ai-message-content">
+                    Select a celestial object and ask a question about its
+                    position, velocity, trajectory, or other available
+                    scientific data.
+                </div>
+            </div>
+        `;
+        messages.scrollTop = 0;
+    }
+
+    if (status) {
+        status.textContent = "Ready";
+    }
+}
 function selectApophis() {
 
     if (
@@ -4556,6 +5624,8 @@ function selectApophis() {
 
     selectedTrackedObject =
         "Apophis";
+
+    updateAIAssistantContext();
 
 
     selectedPlanet =
@@ -4692,6 +5762,254 @@ function isApophisHit(
 ================================================================ */
 
 
+
+/* ================================================================
+   SELECTED OBJECT RELATIONSHIPS
+================================================================ */
+
+function getCelestialVisualPosition(objectId) {
+
+    if (!objectId) {
+        return null;
+    }
+
+    const normalizedId =
+        String(objectId).trim().toLowerCase();
+
+    if (normalizedId === "sun") {
+        return getWorldCenter();
+    }
+
+    if (normalizedId === "moon") {
+        return getMoonPosition();
+    }
+
+    const planet = planets.find(function(candidate) {
+
+        if (!candidate) {
+            return false;
+        }
+
+        return (
+            String(candidate.id)
+                .trim()
+                .toLowerCase() === normalizedId
+        );
+    });
+
+    if (planet) {
+        return getPlanetPosition(planet);
+    }
+
+    if (normalizedId === "asteroid:99942") {
+
+        if (
+            typeof getApophisVisualPosition ===
+            "function"
+        ) {
+            return getApophisVisualPosition();
+        }
+    }
+
+    return null;
+}
+
+
+function drawRelationshipConnector(
+    sourcePosition,
+    targetPosition,
+    relationshipType
+) {
+
+    if (!sourcePosition || !targetPosition) {
+        return;
+    }
+
+    ctx.save();
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        sourcePosition.x,
+        sourcePosition.y
+    );
+
+    ctx.lineTo(
+        targetPosition.x,
+        targetPosition.y
+    );
+
+    if (relationshipType === "orbits") {
+
+        ctx.strokeStyle =
+            "rgba(125,211,252,.55)";
+
+        ctx.lineWidth = 1.5;
+
+        ctx.setLineDash([
+            6,
+            5
+        ]);
+
+    } else {
+
+        ctx.strokeStyle =
+            "rgba(167,139,250,.42)";
+
+        ctx.lineWidth = 1.1;
+
+        ctx.setLineDash([
+            3,
+            5
+        ]);
+    }
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+
+function drawSelectedObjectRelationships() {
+
+    if (!selectedObjectGraph) {
+        return;
+    }
+
+    const selectedId =
+        String(selectedObjectGraph.id)
+            .trim()
+            .toLowerCase();
+
+    const sourcePosition =
+        getCelestialVisualPosition(
+            selectedId
+        );
+
+    if (!sourcePosition) {
+        return;
+    }
+
+    const connections = [];
+
+    const seenTargets = new Set();
+
+
+    function addConnection(
+        targetId,
+        relationshipType
+    ) {
+
+        if (!targetId) {
+            return;
+        }
+
+        const normalizedTargetId =
+            String(targetId)
+                .trim()
+                .toLowerCase();
+
+        if (
+            normalizedTargetId ===
+            selectedId
+        ) {
+            return;
+        }
+
+        if (
+            seenTargets.has(
+                normalizedTargetId
+            )
+        ) {
+            return;
+        }
+
+        const targetPosition =
+            getCelestialVisualPosition(
+                normalizedTargetId
+            );
+
+        if (!targetPosition) {
+            return;
+        }
+
+        seenTargets.add(
+            normalizedTargetId
+        );
+
+        connections.push({
+            targetPosition: targetPosition,
+            relationshipType: relationshipType
+        });
+    }
+
+
+    if (selectedObjectGraph.parent) {
+
+        addConnection(
+            selectedObjectGraph.parent.id,
+            "parent"
+        );
+    }
+
+
+    if (
+        Array.isArray(
+            selectedObjectGraph.relationships
+        )
+    ) {
+
+        selectedObjectGraph.relationships.forEach(
+            function(relationship) {
+
+                if (!relationship) {
+                    return;
+                }
+
+                addConnection(
+                    relationship.target_id,
+                    relationship.relationship_type ||
+                        "relationship"
+                );
+            }
+        );
+    }
+
+
+    if (
+        Array.isArray(
+            selectedObjectGraph.children
+        )
+    ) {
+
+        selectedObjectGraph.children.forEach(
+            function(child) {
+
+                if (!child) {
+                    return;
+                }
+
+                addConnection(
+                    child.id,
+                    "contains"
+                );
+            }
+        );
+    }
+
+
+    connections.forEach(
+        function(connection) {
+
+            drawRelationshipConnector(
+                sourcePosition,
+                connection.targetPosition,
+                connection.relationshipType
+            );
+        }
+    );
+}
+
 function draw(
     time
 ) {
@@ -4716,8 +6034,13 @@ function draw(
 
     drawOrbits();
 
+    /* Planetary trajectory visualization */
+    drawPlanetaryTrajectory();
 
     drawAsteroidBelt();
+
+    /* Scientific relationship overlay */
+    drawSelectedObjectRelationships();
 
 
     drawAsteroidLabel();
@@ -4942,9 +6265,9 @@ document.getElementById(
 
             paused
 
-                ? "▶ Resume"
+                ? "? Resume"
 
-                : "⏸ Pause";
+                : "? Pause";
 
     }
 );
@@ -4993,6 +6316,25 @@ document.getElementById(
         selectedTrackedObject =
             null;
 
+        updateAIAssistantContext();
+
+        /*
+         * Invalidate any in-flight relationship graph
+         * request and clear the relationship panel.
+         */
+        ++selectedObjectGraphRequestId;
+
+        selectedObjectGraph =
+            null;
+
+        selectedObjectGraphError =
+            null;
+
+        loadSelectedObjectGraph(
+            null
+        );
+
+
         focusPlanet =
             null;
 
@@ -5004,7 +6346,7 @@ document.getElementById(
         document.getElementById(
             "pauseButton"
         ).textContent =
-            "⏸ Pause";
+            "? Pause";
 
         if (paused) {
 
@@ -5031,13 +6373,13 @@ document.getElementById(
         document.getElementById(
             "selectedOrbit"
         ).textContent =
-            "—";
+            "â€”";
 
 
         document.getElementById(
             "selectedRotation"
         ).textContent =
-            "—";
+            "â€”";
 
 
         document.querySelectorAll(
@@ -5098,6 +6440,168 @@ document.getElementById(
    PLANET SELECTION
 ================================================================ */
 
+async function loadPlanetaryTrajectory(
+    planetId,
+    observationDate
+) {
+
+    if (!planetId) {
+        planetaryTrajectory = null;
+        planetaryTrajectoryPlanetId = null;
+        planetaryTrajectoryError = null;
+        return;
+    }
+
+    planetaryTrajectoryLoading = true;
+    planetaryTrajectoryError = null;
+
+    const requestPlanetId = planetId;
+
+    /*
+     * Use the cached trajectory when this planet has
+     * already been calculated.
+     */
+    const cachedTrajectory =
+        planetaryTrajectoryCache.get(
+            requestPlanetId
+        );
+
+    if (cachedTrajectory) {
+
+        planetaryTrajectory =
+            cachedTrajectory;
+
+        planetaryTrajectoryPlanetId =
+            requestPlanetId;
+
+        planetaryTrajectoryLoading =
+            false;
+
+        return;
+    }
+
+    /*
+     * Every new request receives a unique sequence ID.
+     * This prevents late responses from replacing
+     * the trajectory for a newer planet selection.
+     */
+    const requestId =
+        ++planetaryTrajectoryRequestId;
+
+    try {
+
+        const params = new URLSearchParams({
+            observation_time:
+                observationDate.toISOString(),
+            days: "365",
+            samples: "181"
+        });
+
+        const response = await fetch(
+            `/api/v1/planets/${encodeURIComponent(requestPlanetId)}/trajectory?${params.toString()}`,
+            {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Planetary trajectory request failed: ${response.status}`
+            );
+        }
+
+        const payload =
+            await response.json();
+
+        const data =
+            payload &&
+            payload.data;
+
+        const samples =
+            data &&
+            Array.isArray(data.samples)
+                ? data.samples
+                : null;
+
+        if (
+            !data ||
+            data.object_id !== requestPlanetId ||
+            !samples ||
+            samples.length < 2
+        ) {
+            throw new Error(
+                "Planetary trajectory response did not contain valid trajectory samples."
+            );
+        }
+
+        /*
+         * Ignore a late response if the user has already
+         * selected another planet.
+         */
+        if (
+            requestId !== planetaryTrajectoryRequestId ||
+            !selectedPlanet ||
+            selectedPlanet.id !== requestPlanetId
+        ) {
+            return;
+        }
+
+        const trajectoryData = {
+            objectId:
+                requestPlanetId,
+
+            observationTime:
+                data.observation_time,
+
+            days:
+                data.days,
+
+            samples:
+                samples
+        };
+
+        /*
+         * Store the calculated trajectory so subsequent
+         * selections of this planet do not require
+         * another 181-sample API request.
+         */
+        planetaryTrajectoryCache.set(
+            requestPlanetId,
+            trajectoryData
+        );
+
+        planetaryTrajectory =
+            trajectoryData;
+
+        planetaryTrajectoryPlanetId =
+            requestPlanetId;
+
+    } catch (error) {
+
+        console.error(
+            "AstroSphere: Failed to load planetary trajectory",
+            error
+        );
+
+        planetaryTrajectoryError =
+            error.message;
+
+        planetaryTrajectory =
+            null;
+
+        planetaryTrajectoryPlanetId =
+            null;
+
+    } finally {
+
+        planetaryTrajectoryLoading =
+            false;
+
+    }
+}
 function selectPlanet(
     name
 ) {
@@ -5125,6 +6629,28 @@ function selectPlanet(
     selectedTrackedObject =
         null;
 
+    updateAIAssistantContext();
+
+    /*
+     * Load the scientific object graph for the
+     * newly selected celestial object.
+     */
+    loadSelectedObjectGraph(
+        selectedCelestialObjectId
+    );
+
+
+
+    /*
+     * Load the structured heliocentric trajectory for
+     * the newly selected planet.
+     */
+    planetaryTrajectoryError = null;
+
+    loadPlanetaryTrajectory(
+        planet.id,
+        getSimulationDate()
+    );
     focusPlanet =
         planet;
 
@@ -5191,6 +6717,627 @@ function selectPlanet(
 
 
 
+async function loadSelectedObjectGraph(objectId) {
+    const panel =
+        document.getElementById(
+            "selectedObjectRelationships"
+        );
+
+    const status =
+        document.getElementById(
+            "selectedObjectRelationshipStatus"
+        );
+
+    const groups =
+        document.getElementById(
+            "selectedObjectRelationshipGroups"
+        );
+
+    if (!panel || !status || !groups) {
+        return;
+    }
+
+    if (!objectId) {
+        selectedObjectGraph = null;
+        selectedObjectGraphError = null;
+        renderSelectedObjectCosmicLocation(null);
+        panel.style.display = "none";
+        groups.innerHTML = "";
+        status.textContent = "";
+        return;
+    }
+
+    const requestId =
+        ++selectedObjectGraphRequestId;
+
+    selectedObjectGraphLoading = true;
+    selectedObjectGraphError = null;
+    selectedObjectGraph = null;
+
+        panel.style.display = "block";
+    status.textContent =
+        "Loading relationship graph...";
+    groups.innerHTML = "";
+
+    try {
+        const response = await fetch(
+            `/api/v1/celestial-objects/${encodeURIComponent(objectId)}/graph`
+        );
+
+        const payload = await response.json();
+
+        if (
+            requestId !== selectedObjectGraphRequestId ||
+            selectedCelestialObjectId !== objectId
+        ) {
+            return;
+        }
+
+        if (!response.ok || payload.status !== "success") {
+
+            throw new Error(
+                payload.error ||
+                "Unable to load relationship graph."
+            );
+        }
+
+        selectedObjectGraph = payload.data;
+
+        renderSelectedObjectGraph(
+            selectedObjectGraph
+        );
+
+        const selectedNameElement =
+            document.getElementById(
+                "selectedName"
+            );
+
+        if (selectedNameElement) {
+            selectedNameElement.textContent =
+                selectedObjectGraph.name ||
+                selectedObjectGraph.id;
+        }
+
+        updateAIAssistantContext();
+    } catch (error) {
+        if (
+            requestId !== selectedObjectGraphRequestId
+        ) {
+            return;
+        }
+
+        console.error(
+            "Failed to load celestial object graph:",
+            error
+        );
+
+        selectedObjectGraphError = error;
+
+        status.textContent =
+            "Relationship graph unavailable.";
+
+        groups.innerHTML = "";
+    } finally {
+        if (
+            requestId === selectedObjectGraphRequestId
+        ) {
+            selectedObjectGraphLoading = false;
+        }
+    }
+}
+
+
+function renderSelectedObjectCosmicLocation(graph) {
+
+    const panel =
+        document.getElementById(
+            "selectedObjectCosmicLocation"
+        );
+
+    const items =
+        document.getElementById(
+            "selectedObjectCosmicLocationItems"
+        );
+
+    if (!panel || !items) {
+        return;
+    }
+
+    items.innerHTML = "";
+
+    if (!graph || !graph.id) {
+                panel.style.display = "none";
+        return;
+    }
+
+    const objects = [];
+
+    if (Array.isArray(graph.ancestors)) {
+        graph.ancestors
+            .slice()
+            .reverse()
+            .forEach(
+            (object) => {
+                if (
+                    object &&
+                    object.id
+                ) {
+                    objects.push(object);
+                }
+            }
+        );
+    }
+
+    objects.push({
+        id: graph.id,
+        name: graph.name || graph.id,
+        object_type: graph.object_type || null,
+        current: true,
+    });
+
+    const seen = new Set();
+
+    objects.forEach(
+        (object, index) => {
+
+            const objectId =
+                String(object.id)
+                    .trim()
+                    .toLowerCase();
+
+            if (
+                !objectId ||
+                seen.has(objectId)
+            ) {
+                return;
+            }
+
+            seen.add(objectId);
+
+            if (index > 0) {
+                const separator =
+                    document.createElement(
+                        "span"
+                    );
+
+                separator.className =
+                    "object-cosmic-location-separator";
+
+                separator.textContent = "›";
+
+                items.appendChild(
+                    separator
+                );
+            }
+
+            const isCurrent =
+                object.current === true;
+
+            const element =
+                document.createElement(
+                    isCurrent
+                        ? "span"
+                        : "button"
+                );
+
+            element.className =
+                "object-cosmic-location-item" +
+                (
+                    isCurrent
+                        ? " object-cosmic-location-current"
+                        : ""
+                );
+
+            element.textContent =
+                object.name || object.id;
+
+            if (!isCurrent) {
+
+                element.type = "button";
+
+                element.title =
+                    object.object_type
+                        ? `${object.name || object.id} (${object.object_type})`
+                        : object.id;
+
+                element.addEventListener(
+                    "click",
+                    () => {
+                        selectCelestialObjectById(
+                            object.id
+                        );
+                    }
+                );
+            }
+
+            items.appendChild(
+                element
+            );
+        }
+    );
+
+    panel.style.display =
+        objects.length > 0
+            ? "block"
+            : "none";
+}
+
+function renderSelectedObjectGraph(graph) {
+    const panel =
+        document.getElementById(
+            "selectedObjectRelationships"
+        );
+
+    const status =
+        document.getElementById(
+            "selectedObjectRelationshipStatus"
+        );
+
+    const groups =
+        document.getElementById(
+            "selectedObjectRelationshipGroups"
+        );
+
+    if (!panel || !status || !groups) {
+        return;
+    }
+
+    renderSelectedObjectCosmicLocation(graph);
+    panel.style.display = "block";
+    groups.innerHTML = "";
+
+    const objectName =
+        graph.name || "Selected object";
+
+    status.textContent =
+        `${objectName} scientific object graph`;
+
+    const objectLookup = new Map();
+
+    if (graph.parent) {
+        objectLookup.set(
+            graph.parent.id,
+            graph.parent
+        );
+    }
+
+    if (Array.isArray(graph.ancestors)) {
+        graph.ancestors.forEach(
+            (object) => {
+                objectLookup.set(
+                    object.id,
+                    object
+                );
+            }
+        );
+    }
+
+    if (Array.isArray(graph.children)) {
+        graph.children.forEach(
+            (object) => {
+                objectLookup.set(
+                    object.id,
+                    object
+                );
+            }
+        );
+    }
+
+    const createGroup = (
+        label,
+        objects
+    ) => {
+        if (
+            !Array.isArray(objects) ||
+            objects.length === 0
+        ) {
+            return;
+        }
+
+        const group =
+            document.createElement("div");
+
+        group.className =
+            "object-relationship-group";
+
+        const heading =
+            document.createElement("div");
+
+        heading.className =
+            "object-relationship-label";
+
+        heading.textContent = label;
+
+        const items =
+            document.createElement("div");
+
+        items.className =
+            "object-relationship-items";
+
+        const seen = new Set();
+
+        objects.forEach(
+            (object) => {
+                if (
+                    !object ||
+                    !object.id ||
+                    seen.has(object.id)
+                ) {
+                    return;
+                }
+
+                seen.add(object.id);
+
+                const button =
+                    document.createElement("button");
+
+                button.type = "button";
+
+                button.className =
+                    "object-relationship-item";
+
+                button.textContent =
+                    object.name || object.id;
+
+                button.title =
+                    object.object_type
+                        ? `${object.name || object.id} (${object.object_type})`
+                        : object.id;
+
+                button.addEventListener(
+                    "click",
+                    () => {
+                        selectCelestialObjectById(
+                            object.id
+                        );
+                    }
+                );
+
+                items.appendChild(button);
+            }
+        );
+
+        if (!items.children.length) {
+            return;
+        }
+
+        group.appendChild(heading);
+        group.appendChild(items);
+        groups.appendChild(group);
+    };
+
+    createGroup(
+        "Parent",
+        graph.parent
+            ? [graph.parent]
+            : []
+    );
+
+    const orbitalTargets = [];
+    const containedObjects = [];
+    const otherRelationships = [];
+
+    if (Array.isArray(graph.relationships)) {
+        graph.relationships.forEach(
+            (relationship) => {
+                if (
+                    !relationship ||
+                    !relationship.target_id
+                ) {
+                    return;
+                }
+
+                const relatedObject =
+                    objectLookup.get(
+                        relationship.target_id
+                    ) || {
+                        id: relationship.target_id,
+                        name: relationship.target_id,
+                        object_type: null,
+                    };
+
+                if (
+                    relationship.relationship_type ===
+                    "orbits"
+                ) {
+                    orbitalTargets.push(
+                        relatedObject
+                    );
+                    return;
+                }
+
+                if (
+                    relationship.relationship_type ===
+                    "contains"
+                ) {
+                    containedObjects.push(
+                        relatedObject
+                    );
+                    return;
+                }
+
+                otherRelationships.push({
+                    label:
+                        relationship.relationship_type ||
+                        "Related",
+                    object: relatedObject,
+                });
+            }
+        );
+    }
+
+    createGroup(
+        "Orbits",
+        orbitalTargets
+    );
+
+    createGroup(
+        "Contains",
+        containedObjects
+    );
+
+    if (
+        Array.isArray(graph.ancestors) &&
+        graph.ancestors.length
+    ) {
+        createGroup(
+            "Cosmic hierarchy",
+            graph.ancestors
+        );
+    }
+
+    if (
+        Array.isArray(graph.children) &&
+        graph.children.length
+    ) {
+        createGroup(
+            "Children",
+            graph.children
+        );
+    }
+
+    otherRelationships.forEach(
+        (relationship) => {
+            createGroup(
+                relationship.label,
+                [relationship.object]
+            );
+        }
+    );
+
+    if (!groups.children.length) {
+        status.textContent =
+            `${objectName} has no additional relationships recorded.`;
+    }
+}
+
+
+function selectCelestialObjectById(objectId) {
+    if (!objectId) {
+        return;
+    }
+
+    const normalizedId =
+        String(objectId)
+            .trim()
+            .toLowerCase();
+
+    const planet =
+        planets.find(
+            (candidate) =>
+                candidate &&
+                String(candidate.id)
+                    .trim()
+                    .toLowerCase() ===
+                normalizedId
+        );
+
+    if (planet) {
+        selectPlanet(planet);
+        return;
+    }
+
+    /*
+     * Generic celestial-object selection.
+     *
+     * Clear planet-specific state so a previously
+     * selected planet cannot remain active when the
+     * user selects Sun, Solar System, Milky Way,
+     * Universe, stars, moons, or other objects.
+     */
+    selectedPlanet = null;
+    selectedTrackedObject = null;
+    focusPlanet = null;
+    focusMode = false;
+
+    // Clear planet-specific display values for generic celestial objects.
+    const selectedDescriptionElement =
+        document.getElementById(
+            "selectedDescription"
+        );
+
+    if (selectedDescriptionElement) {
+        selectedDescriptionElement.textContent =
+            "Scientific object graph and relationships are shown for this object.";
+    }
+
+    const selectedOrbitElement =
+        document.getElementById(
+            "selectedOrbit"
+        );
+
+    if (selectedOrbitElement) {
+        selectedOrbitElement.textContent =
+            "\u2014";
+    }
+
+    const selectedRotationElement =
+        document.getElementById(
+            "selectedRotation"
+        );
+
+    if (selectedRotationElement) {
+        selectedRotationElement.textContent =
+            "\u2014";
+    }
+
+    const selectedRotationLabelElement =
+        document.getElementById(
+            "selectedRotationLabel"
+        );
+
+    if (selectedRotationLabelElement) {
+        selectedRotationLabelElement.textContent =
+            "Rotation";
+    }
+
+    selectedCelestialObjectId =
+        normalizedId;
+
+    loadSelectedObjectGraph(
+        normalizedId
+    );
+
+    updateAIAssistantContext();
+    updateSelectedExploreLink();
+}
+
+function clearSelectedCelestialObject() {
+
+    selectedPlanet = null;
+
+    selectedCelestialObjectId = null;
+
+    selectedTrackedObject = null;
+
+    focusPlanet = null;
+
+    focusMode = false;
+
+    ++selectedObjectGraphRequestId;
+
+    selectedObjectGraph = null;
+
+    selectedObjectGraphLoading = false;
+
+    selectedObjectGraphError = null;
+
+    loadSelectedObjectGraph(null);
+
+    updateSelectedExploreLink();
+
+    updateAIAssistantContext();
+
+    const clearButton =
+        document.getElementById(
+            "clearSelectedObjectButton"
+        );
+
+    if (clearButton) {
+        clearButton.style.display = "none";
+    }
+}
+
 function updateSelectedExploreLink() {
 
     const link =
@@ -5198,24 +7345,39 @@ function updateSelectedExploreLink() {
             "selectedExploreLink"
         );
 
-    if (!link) {
-        return;
-    }
+    const clearButton =
+        document.getElementById(
+            "clearSelectedObjectButton"
+        );
 
     const url =
         CELESTIAL_URLS[
             selectedCelestialObjectId
         ];
 
-    if (!url) {
-        link.style.display = "none";
-        link.removeAttribute("href");
-        return;
+    if (link) {
+
+        if (url) {
+            link.href = url;
+            link.style.display = "inline-flex";
+        }
+        else {
+            link.style.display = "none";
+            link.removeAttribute("href");
+        }
     }
 
-    link.href = url;
-    link.style.display = "inline-flex";
+    if (clearButton) {
+
+        if (selectedCelestialObjectId) {
+            clearButton.style.display = "block";
+        }
+        else {
+            clearButton.style.display = "none";
+        }
+    }
 }
+
 function formatPeriod(
     days
 ) {

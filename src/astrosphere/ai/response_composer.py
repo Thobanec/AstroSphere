@@ -1,4 +1,7 @@
-﻿from astrosphere.ai.context import AIContext
+from astrosphere.ai.context import AIContext
+from astrosphere.ai.explanation_builder import (
+    build_fact_grounded_explanation,
+)
 from astrosphere.ai.fact_extractor import (
     extract_ai_facts,
 )
@@ -41,14 +44,32 @@ def compose_ai_response(
                 "CapabilityExecutionResult instances."
             )
 
+    relationship_result_present = any(
+        result.capability_id == "relationships"
+        for result in results
+    )
+
     facts = extract_ai_facts(
         context.object.id,
         results,
+        (
+            context.object_graph
+            if relationship_result_present
+            else None
+        ),
+        question=context.question,
     )
 
     interpretations = interpret_ai_facts(
         context.object.name,
         facts,
+    )
+
+    explanations = _build_explanations(
+        context,
+        results,
+        facts,
+        interpretations,
     )
 
     answer = _compose_answer(
@@ -57,12 +78,16 @@ def compose_ai_response(
         facts,
     )
 
+    provider_provenance = ()
+    provider_uncertainties = ()
+
     if language_provider is not None:
         language_request = AILanguageRequest(
             question=context.question,
             object=context.object,
             facts=facts,
             interpretations=interpretations,
+            explanations=explanations,
             provenance=tuple(context.provenance),
             uncertainties=context.uncertainties,
             observation_time=(
@@ -77,12 +102,36 @@ def compose_ai_response(
         )
 
         answer = language_response.answer
+        provider_provenance = tuple(
+            language_response.provenance
+        )
+        provider_uncertainties = tuple(
+            language_response.uncertainties
+        )
 
     provenance = list(context.provenance)
 
     for source in facts.provenance:
         if source not in provenance:
             provenance.append(source)
+
+    for source in explanations.provenance:
+        if source not in provenance:
+            provenance.append(source)
+
+    for source in provider_provenance:
+        if source not in provenance:
+            provenance.append(source)
+
+    uncertainties = list(context.uncertainties)
+
+    for uncertainty in explanations.uncertainties:
+        if uncertainty not in uncertainties:
+            uncertainties.append(uncertainty)
+
+    for uncertainty in provider_uncertainties:
+        if uncertainty not in uncertainties:
+            uncertainties.append(uncertainty)
 
     return AIResponse(
         question=context.question,
@@ -97,7 +146,134 @@ def compose_ai_response(
         facts=facts,
         interpretations=interpretations,
         provenance=tuple(provenance),
-        uncertainties=context.uncertainties,
+        uncertainties=tuple(uncertainties),
+    )
+
+
+def _build_explanations(
+    context,
+    results,
+    facts,
+    interpretations,
+):
+    if not facts.facts:
+        return _empty_explanation_set(
+            context.object.id,
+        )
+
+    subjects = []
+
+    fact_names = {
+        fact.name
+        for fact in facts.facts
+    }
+
+    if any(
+        name.startswith("position_")
+        for name in fact_names
+    ):
+        subjects.append("position")
+
+    if any(
+        name.startswith("velocity_")
+        for name in fact_names
+    ):
+        subjects.append("velocity")
+
+    capability_ids = {
+        result.capability_id
+        for result in results
+    }
+
+    if (
+        "trajectory" in capability_ids
+        or "planetary-trajectory" in capability_ids
+    ):
+        subjects.append("trajectory")
+
+    if "close-approaches" in capability_ids:
+        subjects.append("close_approach")
+
+    if "space-weather" in capability_ids:
+        subjects.append("space_weather")
+
+    if "relationships" in capability_ids:
+        subjects.append("relationships")
+
+    unique_subjects = tuple(
+        dict.fromkeys(subjects)
+    )
+
+    explanations = []
+
+    for subject in unique_subjects:
+        try:
+            explanation_set = (
+                build_fact_grounded_explanation(
+                    context.object.id,
+                    facts,
+                    interpretations,
+                    subject,
+                )
+            )
+        except ValueError:
+            continue
+
+        explanations.extend(
+            explanation_set.explanations
+        )
+
+    if not explanations:
+        return _empty_explanation_set(
+            context.object.id,
+        )
+
+    provenance = tuple(
+        source
+        for source in (
+            explanations[0].provenance
+        )
+    )
+
+    uncertainties = tuple(
+        dict.fromkeys(
+            uncertainty
+            for explanation in explanations
+            for uncertainty
+            in explanation.uncertainties
+        )
+    )
+
+    observation_time = next(
+        (
+            explanation.observation_time
+            for explanation in explanations
+            if explanation.observation_time is not None
+        ),
+        None,
+    )
+
+    from astrosphere.ai.explanation import (
+        AIExplanationSet,
+    )
+
+    return AIExplanationSet(
+        object_id=context.object.id,
+        explanations=tuple(explanations),
+        level="standard",
+        observation_time=observation_time,
+        provenance=provenance,
+        uncertainties=uncertainties,
+    )
+
+
+def _empty_explanation_set(object_id):
+    from astrosphere.ai.explanation import (
+        AIExplanationSet,
+    )
+
+    return AIExplanationSet(
+        object_id=object_id,
     )
 
 

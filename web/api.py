@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 from flask import (
     Blueprint,
@@ -23,6 +23,9 @@ from astrosphere.astronomy.planets import (
     PLANETS,
 )
 
+from astrosphere.astronomy.planetary_trajectory import (
+    calculate_planetary_trajectory,
+)
 from astrosphere.astronomy.spacecraft import (
     SpacecraftNotFoundError,
     SpacecraftServiceError,
@@ -46,6 +49,8 @@ from astrosphere.overview import (
 )
 from astrosphere.models.celestial_registry import (
     get_celestial_object,
+    get_children,
+    get_ancestors,
 )
 from astrosphere.models.scientific_serialization import (
     scientific_data_to_dict,
@@ -66,6 +71,9 @@ from astrosphere.scientific.close_approaches import (
 from astrosphere.scientific.context import (
     get_celestial_object_context,
 )
+from astrosphere.scientific.relationships import (
+    get_celestial_object_relationships,
+)
 from astrosphere.scientific.earth import (
     get_earth_context,
 )
@@ -83,6 +91,23 @@ from astrosphere.capabilities.execution import (
 )
 from astrosphere.capabilities.runner import (
     execute_capability,
+)
+from astrosphere.ai import (
+    build_ai_context,
+)
+from astrosphere.ai.assistant import (
+    process_assistant_message,
+)
+from astrosphere.ai.context_serialization import (
+    ai_context_to_dict,
+    _capability_result_to_dict,
+    _fact_set_to_dict,
+    _interpretation_set_to_dict,
+    _observation_time_to_string,
+)
+from astrosphere.ai.conversation import (
+    AIConversation,
+    AssistantMessage,
 )
 from astrosphere.ai.orchestrator import (
     orchestrate_ai_request,
@@ -239,6 +264,82 @@ def capability_execute():
     )
 
 
+
+@api.post(
+    "/celestial-objects/<object_id>/capabilities/"
+    "<capability_id>/execute"
+)
+def execute_celestial_capability(
+    object_id,
+    capability_id,
+):
+    object_id = object_id.strip().lower()
+    capability_id = capability_id.strip().lower()
+
+    data = request.get_json(silent=True)
+
+    if data is None:
+        data = {}
+
+    if not isinstance(data, dict):
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Request body must be a JSON object.",
+            }
+        ), 400
+
+    parameters = data.get("parameters", {})
+
+    if not isinstance(parameters, dict):
+        return jsonify(
+            {
+                "status": "error",
+                "error": "parameters must be an object.",
+            }
+        ), 400
+
+    observation_time = data.get("observation_time")
+
+    if (
+        observation_time is not None
+        and not isinstance(observation_time, str)
+    ):
+        return jsonify(
+            {
+                "status": "error",
+                "error": "observation_time must be a string.",
+            }
+        ), 400
+
+    request_object = CapabilityExecutionRequest(
+        object_id=object_id,
+        capability_id=capability_id,
+        observation_time=observation_time,
+        parameters=parameters,
+    )
+
+    try:
+        execution_result = execute_capability(
+            request_object
+        )
+    except (TypeError, ValueError) as exc:
+        return jsonify(
+            {
+                "status": "error",
+                "error": str(exc),
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": _capability_result_to_dict(
+                execution_result
+            ),
+        }
+    )
+
 @api.get("/celestial-objects/<object_id>/context")
 def celestial_object_context(object_id):
     observation_time = None
@@ -309,17 +410,126 @@ def celestial_object_context(object_id):
     )
 
 
-@api.get("/celestial-objects/<object_id>/relationships")
-def celestial_object_relationships(object_id):
+@api.get("/celestial-objects/<object_id>/ai-context")
+def celestial_object_ai_context(object_id):
+    object_id = object_id.strip().lower()
 
-    from astrosphere.models.celestial_registry import (
-        get_ancestors,
-        get_celestial_object,
-        get_children,
-        get_parent_object,
+    question = request.args.get(
+        "question",
+        "",
+    ).strip()
+
+    if not question:
+        question = (
+            f"Provide the scientific context "
+            f"for {object_id}."
+        )
+
+    observation_time = None
+
+    observation_time_text = (
+        request.args.get(
+            "observation_time",
+            "",
+        ).strip()
     )
 
+    if observation_time_text:
+        observation_time = observation_time_text
+
+    try:
+        context = build_ai_context(
+            question,
+            object_id,
+            observation_time=observation_time,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {
+                "status": "error",
+                "error": str(exc),
+            }
+        ), 404
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": ai_context_to_dict(context),
+        }
+    )
+
+
+@api.get("/celestial-objects/<object_id>/graph")
+def celestial_object_graph(object_id):
     object_id = object_id.strip().lower()
+
+    try:
+        graph_data = get_celestial_object_relationships(
+            object_id
+        )
+    except ValueError:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Celestial object was not found.",
+            }
+        ), 404
+
+    obj = graph_data["object"]
+    parent = graph_data["parent"]
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": {
+                "id": obj.id,
+                "name": obj.name,
+                "object_type": obj.object_type,
+                "parent": (
+                    {
+                        "id": parent.id,
+                        "name": parent.name,
+                        "object_type": parent.object_type,
+                    }
+                    if parent
+                    else None
+                ),
+                "ancestors": [
+                    {
+                        "id": ancestor.id,
+                        "name": ancestor.name,
+                        "object_type": ancestor.object_type,
+                    }
+                    for ancestor in graph_data["ancestors"]
+                ],
+                "children": [
+                    {
+                        "id": child.id,
+                        "name": child.name,
+                        "object_type": child.object_type,
+                    }
+                    for child in graph_data["children"]
+                ],
+                "relationships": [
+                    {
+                        "source_id": relationship.source_id,
+                        "relationship_type": (
+                            relationship.relationship_type
+                        ),
+                        "target_id": relationship.target_id,
+                    }
+                    for relationship in graph_data[
+                        "relationships"
+                    ]
+                ],
+            },
+        }
+    )
+
+@api.get("/celestial-objects/<object_id>/ancestors")
+def celestial_object_ancestors(object_id):
+    object_id = object_id.strip().lower()
+
     obj = get_celestial_object(object_id)
 
     if obj is None:
@@ -330,9 +540,96 @@ def celestial_object_relationships(object_id):
             }
         ), 404
 
-    parent = get_parent_object(object_id)
     ancestors = get_ancestors(object_id)
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": {
+                "id": obj.id,
+                "name": obj.name,
+                "ancestors": [
+                    {
+                        "id": ancestor.id,
+                        "name": ancestor.name,
+                        "object_type": ancestor.object_type,
+                    }
+                    for ancestor in ancestors
+                ],
+            },
+        }
+    )
+
+@api.get("/celestial-objects/<object_id>/children")
+def celestial_object_children(object_id):
+    object_id = object_id.strip().lower()
+
+    obj = get_celestial_object(object_id)
+
+    if obj is None:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Celestial object was not found.",
+            }
+        ), 404
+
     children = get_children(object_id)
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": {
+                "id": obj.id,
+                "name": obj.name,
+                "children": [
+                    {
+                        "id": child.id,
+                        "name": child.name,
+                        "object_type": child.object_type,
+                    }
+                    for child in children
+                ],
+            },
+        }
+    )
+
+@api.get("/celestial-objects/<object_id>/relationships")
+def celestial_object_relationships(object_id):
+    object_id = object_id.strip().lower()
+
+    relationship_type = request.args.get(
+        "relationship_type"
+    )
+
+    if relationship_type is not None:
+        relationship_type = relationship_type.strip().lower()
+
+    try:
+        relationship_data = (
+            get_celestial_object_relationships(
+                object_id
+            )
+        )
+    except ValueError:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Celestial object was not found.",
+            }
+        ), 404
+
+    obj = relationship_data["object"]
+    parent = relationship_data["parent"]
+
+    relationships = relationship_data["relationships"]
+
+    if relationship_type is not None:
+        relationships = tuple(
+            relationship
+            for relationship in relationships
+            if relationship.relationship_type == relationship_type
+        )
 
     return jsonify(
         {
@@ -353,7 +650,9 @@ def celestial_object_relationships(object_id):
                         "id": ancestor.id,
                         "name": ancestor.name,
                     }
-                    for ancestor in ancestors
+                    for ancestor in relationship_data[
+                        "ancestors"
+                    ]
                 ],
                 "children": [
                     {
@@ -361,12 +660,23 @@ def celestial_object_relationships(object_id):
                         "name": child.name,
                         "object_type": child.object_type,
                     }
-                    for child in children
+                    for child in relationship_data[
+                        "children"
+                    ]
+                ],
+                "relationships": [
+                    {
+                        "source_id": relationship.source_id,
+                        "relationship_type": (
+                            relationship.relationship_type
+                        ),
+                        "target_id": relationship.target_id,
+                    }
+                    for relationship in relationships
                 ],
             },
         }
     )
-
 
 @api.get("/celestial-objects/<object_id>/scientific-data")
 def celestial_object_scientific_data(object_id):
@@ -610,6 +920,158 @@ def planet_detail(planet_name):
             "skyfield_object": (
                 planet.skyfield_name
             ),
+        }
+    )
+
+
+@api.get("/planets/<planet_name>/trajectory")
+def planetary_trajectory(planet_name):
+
+    planet_name = (
+        planet_name
+        .strip()
+        .lower()
+    )
+
+    if planet_name not in PLANET_LOOKUP:
+
+        return jsonify(
+            {
+                "error": (
+                    "Invalid planetary body."
+                )
+            }
+        ), 404
+
+    try:
+
+        days = int(
+            request.args.get(
+                "days",
+                "365",
+            )
+        )
+
+        samples = int(
+            request.args.get(
+                "samples",
+                "181",
+            )
+        )
+
+    except ValueError:
+
+        return jsonify(
+            {
+                "error": (
+                    "days and samples must be integers."
+                )
+            }
+        ), 400
+
+    if days < 1:
+
+        return jsonify(
+            {
+                "error": (
+                    "days must be at least 1."
+                )
+            }
+        ), 400
+
+    if samples < 2:
+
+        return jsonify(
+            {
+                "error": (
+                    "samples must be at least 2."
+                )
+            }
+        ), 400
+
+    observation_time = None
+
+    observation_time_text = (
+        request.args.get(
+            "observation_time"
+        )
+    )
+
+    if observation_time_text:
+
+        try:
+
+            observation_time = (
+                datetime.fromisoformat(
+                    observation_time_text.replace(
+                        "Z",
+                        "+00:00",
+                    )
+                )
+            )
+
+            if observation_time.tzinfo is None:
+
+                observation_time = (
+                    observation_time.replace(
+                        tzinfo=timezone.utc
+                    )
+                )
+
+            else:
+
+                observation_time = (
+                    observation_time.astimezone(
+                        timezone.utc
+                    )
+                )
+
+        except ValueError:
+
+            return jsonify(
+                {
+                    "error": (
+                        "Invalid observation_time. "
+                        "Use ISO 8601 format."
+                    )
+                }
+            ), 400
+
+    try:
+
+        trajectory = (
+            calculate_planetary_trajectory(
+                planet_name,
+                observation_time=observation_time,
+                days=days,
+                samples=samples,
+            )
+        )
+
+    except ValueError as exc:
+
+        return jsonify(
+            {
+                "error": str(exc)
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "status": "success",
+            "data": {
+                "object_id": planet_name,
+                "name": PLANET_LOOKUP[
+                    planet_name
+                ].name,
+                "observation_time": (
+                    trajectory[0]["date"].isoformat()
+                    if trajectory
+                    else None
+                ),
+                "days": days,
+                "samples": trajectory,
+            },
         }
     )
 
@@ -1305,6 +1767,286 @@ def ai_query():
             }
         ), 400
 
+    message = payload.get("message")
+
+    if message is not None:
+        conversation_id = payload.get(
+            "conversation_id"
+        )
+
+        if (
+            not isinstance(conversation_id, str)
+            or not conversation_id.strip()
+        ):
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": (
+                        "conversation_id is required "
+                        "for assistant messages."
+                    ),
+                }
+            ), 400
+
+        object_id = payload.get("object_id")
+
+        if object_id is not None and not isinstance(
+            object_id,
+            str,
+        ):
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": "object_id must be a string.",
+                }
+            ), 400
+
+        capability_ids = payload.get(
+            "capability_ids",
+            (),
+        )
+
+        if not isinstance(
+            capability_ids,
+            (list, tuple),
+        ):
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": "capability_ids must be a list.",
+                }
+            ), 400
+
+        messages = payload.get(
+            "messages",
+            (),
+        )
+
+        if not isinstance(
+            messages,
+            (list, tuple),
+        ):
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": "messages must be a list.",
+                }
+            ), 400
+
+        conversation_messages = []
+
+        for item in messages:
+            if not isinstance(item, dict):
+                return jsonify(
+                    {
+                        "status": "error",
+                        "error": (
+                            "conversation messages require "
+                            "role and content."
+                        ),
+                    }
+                ), 400
+
+            role = item.get("role")
+            content = item.get("content")
+
+            if (
+                not isinstance(role, str)
+                or not role.strip()
+                or not isinstance(content, str)
+                or not content.strip()
+            ):
+                return jsonify(
+                    {
+                        "status": "error",
+                        "error": (
+                            "conversation messages require "
+                            "role and content."
+                        ),
+                    }
+                ), 400
+
+            role = role.strip().lower()
+
+            if role not in (
+                "user",
+                "assistant",
+            ):
+                return jsonify(
+                    {
+                        "status": "error",
+                        "error": (
+                            "conversation message role "
+                            "must be user or assistant."
+                        ),
+                    }
+                ), 400
+
+            message_object_id = item.get(
+                "object_id"
+            )
+
+            if (
+                message_object_id is not None
+                and not isinstance(
+                    message_object_id,
+                    str,
+                )
+            ):
+                return jsonify(
+                    {
+                        "status": "error",
+                        "error": (
+                            "conversation message "
+                            "object_id must be a string."
+                        ),
+                    }
+                ), 400
+
+            metadata = item.get("metadata")
+
+            if (
+                metadata is not None
+                and not isinstance(metadata, dict)
+            ):
+                return jsonify(
+                    {
+                        "status": "error",
+                        "error": (
+                            "conversation message "
+                            "metadata must be an object."
+                        ),
+                    }
+                ), 400
+
+            conversation_messages.append(
+                AssistantMessage(
+                    role=role,
+                    content=content.strip(),
+                    object_id=(
+                        message_object_id.strip().lower()
+                        if isinstance(
+                            message_object_id,
+                            str,
+                        )
+                        and message_object_id.strip()
+                        else None
+                    ),
+                    metadata=metadata,
+                )
+            )
+
+        observation_time = payload.get(
+            "observation_time"
+        )
+        parameters = payload.get("parameters")
+
+        if (
+            parameters is not None
+            and not isinstance(parameters, dict)
+        ):
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": (
+                        "parameters must be an object."
+                    ),
+                }
+            ), 400
+
+        try:
+            conversation = AIConversation(
+                conversation_id=conversation_id.strip(),
+                messages=tuple(
+                    conversation_messages
+                ),
+                object_id=(
+                    object_id.strip().lower()
+                    if isinstance(object_id, str)
+                    and object_id.strip()
+                    else None
+                ),
+            )
+
+            language_provider = create_language_provider()
+
+            updated_conversation, result = (
+                process_assistant_message(
+                    conversation,
+                    message,
+                    object_id=object_id,
+                    observation_time=observation_time,
+                    capability_ids=tuple(
+                        capability_ids
+                    ),
+                    parameters=parameters,
+                    language_provider=language_provider,
+                )
+            )
+
+            return jsonify(
+                {
+                    "status": "success",
+                    "data": {
+                        "conversation_id": (
+                            updated_conversation
+                            .conversation_id
+                        ),
+                        "message": message.strip(),
+                        "question": result.question,
+                        "object_id": result.object_id,
+                        "answer": result.answer,
+                        "capabilities": list(
+                            result.capabilities
+                        ),
+                        "observation_time": (
+                            result.observation_time
+                        ),
+                        "provenance": [
+                            {
+                                "name": source.name,
+                                "provider": source.provider,
+                                "url": source.url,
+                                "dataset": source.dataset,
+                                "version": source.version,
+                                "upstream_source": source.upstream_source,
+                            }
+                            for source in result.provenance
+                        ],
+                        "uncertainties": list(
+                            result.uncertainties
+                        ),
+                        "messages": [
+                            {
+                                "role": item.role,
+                                "content": item.content,
+                                "object_id": item.object_id,
+                            }
+                            for item
+                            in updated_conversation.messages
+                        ],
+                    },
+                }
+            )
+
+        except ValueError as exc:
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": str(exc),
+                }
+            ), 400
+
+        except Exception:
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": (
+                        "AI assistant processing failed."
+                    ),
+                }
+            ), 500
+
     question = payload.get("question")
     object_id = payload.get("object_id")
 
@@ -1325,6 +2067,7 @@ def ai_query():
         ), 400
 
     capability_ids = payload.get("capability_ids", ())
+
     if not isinstance(capability_ids, (list, tuple)):
         return jsonify(
             {
@@ -1368,7 +2111,38 @@ def ai_query():
                     "object_id": result.object_id,
                     "answer": result.answer,
                     "capabilities": list(result.capabilities),
-                    "observation_time": result.observation_time,
+                    "results": [
+                        _capability_result_to_dict(
+                            capability_result
+                        )
+                        for capability_result
+                        in result.results
+                    ],
+                    "facts": _fact_set_to_dict(
+                        result.facts
+                    ),
+                    "interpretations": _interpretation_set_to_dict(
+                        result.interpretations
+                    ),
+                    "observation_time": (
+                        _observation_time_to_string(
+                            result.observation_time
+                        )
+                    ),
+                    "provenance": [
+                        {
+                            "name": source.name,
+                            "provider": source.provider,
+                            "url": source.url,
+                            "dataset": source.dataset,
+                            "version": source.version,
+                            "upstream_source": source.upstream_source,
+                        }
+                        for source in result.provenance
+                    ],
+                    "uncertainties": list(
+                        result.uncertainties
+                    ),
                 },
             }
         )

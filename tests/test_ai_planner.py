@@ -1,4 +1,4 @@
-﻿from astrosphere.ai import (
+from astrosphere.ai import (
     AICapabilityPlanItem,
     AIOrchestrationRequest,
     plan_ai_capabilities,
@@ -109,6 +109,7 @@ def test_plan_uses_all_available_capabilities_when_unspecified():
         for item in plan
     ] == [
         "context",
+        "scientific-data",
         "relationships",
     ]
 
@@ -229,17 +230,63 @@ def test_plan_question_selects_context_for_generic_question():
     ] == ["context"]
 
 
-def test_plan_rejects_intent_not_supported_by_object():
+def test_plan_question_selects_planetary_trajectory():
     request = AIOrchestrationRequest(
         question="Show the trajectory of Earth.",
         object_id="earth",
     )
 
-    try:
-        plan_ai_capabilities(request)
-    except ValueError as exc:
-        assert "not available" in str(exc)
-    else:
-        raise AssertionError(
-            "Expected unsupported intent to be rejected."
-        )
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == ["planetary-trajectory"]
+
+def test_plan_compound_position_and_trajectory_question():
+    request = AIOrchestrationRequest(
+        question="Where is Apophis and what is its trajectory?",
+        object_id="asteroid:99942",
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == [
+        "tracking",
+        "trajectory",
+    ]
+
+    assert [
+        item.execution_order
+        for item in plan
+    ] == [1, 2]
+
+def test_plan_compound_parameters_are_routed_per_capability():
+    request = AIOrchestrationRequest(
+        question="Where is Earth and what is its trajectory?",
+        object_id="earth",
+        parameters={
+            "days": 5,
+            "samples": 5,
+        },
+    )
+
+    plan = plan_ai_capabilities(request)
+
+    assert [
+        item.capability_id
+        for item in plan
+    ] == [
+        "scientific-data",
+        "planetary-trajectory",
+    ]
+
+    assert plan[0].parameters == {}
+
+    assert plan[1].parameters == {
+        "days": 5,
+        "samples": 5,
+    }

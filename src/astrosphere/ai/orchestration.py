@@ -1,8 +1,9 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 from typing import Any
 
 from astrosphere.ai.facts import AIFactSet
 from astrosphere.ai.interpretation import AIInterpretationSet
+from astrosphere.models.scientific import DataSource
 from astrosphere.capabilities.results import (
     CapabilityExecutionResult,
 )
@@ -35,3 +36,5 @@ class AIOrchestrationResult:
     facts: AIFactSet | None = None
     interpretations: AIInterpretationSet | None = None
     observation_time: Any | None = None
+    provenance: tuple[DataSource, ...] = ()
+    uncertainties: tuple[str, ...] = ()

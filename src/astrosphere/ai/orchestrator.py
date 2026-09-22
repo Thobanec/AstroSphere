@@ -1,4 +1,4 @@
-﻿from astrosphere.ai.capability_access import (
+from astrosphere.ai.capability_access import (
     execute_ai_capability,
 )
 from astrosphere.ai.grounding import (
@@ -10,6 +10,9 @@ from astrosphere.ai.orchestration import (
 )
 from astrosphere.ai.llm import (
     AILanguageProvider,
+)
+from astrosphere.ai.deterministic_provider import (
+    DeterministicLanguageProvider,
 )
 from astrosphere.ai.planner import (
     plan_ai_capabilities,
@@ -23,6 +26,9 @@ def orchestrate_ai_request(
     request,
     language_provider: AILanguageProvider | None = None,
 ):
+    if language_provider is None:
+        language_provider = DeterministicLanguageProvider()
+
     if not isinstance(
         request,
         AIOrchestrationRequest,
@@ -70,4 +76,6 @@ def orchestrate_ai_request(
         facts=composed_response.facts,
         interpretations=composed_response.interpretations,
         observation_time=composed_response.observation_time,
+        provenance=composed_response.provenance,
+        uncertainties=composed_response.uncertainties,
     )

@@ -9,6 +9,9 @@ from astrosphere.models.celestial_registry import (
 from astrosphere.models.planetary_scientific_catalog import (
     get_planetary_scientific_properties,
 )
+from astrosphere.models.stellar_scientific_catalog import (
+    get_stellar_scientific_properties,
+)
 from astrosphere.models.scientific import (
     DataSource,
     Observation,
@@ -69,6 +72,46 @@ def get_scientific_data(
     if obj is None:
         raise ValueError(
             f"Unknown celestial object: {object_id}"
+        )
+
+    if obj.object_type == "star":
+        stellar_properties = (
+            get_stellar_scientific_properties(
+                obj.id
+            )
+        )
+
+        if stellar_properties is None:
+            raise ValueError(
+                f"Scientific data is not yet supported "
+                f"for: {obj.id}"
+            )
+
+        return ScientificData(
+            object_id=obj.id,
+            observation=None,
+            position=None,
+            velocity=None,
+            physical_properties=(
+                stellar_properties.physical_properties
+            ),
+            orbital_properties=None,
+            physical_properties_source=(
+                stellar_properties.source
+            ),
+            orbital_properties_source=None,
+            stellar_properties=(
+                stellar_properties.stellar_properties
+            ),
+            stellar_properties_source=(
+                stellar_properties.source
+            ),
+            provenance=ScientificProvenance(
+                sources=(
+                    stellar_properties.source,
+                ),
+                reference_frames=(),
+            ),
         )
 
     if obj.object_type == "asteroid":

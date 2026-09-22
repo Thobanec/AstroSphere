@@ -1,12 +1,17 @@
-﻿from astrosphere.capabilities.definitions import (
+from datetime import datetime
+from astrosphere.capabilities.definitions import (
     CAPABILITY_CLOSE_APPROACHES,
     CAPABILITY_CONTEXT,
     CAPABILITY_ORBITAL_ANALYSIS,
+    CAPABILITY_PLANETARY_TRAJECTORY,
     CAPABILITY_RELATIONSHIPS,
     CAPABILITY_SCIENTIFIC_DATA,
     CAPABILITY_SPACE_WEATHER,
     CAPABILITY_TRACKING,
     CAPABILITY_TRAJECTORY,
+)
+from astrosphere.capabilities.registry import (
+    get_capabilities_for_object,
 )
 from astrosphere.capabilities.executors import (
     get_capability_executor,
@@ -427,6 +432,60 @@ def test_orbital_analysis_valid():
     assert result["interval_days"] == 30
 
 
+def test_orbital_analysis_normalization_uses_observation_date():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id=CAPABILITY_ORBITAL_ANALYSIS,
+        observation_time="2026-09-22T05:30:00+02:00",
+        parameters={
+            "reference_body": "sun",
+            "target_body": "earth",
+        },
+    )
+
+    result = normalize_capability_request(request)
+
+    assert result.arguments == (
+        "sun",
+        "earth",
+        datetime(
+            2026,
+            9,
+            22,
+        ),
+    )
+
+    assert result.keyword_arguments == {
+        "months": 12,
+        "interval_days": 30,
+    }
+
+
+def test_orbital_analysis_normalization_preserves_explicit_start_date():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id=CAPABILITY_ORBITAL_ANALYSIS,
+        observation_time="2026-09-22T05:30:00+02:00",
+        parameters={
+            "reference_body": "sun",
+            "target_body": "earth",
+            "start_date": "2026-01-15",
+        },
+    )
+
+    result = normalize_capability_request(request)
+
+    assert result.arguments == (
+        "sun",
+        "earth",
+        datetime(
+            2026,
+            1,
+            15,
+        ),
+    )
+
+
 def test_unexpected_parameter_rejected():
     try:
         validate_capability_parameters(
@@ -688,7 +747,7 @@ def test_normalize_orbital_analysis():
     assert result.arguments == (
         "earth",
         "mars",
-        "2026-01-01",
+        datetime(2026, 1, 1),
     )
 
     assert result.keyword_arguments == {
@@ -850,3 +909,247 @@ def test_runner_reports_missing_executor(
         raise AssertionError(
             "Expected missing executor to be rejected."
         )
+
+
+def test_planetary_trajectory_executor_for_earth():
+    executor = get_capability_executor_for_object(
+        "earth",
+        CAPABILITY_PLANETARY_TRAJECTORY,
+    )
+
+    assert executor is not None
+    assert executor.__name__ == "calculate_planetary_trajectory"
+
+
+def test_planetary_trajectory_executor_not_available_for_apophis():
+    executor = get_capability_executor_for_object(
+        "asteroid:99942",
+        CAPABILITY_PLANETARY_TRAJECTORY,
+    )
+
+    assert executor is None
+
+
+
+
+
+def test_planetary_trajectory_normalization_defaults():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id="planetary-trajectory",
+    )
+
+    result = normalize_capability_request(request)
+
+    assert result.capability_id == "planetary-trajectory"
+    assert result.object_id == "earth"
+    assert result.arguments == ("earth",)
+    assert result.keyword_arguments == {
+        "observation_time": None,
+        "days": 365,
+        "samples": 181,
+    }
+
+
+def test_planetary_trajectory_normalization_custom_parameters():
+    request = CapabilityExecutionRequest(
+        object_id="mars",
+        capability_id="planetary-trajectory",
+        parameters={
+            "days": 730,
+            "samples": 365,
+        },
+    )
+
+    result = normalize_capability_request(request)
+
+    assert result.arguments == ("mars",)
+    assert result.keyword_arguments == {
+        "observation_time": None,
+        "days": 730,
+        "samples": 365,
+    }
+
+
+def test_planetary_trajectory_normalization_observation_time():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id="planetary-trajectory",
+        observation_time="2026-09-19T00:00:00+00:00",
+    )
+
+    result = normalize_capability_request(request)
+
+    assert result.arguments == ("earth",)
+    assert result.keyword_arguments == {
+        "observation_time": "2026-09-19T00:00:00+00:00",
+        "days": 365,
+        "samples": 181,
+    }
+
+
+def test_planetary_trajectory_normalization_rejects_apophis():
+    request = CapabilityExecutionRequest(
+        object_id="asteroid:99942",
+        capability_id="planetary-trajectory",
+    )
+
+    try:
+        normalize_capability_request(request)
+    except ValueError as exc:
+        assert "Capability 'planetary-trajectory' is not supported for object 'asteroid:99942'." in str(exc)
+    else:
+        raise AssertionError(
+            "Expected non-planetary object to be rejected."
+        )
+
+
+def test_planetary_trajectory_validation_rejects_non_integer_days():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id=CAPABILITY_PLANETARY_TRAJECTORY,
+        parameters={"days": 365.5},
+    )
+
+    try:
+        normalize_capability_request(request)
+    except ValueError as exc:
+        assert "days must be an integer" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected non-integer days to be rejected."
+        )
+
+
+def test_planetary_trajectory_validation_rejects_invalid_days():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id=CAPABILITY_PLANETARY_TRAJECTORY,
+        parameters={"days": 0},
+    )
+
+    try:
+        normalize_capability_request(request)
+    except ValueError as exc:
+        assert "days must be at least 1" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected invalid days to be rejected."
+        )
+
+
+def test_planetary_trajectory_validation_rejects_non_integer_samples():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id=CAPABILITY_PLANETARY_TRAJECTORY,
+        parameters={"samples": 181.5},
+    )
+
+    try:
+        normalize_capability_request(request)
+    except ValueError as exc:
+        assert "samples must be an integer" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected non-integer samples to be rejected."
+        )
+
+
+def test_planetary_trajectory_validation_rejects_invalid_samples():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id=CAPABILITY_PLANETARY_TRAJECTORY,
+        parameters={"samples": 1},
+    )
+
+    try:
+        normalize_capability_request(request)
+    except ValueError as exc:
+        assert "samples must be at least 2" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected invalid samples to be rejected."
+        )
+
+
+def test_planetary_trajectory_validation_rejects_invalid_observation_time():
+    request = CapabilityExecutionRequest(
+        object_id="earth",
+        capability_id=CAPABILITY_PLANETARY_TRAJECTORY,
+        parameters={
+            "observation_time": "not-a-date",
+        },
+    )
+
+    try:
+        normalize_capability_request(request)
+    except ValueError as exc:
+        assert "observation_time" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected invalid observation_time to be rejected."
+        )
+
+def test_universe_supports_context_and_relationships():
+    from astrosphere.capabilities.registry import (
+        get_capabilities_for_object,
+    )
+
+    capabilities = get_capabilities_for_object(
+        "universe"
+    )
+
+    capability_ids = {
+        capability.id
+        for capability in capabilities
+    }
+
+    assert CAPABILITY_CONTEXT in capability_ids
+    assert CAPABILITY_RELATIONSHIPS in capability_ids
+    assert CAPABILITY_SCIENTIFIC_DATA not in capability_ids
+
+
+def test_milky_way_supports_context_and_relationships():
+    from astrosphere.capabilities.registry import (
+        get_capabilities_for_object,
+    )
+
+    capabilities = get_capabilities_for_object(
+        "milky-way"
+    )
+
+    capability_ids = {
+        capability.id
+        for capability in capabilities
+    }
+
+    assert CAPABILITY_CONTEXT in capability_ids
+    assert CAPABILITY_RELATIONSHIPS in capability_ids
+    assert CAPABILITY_SCIENTIFIC_DATA not in capability_ids
+
+
+def test_solar_system_retains_context_and_relationships():
+    from astrosphere.capabilities.registry import (
+        get_capabilities_for_object,
+    )
+
+    capabilities = get_capabilities_for_object(
+        "solar-system"
+    )
+
+    capability_ids = {
+        capability.id
+        for capability in capabilities
+    }
+
+    assert CAPABILITY_CONTEXT in capability_ids
+    assert CAPABILITY_RELATIONSHIPS in capability_ids
+
+def test_star_supports_scientific_data():
+    capabilities = get_capabilities_for_object("sirius")
+    capability_ids = {
+        capability.id
+        for capability in capabilities
+    }
+
+    assert "scientific-data" in capability_ids

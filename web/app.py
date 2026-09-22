@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 from flask import Flask, render_template, request
 
@@ -220,6 +220,26 @@ def asteroid_tracking_page():
     return render_template(
         "asteroid.html",
         asteroid=result,
+        celestial_context=celestial_context,
+    )
+
+@app.route("/celestial/<path:object_id>")
+def celestial_object_page(object_id):
+
+    try:
+        celestial_context = get_celestial_object_context(
+            object_id,
+            observation_time=get_current_time(),
+        )
+
+    except ValueError:
+        return render_template(
+            "error.html",
+            message="Celestial object was not found.",
+        )
+
+    return render_template(
+        "celestial_object.html",
         celestial_context=celestial_context,
     )
 

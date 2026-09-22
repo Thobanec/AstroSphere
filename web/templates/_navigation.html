@@ -1,4 +1,4 @@
-﻿<nav class="global-nav" aria-label="Primary navigation">
+<nav class="global-nav" aria-label="Primary navigation">
 
     <a href="{{ url_for('index') }}"
        class="global-nav-link{% if request.endpoint == 'index' %} active{% endif %}"
@@ -6,9 +6,15 @@
         ⌂ Home
     </a>
 
-    <a href="{{ url_for('galaxy') }}"
-       class="global-nav-link{% if request.endpoint == 'galaxy' %} active{% endif %}"
-       {% if request.endpoint == 'galaxy' %}aria-current="page"{% endif %}>
+    <a href="{{ url_for('celestial_object_page', object_id='universe') }}"
+       class="global-nav-link{% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'universe' %} active{% endif %}"
+       {% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'universe' %}aria-current="page"{% endif %}>
+        🌌 Universe
+    </a>
+
+    <a href="{{ url_for('celestial_object_page', object_id='milky-way') }}"
+       class="global-nav-link{% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'milky-way' %} active{% endif %}"
+       {% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'milky-way' %}aria-current="page"{% endif %}>
         🌌 Milky Way
     </a>
 

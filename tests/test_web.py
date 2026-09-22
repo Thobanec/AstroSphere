@@ -153,6 +153,7 @@ from astrosphere.capabilities.definitions import (
     CAPABILITY_SPACE_WEATHER,
     CAPABILITY_TRACKING,
     CAPABILITY_TRAJECTORY,
+    CAPABILITY_PLANETARY_TRAJECTORY,
 )
 from astrosphere.capabilities.registry import (
     get_capabilities_for_object,
@@ -184,6 +185,7 @@ def test_earth_capabilities():
         CAPABILITY_RELATIONSHIPS,
         CAPABILITY_SPACE_WEATHER,
         CAPABILITY_ORBITAL_ANALYSIS,
+        CAPABILITY_PLANETARY_TRAJECTORY,
     }
 
 
@@ -225,9 +227,94 @@ def test_sun_capabilities():
 
     assert capability_ids == {
         CAPABILITY_CONTEXT,
+        CAPABILITY_SCIENTIFIC_DATA,
         CAPABILITY_RELATIONSHIPS,
     }
 
 
 def test_unknown_object_has_no_capabilities():
     assert get_capabilities_for_object("unknown") == ()
+
+
+
+def test_stellar_detail_pages():
+
+    client = app.test_client()
+
+    stellar_objects = (
+        "sirius",
+        "proxima-centauri",
+        "betelgeuse",
+        "vega",
+    )
+
+    for object_id in stellar_objects:
+
+        response = client.get(
+            f"/celestial/{object_id}"
+        )
+
+        assert response.status_code == 200
+
+        assert (
+            b"Physical Properties"
+            in response.data
+        )
+
+        assert (
+            b"Stellar Properties"
+            in response.data
+        )
+
+        assert (
+            b"Provenance"
+            in response.data
+        )
+
+
+def test_milky_way_contains_galaxy_visualization_link():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/celestial/milky-way"
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        b' href="/galaxy"'
+        in response.data
+    )
+
+    assert (
+        b"Explore Galaxy Visualization"
+        in response.data
+    )
+
+
+def test_stellar_page_does_not_contain_galaxy_visualization_link():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/celestial/sirius"
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        b"Explore Galaxy Visualization"
+        not in response.data
+    )
+
+
+def test_galaxy_visualization_page():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/galaxy"
+    )
+
+    assert response.status_code == 200

@@ -1,4 +1,4 @@
-﻿from astrosphere.models.celestial_registry import (
+from astrosphere.models.celestial_registry import (
     get_celestial_object,
 )
 
@@ -26,4 +26,4 @@ def get_celestial_object_url(object_id):
         norad_id = obj.id.split(":", 1)[1]
         return f"/spacecraft?norad_id={norad_id}"
 
-    return None
+    return f"/celestial/{obj.id}"

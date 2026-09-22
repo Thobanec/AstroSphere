@@ -1,4 +1,4 @@
-﻿from openai import OpenAI
+from openai import OpenAI
 
 from astrosphere.ai.llm import (
     AILanguageRequest,
@@ -63,7 +63,12 @@ class OpenAILanguageProvider:
     def _build_instructions():
         return (
             "You are the AstroSphere scientific language assistant. "
-            "Use only the supplied AstroSphere facts and interpretations. "
+            "Use only the supplied AstroSphere facts and interpretations "
+            "as scientific evidence. "
+            "Educational explanations are provided as controlled context "
+            "to help explain scientific concepts. "
+            "Do not treat an educational explanation as a new source of "
+            "scientific measurements. "
             "Do not invent scientific measurements, sources, or observations. "
             "Do not claim access to data that was not supplied. "
             "Preserve uncertainty when it is provided. "
@@ -80,8 +85,23 @@ class OpenAILanguageProvider:
 
         interpretations = "\n".join(
             interpretation.statement
-            for interpretation in request.interpretations.interpretations
+            for interpretation
+            in request.interpretations.interpretations
         )
+
+        explanations = ""
+
+        if (
+            request.explanations is not None
+            and request.explanations.explanations
+        ):
+            explanations = "\n".join(
+                OpenAILanguageProvider._render_explanation(
+                    explanation
+                )
+                for explanation
+                in request.explanations.explanations
+            )
 
         return (
             f"Question:\n{request.question}\n\n"
@@ -93,6 +113,8 @@ class OpenAILanguageProvider:
             f"{facts or 'None supplied.'}\n\n"
             f"Deterministic interpretations:\n"
             f"{interpretations or 'None supplied.'}\n\n"
+            f"Educational explanations:\n"
+            f"{explanations or 'None supplied.'}\n\n"
             f"Uncertainties:\n"
             f"{chr(10).join(request.uncertainties) or 'None supplied.'}\n"
         )
@@ -109,4 +131,13 @@ class OpenAILanguageProvider:
         return (
             f"{fact.name}: "
             f"{fact.value}"
+        )
+
+    @staticmethod
+    def _render_explanation(explanation):
+        return (
+            f"{explanation.subject} "
+            f"({explanation.explanation_type}, "
+            f"{explanation.level}): "
+            f"{explanation.explanation}"
         )

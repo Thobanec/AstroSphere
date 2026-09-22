@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 
 from astrosphere.ai.facts import (
     AIFact,
@@ -279,6 +279,67 @@ def test_interpreter_handles_orbital_analysis_facts():
     assert result.interpretations[1].statement == (
         "Earth relative_velocity_km_s is 29.78 km/s."
     )
+
+
+def test_interpreter_handles_cross_capability_earth_facts():
+    fact_set = AIFactSet(
+        object_id="earth",
+        facts=(
+            AIFact(
+                name="position_x",
+                value=1.002,
+                unit="AU",
+                source_capability="scientific-data",
+            ),
+            AIFact(
+                name="velocity_y",
+                value=0.0157,
+                unit="AU/day",
+                source_capability="scientific-data",
+            ),
+            AIFact(
+                name="trajectory_sample_count",
+                value=2,
+                unit=None,
+                source_capability="planetary-trajectory",
+            ),
+            AIFact(
+                name="trajectory_start_x",
+                value=1.003,
+                unit="AU",
+                source_capability="planetary-trajectory",
+            ),
+            AIFact(
+                name="trajectory_end_x",
+                value=1.001,
+                unit="AU",
+                source_capability="planetary-trajectory",
+            ),
+        ),
+    )
+
+    result = interpret_ai_facts("Earth", fact_set)
+
+    assert len(result.interpretations) == 5
+
+    statements = {
+        interpretation.statement
+        for interpretation in result.interpretations
+    }
+
+    assert "Earth position_x is 1.002 AU." in statements
+    assert "Earth velocity_y is 0.0157 AU/day." in statements
+    assert "Earth trajectory_sample_count is 2." in statements
+    assert "Earth trajectory_start_x is 1.003 AU." in statements
+    assert "Earth trajectory_end_x is 1.001 AU." in statements
+
+    supporting_capabilities = {
+        interpretation.supporting_capabilities
+        for interpretation in result.interpretations
+    }
+
+    assert ("scientific-data",) in supporting_capabilities
+    assert ("planetary-trajectory",) in supporting_capabilities
 
 
 def test_interpreter_empty_facts_produces_empty_set():

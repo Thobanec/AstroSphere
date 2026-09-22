@@ -1,4 +1,4 @@
-﻿from astrosphere.ai.intent import (
+from astrosphere.ai.intent import (
     AICapabilityIntent,
 )
 
@@ -39,6 +39,9 @@ _CAPABILITY_KEYWORDS = {
         "scientific data",
         "scientific state",
         "velocity",
+        "how fast",
+        "moving",
+        "speed",
         "position and velocity",
         "observation",
         "reference frame",
@@ -52,6 +55,10 @@ _CAPABILITY_KEYWORDS = {
         "hierarchy",
         "relationship",
         "relationships",
+        "orbit",
+        "orbits",
+        "associated",
+        "associated with",
     ),
     "context": (
         "information about",
@@ -109,6 +116,29 @@ def select_capability_intents(
                 )
                 break
 
+    # Domain-specific capabilities take precedence over generic
+    # scientific-data matches. For example, "solar wind speed"
+    # belongs to space-weather, not generic velocity data.
+    if any(
+        intent.capability_id == "space-weather"
+        for intent in intents
+    ):
+        intents = [
+            intent
+            for intent in intents
+            if intent.capability_id != "scientific-data"
+        ]
+
+
+    # Cosmic hierarchy questions are relationship queries, not
+    # current-position tracking queries.
+    if "hierarchy" in normalized_question:
+        intents = [
+            intent
+            for intent in intents
+            if intent.capability_id != "tracking"
+        ]
+
     if available is not None:
         tracking_available = (
             "tracking" in available
@@ -117,9 +147,12 @@ def select_capability_intents(
             "scientific-data" in available
         )
 
-        position_requested = any(
-            keyword in normalized_question
-            for keyword in _POSITION_KEYWORDS
+        position_requested = (
+            "hierarchy" not in normalized_question
+            and any(
+                keyword in normalized_question
+                for keyword in _POSITION_KEYWORDS
+            )
         )
 
         if (
@@ -152,6 +185,94 @@ def select_capability_intents(
                     or tracking_available
                 )
             ]
+
+    if available is not None:
+        trajectory_available = (
+            "trajectory" in available
+        )
+        planetary_trajectory_available = (
+            "planetary-trajectory" in available
+        )
+        orbital_analysis_available = (
+            "orbital-analysis" in available
+        )
+
+        trajectory_requested = any(
+            keyword in normalized_question
+            for keyword in (
+                "trajectory",
+                "path",
+                "orbit path",
+                "projected path",
+            )
+        )
+
+        # Explicit trajectory/path questions take precedence over the
+        # generic relationship "orbit" keyword.
+        if trajectory_requested:
+            intents = [
+                intent
+                for intent in intents
+                if intent.capability_id != "relationships"
+            ]
+        planetary_object_requested = any(
+            planet in normalized_question
+            for planet in (
+                "mercury",
+                "venus",
+                "earth",
+                "mars",
+                "jupiter",
+                "saturn",
+                "uranus",
+                "neptune",
+                "pluto",
+            )
+        )
+
+        if (
+            trajectory_requested
+            and planetary_object_requested
+            and planetary_trajectory_available
+        ):
+            intents = [
+                intent
+                for intent in intents
+                if intent.capability_id != "trajectory"
+            ]
+
+            intents.append(
+                AICapabilityIntent(
+                    capability_id="planetary-trajectory",
+                    reason=(
+                        "Trajectory intent mapped to "
+                        "'planetary-trajectory' for a "
+                        "planetary object."
+                    ),
+                )
+            )
+
+        elif (
+            trajectory_requested
+            and not trajectory_available
+            and orbital_analysis_available
+        ):
+            intents = [
+                intent
+                for intent in intents
+                if intent.capability_id != "trajectory"
+            ]
+
+            intents.append(
+                AICapabilityIntent(
+                    capability_id="orbital-analysis",
+                    reason=(
+                        "Trajectory intent mapped to "
+                        "'orbital-analysis' because "
+                        "'trajectory' is unavailable."
+                    ),
+                )
+            )
 
     specific_intents = tuple(
         intent

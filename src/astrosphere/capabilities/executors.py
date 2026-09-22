@@ -1,7 +1,8 @@
-﻿from astrosphere.capabilities.definitions import (
+from astrosphere.capabilities.definitions import (
     CAPABILITY_CLOSE_APPROACHES,
     CAPABILITY_CONTEXT,
     CAPABILITY_ORBITAL_ANALYSIS,
+    CAPABILITY_PLANETARY_TRAJECTORY,
     CAPABILITY_RELATIONSHIPS,
     CAPABILITY_SCIENTIFIC_DATA,
     CAPABILITY_SPACE_WEATHER,
@@ -42,6 +43,9 @@ from astrosphere.astronomy.spacecraft import (
 from astrosphere.astronomy.orbital_analysis import (
     analyze_body_distance,
 )
+from astrosphere.astronomy.planetary_trajectory import (
+    calculate_planetary_trajectory,
+)
 
 
 CAPABILITY_EXECUTOR_IDS = {
@@ -53,6 +57,7 @@ CAPABILITY_EXECUTOR_IDS = {
     CAPABILITY_CLOSE_APPROACHES: "close-approaches",
     CAPABILITY_SPACE_WEATHER: "space-weather",
     CAPABILITY_ORBITAL_ANALYSIS: "orbital-analysis",
+    CAPABILITY_PLANETARY_TRAJECTORY: "planetary-trajectory",
 }
 
 
@@ -66,6 +71,7 @@ CAPABILITY_EXECUTORS = {
     "asteroid-tracking": track_asteroid,
     "spacecraft-tracking": track_spacecraft_by_norad,
     CAPABILITY_ORBITAL_ANALYSIS: analyze_body_distance,
+    CAPABILITY_PLANETARY_TRAJECTORY: calculate_planetary_trajectory,
 }
 
 

@@ -1,7 +1,10 @@
-﻿from astrosphere.ai.capability_access import (
+from astrosphere.ai.capability_access import (
     execute_ai_capability,
 )
-from astrosphere.ai.context import AIContext
+from astrosphere.ai.context import (
+    AIContext,
+    AIObjectGraph,
+)
 from astrosphere.ai.grounding import build_ai_context
 from astrosphere.ai.orchestration import (
     AICapabilityPlanItem,
@@ -27,6 +30,7 @@ from astrosphere.ai.time import (
 
 __all__ = [
     "AIContext",
+    "AIObjectGraph",
     "AIResponse",
     "AICapabilityPlanItem",
     "AIOrchestrationRequest",

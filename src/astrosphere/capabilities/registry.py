@@ -2,6 +2,7 @@ from astrosphere.capabilities.definitions import (
     CAPABILITY_CLOSE_APPROACHES,
     CAPABILITY_CONTEXT,
     CAPABILITY_ORBITAL_ANALYSIS,
+    CAPABILITY_PLANETARY_TRAJECTORY,
     CAPABILITY_RELATIONSHIPS,
     CAPABILITY_SCIENTIFIC_DATA,
     CAPABILITY_SPACE_WEATHER,
@@ -22,12 +23,15 @@ CAPABILITY_DEFINITIONS = {
             "scientific context."
         ),
         supported_object_types=(
+            "universe",
+            "galaxy",
             "system",
             "star",
             "planet",
             "dwarf_planet",
             "asteroid",
             "spacecraft",
+            "moon",
         ),
     ),
 
@@ -40,6 +44,7 @@ CAPABILITY_DEFINITIONS = {
             "supported celestial object."
         ),
         supported_object_types=(
+            "star",
             "planet",
             "dwarf_planet",
             "asteroid",
@@ -55,12 +60,15 @@ CAPABILITY_DEFINITIONS = {
             "parent, and children of a celestial object."
         ),
         supported_object_types=(
+            "universe",
+            "galaxy",
             "system",
             "star",
             "planet",
             "dwarf_planet",
             "asteroid",
             "spacecraft",
+            "moon",
         ),
     ),
 
@@ -124,6 +132,18 @@ CAPABILITY_DEFINITIONS = {
             "planet",
         ),
     ),
+
+    CAPABILITY_PLANETARY_TRAJECTORY: CapabilityDefinition(
+        id=CAPABILITY_PLANETARY_TRAJECTORY,
+        name="Planetary Trajectory",
+        description=(
+            "Calculate a time-based heliocentric trajectory "
+            "for a supported planet."
+        ),
+        supported_object_types=(
+            "planet",
+        ),
+    ),
 }
 
 
@@ -152,4 +172,3 @@ def get_capabilities_for_object(object_id):
             capabilities.append(capability)
 
     return tuple(capabilities)
-

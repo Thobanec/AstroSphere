@@ -51,6 +51,8 @@ class ScientificData:
     orbital_properties: dict | None = None
     physical_properties_source: DataSource | None = None
     orbital_properties_source: DataSource | None = None
+    stellar_properties: dict | None = None
+    stellar_properties_source: DataSource | None = None
     provenance: ScientificProvenance | None = None
 
 @dataclass(frozen=True)

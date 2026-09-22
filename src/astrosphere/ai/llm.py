@@ -1,6 +1,7 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 from typing import Any, Protocol
 
+from astrosphere.ai.explanation import AIExplanationSet
 from astrosphere.ai.facts import AIFactSet
 from astrosphere.ai.interpretation import AIInterpretationSet
 from astrosphere.models.celestial import CelestialObject
@@ -13,6 +14,7 @@ class AILanguageRequest:
     object: CelestialObject
     facts: AIFactSet
     interpretations: AIInterpretationSet
+    explanations: AIExplanationSet | None = None
     provenance: tuple[DataSource, ...] = ()
     uncertainties: tuple[str, ...] = ()
     observation_time: Any | None = None

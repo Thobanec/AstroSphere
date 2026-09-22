@@ -1,4 +1,4 @@
-﻿from astrosphere.ai.intent import (
+from astrosphere.ai.intent import (
     AICapabilityIntent,
 )
 from astrosphere.ai.intent_selector import (
@@ -173,3 +173,61 @@ def test_position_keeps_tracking_when_tracking_available():
         intent.capability_id
         for intent in intents
     ] == ["tracking"]
+
+def test_trajectory_falls_back_to_orbital_analysis_when_trajectory_unavailable():
+    intents = select_capability_intents(
+        "What is Earth's orbital trajectory?",
+        available_capabilities={
+            "context",
+            "scientific-data",
+            "relationships",
+            "space-weather",
+            "orbital-analysis",
+        },
+    )
+
+    assert [
+        intent.capability_id
+        for intent in intents
+    ] == ["orbital-analysis"]
+
+
+def test_trajectory_maps_to_planetary_trajectory_when_available():
+    intents = select_capability_intents(
+        "What is Earth's orbital trajectory?",
+        available_capabilities={
+            "context",
+            "scientific-data",
+            "relationships",
+            "space-weather",
+            "orbital-analysis",
+            "planetary-trajectory",
+        },
+    )
+
+    assert [
+        intent.capability_id
+        for intent in intents
+    ] == ["planetary-trajectory"]
+
+
+def test_asteroid_trajectory_remains_trajectory_capability():
+    intents = select_capability_intents(
+        "What is Apophis's trajectory?",
+        available_capabilities={
+            "context",
+            "scientific-data",
+            "relationships",
+            "tracking",
+            "trajectory",
+            "close-approaches",
+            "space-weather",
+            "orbital-analysis",
+            "planetary-trajectory",
+        },
+    )
+
+    assert [
+        intent.capability_id
+        for intent in intents
+    ] == ["trajectory"]

@@ -139,6 +139,9 @@
 
             {% if celestial_context.scientific_data %}
 
+            {% set scientific_source = celestial_context.scientific_data.physical_properties_source %}
+
+
             <div class="form-grid">
 
                 <div class="form-group">
@@ -165,9 +168,8 @@
                     </label>
 
                     <div>
-                        {% if celestial_context.scientific_data.observation
-                              and celestial_context.scientific_data.observation.source %}
-                            {{ celestial_context.scientific_data.observation.source.name }}
+                        {% if scientific_source %}
+                            {{ scientific_source.name }}
                         {% else %}
                             Unavailable
                         {% endif %}
@@ -234,6 +236,79 @@
             </div>
 
 
+
+            {% if celestial_context.scientific_data.physical_properties %}
+
+            <div class="card-header">
+
+                <h3>
+                    Physical Properties
+                </h3>
+
+                <p>
+                    Canonical physical properties for this celestial object.
+                </p>
+
+            </div>
+
+            <div class="form-grid">
+
+                {% for property_name, property_value in celestial_context.scientific_data.physical_properties.items() %}
+
+                <div class="form-group">
+
+                    <label>
+                        {{ property_name|replace("_", " ")|title }}
+                    </label>
+
+                    <div>
+                        {{ property_value }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+            {% endif %}
+
+            {% if celestial_context.scientific_data.stellar_properties %}
+
+            <div class="card-header">
+
+                <h3>
+                    Stellar Properties
+                </h3>
+
+                <p>
+                    Catalogue properties describing the stellar object or system.
+                </p>
+
+            </div>
+
+            <div class="form-grid">
+
+                {% for property_name, property_value in celestial_context.scientific_data.stellar_properties.items() %}
+
+                <div class="form-group">
+
+                    <label>
+                        {{ property_name|replace("_", " ")|title }}
+                    </label>
+
+                    <div>
+                        {{ property_value }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+            {% endif %}
+
             <div class="card-header">
 
                 <h3>
@@ -257,10 +332,8 @@
                     </label>
 
                     <div>
-                        {% if celestial_context.scientific_data.observation
-                              and celestial_context.scientific_data.observation.source
-                              and celestial_context.scientific_data.observation.source.provider %}
-                            {{ celestial_context.scientific_data.observation.source.provider }}
+                        {% if scientific_source and scientific_source.provider %}
+                            {{ scientific_source.provider }}
                         {% else %}
                             Unavailable
                         {% endif %}
@@ -276,10 +349,8 @@
                     </label>
 
                     <div>
-                        {% if celestial_context.scientific_data.observation
-                              and celestial_context.scientific_data.observation.source
-                              and celestial_context.scientific_data.observation.source.dataset %}
-                            {{ celestial_context.scientific_data.observation.source.dataset }}
+                        {% if scientific_source and scientific_source.dataset %}
+                            {{ scientific_source.dataset }}
                         {% else %}
                             Unavailable
                         {% endif %}
@@ -295,10 +366,8 @@
                     </label>
 
                     <div>
-                        {% if celestial_context.scientific_data.observation
-                              and celestial_context.scientific_data.observation.source
-                              and celestial_context.scientific_data.observation.source.version %}
-                            {{ celestial_context.scientific_data.observation.source.version }}
+                        {% if scientific_source and scientific_source.version %}
+                            {{ scientific_source.version }}
                         {% else %}
                             Unavailable
                         {% endif %}
@@ -314,10 +383,8 @@
                     </label>
 
                     <div>
-                        {% if celestial_context.scientific_data.observation
-                              and celestial_context.scientific_data.observation.source
-                              and celestial_context.scientific_data.observation.source.upstream_source %}
-                            {{ celestial_context.scientific_data.observation.source.upstream_source }}
+                        {% if scientific_source and scientific_source.upstream_source %}
+                            {{ scientific_source.upstream_source }}
                         {% else %}
                             Unavailable
                         {% endif %}

@@ -1,9 +1,13 @@
-﻿from astrosphere.ai.facts import (
+from astrosphere.ai.context import AIObjectGraph
+from astrosphere.ai.facts import (
     AIFact,
     AIFactSet,
 )
 from astrosphere.capabilities.results import (
     CapabilityExecutionResult,
+)
+from astrosphere.models.celestial_registry import (
+    get_celestial_object,
 )
 from astrosphere.models.scientific import (
     ScientificData,
@@ -14,6 +18,8 @@ from astrosphere.models.scientific import (
 def extract_ai_facts(
     object_id,
     results,
+    object_graph=None,
+    question=None,
 ):
     if not isinstance(object_id, str) or not object_id.strip():
         raise ValueError("Object ID is required.")
@@ -24,6 +30,22 @@ def extract_ai_facts(
     facts = []
     provenance = []
     observation_time = None
+
+    if object_graph is not None and not isinstance(
+        object_graph,
+        AIObjectGraph,
+    ):
+        raise ValueError(
+            "object_graph must be an AIObjectGraph instance."
+        )
+
+    if object_graph is not None:
+        facts.extend(
+            _extract_object_graph_facts(
+                object_graph,
+                question=question,
+            )
+        )
 
     for result in results:
         if not isinstance(
@@ -59,6 +81,158 @@ def extract_ai_facts(
     )
 
 
+def _extract_object_graph_facts(
+    object_graph,
+    question=None,
+):
+    facts = []
+
+    normalized_question = (
+        question.strip().lower()
+        if isinstance(question, str)
+        else ""
+    )
+
+    if object_graph.parent is not None:
+        facts.append(
+            AIFact(
+                name="object_parent",
+                value=object_graph.parent.id,
+                source_capability="relationships",
+                metadata={
+                    "name": object_graph.parent.name,
+                    "object_type": object_graph.parent.object_type,
+                },
+            )
+        )
+
+    for ancestor in object_graph.ancestors:
+        facts.append(
+            AIFact(
+                name="object_ancestor",
+                value=ancestor.id,
+                source_capability="relationships",
+                metadata={
+                    "name": ancestor.name,
+                    "object_type": ancestor.object_type,
+                },
+            )
+        )
+
+    for child in object_graph.children:
+        facts.append(
+            AIFact(
+                name="object_child",
+                value=child.id,
+                source_capability="relationships",
+                metadata={
+                    "name": child.name,
+                    "object_type": child.object_type,
+                },
+            )
+        )
+
+
+    for relationship in object_graph.relationships:
+        target_object = get_celestial_object(
+            relationship.target_id
+        )
+
+        metadata = {}
+
+        if target_object is not None:
+            metadata = {
+                "name": target_object.name,
+                "object_type": target_object.object_type,
+            }
+
+        fact_name = (
+            f"relationship_{relationship.relationship_type}"
+        )
+
+        facts.append(
+            AIFact(
+                name=fact_name,
+                value=relationship.target_id,
+                source_capability="relationships",
+                metadata=metadata,
+            )
+        )
+    if "what orbits" in normalized_question:
+        for relationship in object_graph.incoming_relationships:
+            if relationship.relationship_type != "orbits":
+                continue
+            source_object = get_celestial_object(
+                relationship.source_id
+            )
+
+            metadata = {}
+
+            if source_object is not None:
+                metadata = {
+                    "name": source_object.name,
+                    "object_type": source_object.object_type,
+                }
+
+            fact_name = (
+                f"incoming_relationship_"
+                f"{relationship.relationship_type}"
+            )
+
+            facts.append(
+                AIFact(
+                    name=fact_name,
+                    value=relationship.source_id,
+                    source_capability="relationships",
+                    metadata=metadata,
+                )
+            )
+
+    if "associated" in normalized_question:
+        associated_ids = []
+
+        if object_graph.parent is not None:
+            associated_ids.append(object_graph.parent.id)
+
+        for child in object_graph.children:
+            associated_ids.append(child.id)
+
+        for relationship in object_graph.relationships:
+            associated_ids.append(relationship.target_id)
+
+        for relationship in object_graph.incoming_relationships:
+            associated_ids.append(relationship.source_id)
+
+        seen_ids = set()
+
+        for associated_id in associated_ids:
+            if associated_id in seen_ids:
+                continue
+
+            seen_ids.add(associated_id)
+
+            associated_object = get_celestial_object(
+                associated_id
+            )
+
+            metadata = {}
+
+            if associated_object is not None:
+                metadata = {
+                    "name": associated_object.name,
+                    "object_type": associated_object.object_type,
+                }
+
+            facts.append(
+                AIFact(
+                    name="associated_object",
+                    value=associated_id,
+                    source_capability="relationships",
+                    metadata=metadata,
+                )
+            )
+    return tuple(facts)
+
 def _extract_result_facts(result):
     capability_id = result.capability_id
     value = result.result
@@ -83,6 +257,12 @@ def _extract_result_facts(result):
 
     if capability_id == "trajectory":
         return _extract_trajectory(
+            value,
+            capability_id,
+        )
+
+    if capability_id == "planetary-trajectory":
+        return _extract_planetary_trajectory(
             value,
             capability_id,
         )
@@ -129,6 +309,40 @@ def _extract_scientific_data(
 
     if len(provenance) == 1:
         fact_source = provenance[0]
+
+    if value.physical_properties:
+        for name, property_value in value.physical_properties.items():
+            fact_name = f"physical_{name}"
+
+            facts.append(
+                AIFact(
+                    name=fact_name,
+                    value=property_value,
+                    source_capability=capability_id,
+                    source=(
+                        value.physical_properties_source
+                        if value.physical_properties_source is not None
+                        else fact_source
+                    ),
+                )
+            )
+
+    if value.stellar_properties:
+        for name, property_value in value.stellar_properties.items():
+            fact_name = f"stellar_{name}"
+
+            facts.append(
+                AIFact(
+                    name=fact_name,
+                    value=property_value,
+                    source_capability=capability_id,
+                    source=(
+                        value.stellar_properties_source
+                        if value.stellar_properties_source is not None
+                        else fact_source
+                    ),
+                )
+            )
 
     if value.position is not None:
         position = value.position
@@ -449,6 +663,108 @@ def _extract_trajectory(
         "provenance": (),
     }
 
+
+def _extract_planetary_trajectory(
+    value,
+    capability_id,
+):
+    if not isinstance(value, (list, tuple)):
+        return {
+            "facts": (),
+            "observation_time": None,
+            "provenance": (),
+        }
+
+    samples = [
+        sample
+        for sample in value
+        if isinstance(sample, dict)
+    ]
+
+    if not samples:
+        return {
+            "facts": (),
+            "observation_time": None,
+            "provenance": (),
+        }
+
+    facts = []
+
+    facts.append(
+        AIFact(
+            name="trajectory_sample_count",
+            value=len(samples),
+            source_capability=capability_id,
+        )
+    )
+
+    first_sample = samples[0]
+    last_sample = samples[-1]
+
+    first_date = first_sample.get("date")
+    last_date = last_sample.get("date")
+
+    if first_date is not None:
+        facts.append(
+            AIFact(
+                name="trajectory_start_date",
+                value=first_date,
+                source_capability=capability_id,
+            )
+        )
+
+    if last_date is not None:
+        facts.append(
+            AIFact(
+                name="trajectory_end_date",
+                value=last_date,
+                source_capability=capability_id,
+            )
+        )
+
+    facts.append(
+        AIFact(
+            name="trajectory_coordinate_frame",
+            value="heliocentric ecliptic",
+            source_capability=capability_id,
+        )
+    )
+
+    coordinate_definitions = (
+        ("x_au", "trajectory_start_x", "trajectory_end_x"),
+        ("y_au", "trajectory_start_y", "trajectory_end_y"),
+        ("z_au", "trajectory_start_z", "trajectory_end_z"),
+    )
+
+    for coordinate_key, start_name, end_name in coordinate_definitions:
+        start_value = first_sample.get(coordinate_key)
+        end_value = last_sample.get(coordinate_key)
+
+        if start_value is not None:
+            facts.append(
+                AIFact(
+                    name=start_name,
+                    value=start_value,
+                    unit="AU",
+                    source_capability=capability_id,
+                )
+            )
+
+        if end_value is not None:
+            facts.append(
+                AIFact(
+                    name=end_name,
+                    value=end_value,
+                    unit="AU",
+                    source_capability=capability_id,
+                )
+            )
+
+    return {
+        "facts": tuple(facts),
+        "observation_time": first_date,
+        "provenance": (),
+    }
 
 def _extract_orbital_analysis(
     value,

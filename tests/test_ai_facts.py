@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 import pytest
 
@@ -195,6 +195,243 @@ def test_extract_trajectory_facts():
     assert fact_set.facts[1].value == 323.6
     assert fact_set.facts[1].unit == "days"
     assert fact_set.facts[2].value == 181
+
+
+def test_extract_cross_capability_earth_facts():
+    scientific_source = DataSource(
+        name="JPL DE440S",
+        provider="NASA/JPL",
+        dataset="DE440S",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        observation=Observation(
+            observation_time="2026-09-21T12:00:00+00:00",
+            source=scientific_source,
+        ),
+        position=Position(
+            x=1.002,
+            y=-0.032,
+            z=-0.014,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=0.0002,
+            y=0.0157,
+            z=0.0068,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(scientific_source,),
+            reference_frames=("ICRF",),
+        ),
+    )
+
+    scientific_result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    trajectory_result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="planetary-trajectory",
+        result=[
+            {
+                "date": "2026-09-21T12:00:00+00:00",
+                "x_au": 1.003,
+                "y_au": -0.023,
+                "z_au": 0.0,
+            },
+            {
+                "date": "2026-09-26T12:00:00+00:00",
+                "x_au": 1.001,
+                "y_au": 0.063,
+                "z_au": 0.0,
+            },
+        ],
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (
+            scientific_result,
+            trajectory_result,
+        ),
+    )
+
+    assert fact_set.object_id == "earth"
+
+    scientific_facts = [
+        fact
+        for fact in fact_set.facts
+        if fact.source_capability == "scientific-data"
+    ]
+
+    trajectory_facts = [
+        fact
+        for fact in fact_set.facts
+        if fact.source_capability == "planetary-trajectory"
+    ]
+
+    assert scientific_facts
+    assert trajectory_facts
+
+    scientific_names = {
+        fact.name
+        for fact in scientific_facts
+    }
+
+    trajectory_names = {
+        fact.name
+        for fact in trajectory_facts
+    }
+
+    assert {
+        "position_x",
+        "position_y",
+        "position_z",
+        "velocity_x",
+        "velocity_y",
+        "velocity_z",
+    }.issubset(scientific_names)
+
+    assert {
+        "trajectory_sample_count",
+        "trajectory_start_date",
+        "trajectory_end_date",
+        "trajectory_coordinate_frame",
+        "trajectory_start_x",
+        "trajectory_end_x",
+        "trajectory_start_y",
+        "trajectory_end_y",
+        "trajectory_start_z",
+        "trajectory_end_z",
+    }.issubset(trajectory_names)
+
+    position_x = next(
+        fact
+        for fact in scientific_facts
+        if fact.name == "position_x"
+    )
+
+    assert position_x.value == 1.002
+    assert position_x.unit == "AU"
+    assert position_x.metadata["frame"] == "ICRF"
+
+    sample_count = next(
+        fact
+        for fact in trajectory_facts
+        if fact.name == "trajectory_sample_count"
+    )
+
+    assert sample_count.value == 2
+
+    assert scientific_source in fact_set.provenance
+
+
+def test_cross_capability_facts_preserve_evidence_traceability():
+    scientific_source = DataSource(
+        name="JPL DE440S",
+        provider="NASA/JPL",
+        dataset="DE440S",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        observation=Observation(
+            observation_time="2026-09-21T12:00:00+00:00",
+            source=scientific_source,
+        ),
+        position=Position(
+            x=1.002,
+            y=-0.032,
+            z=-0.014,
+            unit="AU",
+            frame="ICRF",
+        ),
+        velocity=Velocity(
+            x=0.0002,
+            y=0.0157,
+            z=0.0068,
+            unit="AU/day",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(scientific_source,),
+            reference_frames=("ICRF",),
+        ),
+    )
+
+    scientific_result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    trajectory_result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="planetary-trajectory",
+        result=[
+            {
+                "date": "2026-09-21T12:00:00+00:00",
+                "x_au": 1.003,
+                "y_au": -0.023,
+                "z_au": 0.0,
+            },
+            {
+                "date": "2026-09-26T12:00:00+00:00",
+                "x_au": 1.001,
+                "y_au": 0.063,
+                "z_au": 0.0,
+            },
+        ],
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (
+            scientific_result,
+            trajectory_result,
+        ),
+    )
+
+    scientific_facts = tuple(
+        fact
+        for fact in fact_set.facts
+        if fact.source_capability == "scientific-data"
+    )
+
+    trajectory_facts = tuple(
+        fact
+        for fact in fact_set.facts
+        if fact.source_capability == "planetary-trajectory"
+    )
+
+    assert scientific_facts
+    assert trajectory_facts
+
+    assert all(
+        fact.source_capability == "scientific-data"
+        for fact in scientific_facts
+    )
+
+    assert all(
+        fact.source_capability == "planetary-trajectory"
+        for fact in trajectory_facts
+    )
+
+    assert scientific_source in fact_set.provenance
+
+    assert all(
+        fact.metadata.get("frame") == "ICRF"
+        for fact in scientific_facts
+        if fact.name.startswith("position_")
+        or fact.name.startswith("velocity_")
+    )
 
 
 def test_extract_orbital_analysis_facts():
@@ -643,3 +880,251 @@ def test_scientific_facts_have_no_source_without_provenance():
 
     assert fact_set.facts[0].source is None
     assert fact_set.provenance == ()
+
+
+def test_extract_stellar_scientific_facts():
+    source = DataSource(
+        name="NASA Hubble Sirius Observation",
+        provider="NASA Hubble Space Telescope",
+    )
+
+    scientific_data = ScientificData(
+        object_id="sirius",
+        observation=None,
+        position=None,
+        velocity=None,
+        physical_properties={
+            "mass_solar": 2.0,
+        },
+        orbital_properties=None,
+        physical_properties_source=source,
+        orbital_properties_source=None,
+        stellar_properties={
+            "system_type": "binary",
+            "primary_component": "Sirius A",
+            "companion_component": "Sirius B",
+        },
+        stellar_properties_source=source,
+        provenance=ScientificProvenance(
+            sources=(source,),
+            reference_frames=(),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="sirius",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    fact_set = extract_ai_facts(
+        "sirius",
+        (result,),
+    )
+
+    names = [fact.name for fact in fact_set.facts]
+
+    assert names == [
+        "physical_mass_solar",
+        "stellar_system_type",
+        "stellar_primary_component",
+        "stellar_companion_component",
+    ]
+
+    assert fact_set.facts[0].value == 2.0
+    assert fact_set.facts[1].value == "binary"
+    assert fact_set.facts[2].value == "Sirius A"
+    assert fact_set.facts[3].value == "Sirius B"
+
+    assert all(
+        fact.source_capability == "scientific-data"
+        for fact in fact_set.facts
+    )
+
+    assert all(
+        fact.source == source
+        for fact in fact_set.facts
+    )
+
+    assert fact_set.provenance == (source,)
+
+
+def test_extract_earth_object_graph_facts():
+    from astrosphere.ai.context import AIContext
+    from astrosphere.ai.grounding import build_ai_context
+
+    context = build_ai_context(
+        "What is Earth's place in the Solar System?",
+        "earth",
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (),
+        context.object_graph,
+    )
+
+    graph_facts = [
+        fact
+        for fact in fact_set.facts
+        if fact.source_capability == "relationships"
+    ]
+
+    assert [
+        fact.name
+        for fact in graph_facts
+    ] == [
+        "object_parent",
+        "object_ancestor",
+        "object_ancestor",
+        "object_ancestor",
+        "object_ancestor",
+        "object_child",
+        "object_child",
+        "relationship_orbits",
+        "relationship_contains",
+        "relationship_contains",
+    ]
+
+    assert graph_facts[0].value == "sun"
+
+    assert [
+        fact.value
+        for fact in graph_facts[1:5]
+    ] == [
+        "sun",
+        "solar-system",
+        "milky-way",
+        "universe",
+    ]
+
+    assert {
+        fact.value
+        for fact in graph_facts[5:7]
+    } == {
+        "moon",
+        "spacecraft:25544",
+    }
+
+    assert graph_facts[7].value == "sun"
+
+    assert {
+        fact.value
+        for fact in graph_facts[8:]
+    } == {
+        "moon",
+        "spacecraft:25544",
+    }
+
+
+def test_extract_milky_way_object_graph_facts():
+    from astrosphere.ai.grounding import build_ai_context
+
+    context = build_ai_context(
+        "What is the Milky Way?",
+        "milky-way",
+    )
+
+    fact_set = extract_ai_facts(
+        "milky-way",
+        (),
+        context.object_graph,
+    )
+
+    graph_facts = [
+        fact
+        for fact in fact_set.facts
+        if fact.source_capability == "relationships"
+    ]
+
+    assert graph_facts[0].name == "object_parent"
+    assert graph_facts[0].value == "universe"
+
+    ancestor_facts = [
+        fact
+        for fact in graph_facts
+        if fact.name == "object_ancestor"
+    ]
+
+    assert [
+        fact.value
+        for fact in ancestor_facts
+    ] == [
+        "universe",
+    ]
+
+    child_values = {
+        fact.value
+        for fact in graph_facts
+        if fact.name == "object_child"
+    }
+
+    assert child_values == {
+        "solar-system",
+        "sirius",
+        "proxima-centauri",
+        "betelgeuse",
+        "vega",
+    }
+
+    relationship_facts = [
+        fact
+        for fact in graph_facts
+        if fact.name.startswith("relationship_")
+    ]
+
+    assert [
+        (
+            fact.name,
+            fact.value,
+        )
+        for fact in relationship_facts
+    ] == [
+        (
+            "relationship_member_of",
+            "universe",
+        ),
+        (
+            "relationship_contains",
+            "solar-system",
+        ),
+        (
+            "relationship_contains",
+            "sirius",
+        ),
+        (
+            "relationship_contains",
+            "proxima-centauri",
+        ),
+        (
+            "relationship_contains",
+            "betelgeuse",
+        ),
+        (
+            "relationship_contains",
+            "vega",
+        ),
+    ]
+
+
+def test_graph_facts_have_no_external_provenance():
+    from astrosphere.ai.grounding import build_ai_context
+
+    context = build_ai_context(
+        "What does Earth orbit?",
+        "earth",
+    )
+
+    fact_set = extract_ai_facts(
+        "earth",
+        (),
+        context.object_graph,
+    )
+
+    assert fact_set.provenance == ()
+
+    assert all(
+        fact.source is None
+        for fact in fact_set.facts
+        if fact.source_capability == "relationships"
+    )

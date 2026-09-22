@@ -87,6 +87,14 @@ def scientific_data_to_dict(data):
                 data.orbital_properties_source
             )
         ),
+        "stellar_properties": (
+            data.stellar_properties
+        ),
+        "stellar_properties_source": (
+            _data_source_to_dict(
+                data.stellar_properties_source
+            )
+        ),
         "provenance": _provenance_to_dict(
             data.provenance
         ),

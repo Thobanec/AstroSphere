@@ -1,4 +1,7 @@
-﻿from astrosphere.ai.context import AIContext
+from astrosphere.ai.context import (
+    AIContext,
+    AIObjectGraph,
+)
 from astrosphere.ai.time import normalize_observation_time
 from astrosphere.capabilities.registry import (
     get_capabilities_for_object,
@@ -8,6 +11,10 @@ from astrosphere.models.celestial_registry import (
 )
 from astrosphere.scientific.context import (
     get_celestial_object_context,
+)
+from astrosphere.scientific.relationships import (
+    get_celestial_object_relationships,
+    get_incoming_relationships,
 )
 
 
@@ -56,6 +63,31 @@ def build_ai_context(
                 scientific_data.provenance.sources
             )
 
+    relationship_context = get_celestial_object_relationships(
+        object_id
+    )
+
+    incoming_relationships = get_incoming_relationships(
+        object_id
+    )
+
+    object_graph = AIObjectGraph(
+        object=relationship_context["object"],
+        parent=relationship_context["parent"],
+        ancestors=tuple(
+            relationship_context["ancestors"]
+        ),
+        children=tuple(
+            relationship_context["children"]
+        ),
+        relationships=tuple(
+            relationship_context["relationships"]
+        ),
+        incoming_relationships=tuple(
+            incoming_relationships
+        ),
+    )
+
     return AIContext(
         question=question.strip(),
         observation_time=normalized_time,
@@ -63,4 +95,5 @@ def build_ai_context(
         scientific_data=scientific_data,
         capabilities=tuple(capabilities),
         provenance=provenance,
+        object_graph=object_graph,
     )

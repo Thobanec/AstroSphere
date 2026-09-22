@@ -1,4 +1,4 @@
-﻿from astrosphere.ai import (
+from astrosphere.ai import (
     AICapabilityPlanItem,
     AIOrchestrationRequest,
     AIOrchestrationResult,
@@ -44,8 +44,7 @@ def test_orchestrate_single_capability(monkeypatch):
     )
     assert result.object_id == "earth"
     assert result.answer == (
-        "AstroSphere retrieved the "
-        "scientific-data result for Earth."
+        "No grounded scientific facts are available for Earth."
     )
     assert result.capabilities == (
         "scientific-data",
@@ -97,9 +96,7 @@ def test_orchestrate_multiple_capabilities(monkeypatch):
     ]
 
     assert result.answer == (
-        "AstroSphere retrieved the following "
-        "capability results for Apophis: "
-        "scientific-data, tracking, close-approaches."
+        "No grounded scientific facts are available for Apophis."
     )
 
     assert result.capabilities == (
@@ -147,6 +144,51 @@ def test_orchestrate_normalizes_capability_ids(monkeypatch):
         "space-weather",
     )
 
+
+def test_orchestrate_planetary_trajectory():
+    request = AIOrchestrationRequest(
+        question="Show the trajectory of Earth.",
+        object_id="earth",
+        parameters={
+            "days": 30,
+            "samples": 5,
+        },
+    )
+
+    result = orchestrate_ai_request(request)
+
+    assert result.object_id == "earth"
+    assert result.capabilities == (
+        "planetary-trajectory",
+    )
+    assert len(result.results) == 1
+
+    capability_result = result.results[0]
+
+    assert capability_result.capability_id == (
+        "planetary-trajectory"
+    )
+
+    assert isinstance(
+        capability_result.result,
+        list,
+    )
+
+    assert len(capability_result.result) == 5
+
+    assert capability_result.result[0]["date"] is not None
+    assert isinstance(
+        capability_result.result[0]["x_au"],
+        float,
+    )
+    assert isinstance(
+        capability_result.result[0]["y_au"],
+        float,
+    )
+    assert isinstance(
+        capability_result.result[0]["z_au"],
+        float,
+    )
 
 def test_orchestrate_rejects_unavailable_capability():
     request = AIOrchestrationRequest(
@@ -209,11 +251,13 @@ def test_orchestrate_uses_all_available_capabilities_when_unspecified(
 
     assert executed == [
         "context",
+        "scientific-data",
         "relationships",
     ]
 
     assert result.capabilities == (
         "context",
+        "scientific-data",
         "relationships",
     )
 
@@ -277,10 +321,13 @@ def test_orchestrate_executes_planner_output(monkeypatch):
         )
     ]
 
-    assert result.answer == (
-        "AstroSphere retrieved the "
-        "relationships result for Earth."
+    assert result.answer.startswith(
+        "Grounded relationship information for Earth:"
     )
+    assert "object_parent: sun" in result.answer
+    assert "relationship_orbits: sun" in result.answer
+    assert "object_parent: sun" in result.answer
+    assert "object_ancestor: sun" in result.answer
 
     assert result.capabilities == (
         "relationships",
@@ -546,6 +593,62 @@ def test_orchestrate_uses_language_provider(monkeypatch):
     )
 
 
+def test_orchestrate_preserves_provider_metadata(monkeypatch):
+    from astrosphere.ai.llm import (
+        AILanguageResponse,
+    )
+    from astrosphere.models.scientific import (
+        DataSource,
+    )
+
+    provider_source = DataSource(
+        name="Provider Source",
+        provider="Provider",
+        dataset="Provider Dataset",
+    )
+
+    def fake_execute(
+        context,
+        capability_id,
+        observation_time=None,
+        parameters=None,
+    ):
+        return CapabilityExecutionResult(
+            object_id=context.object.id,
+            capability_id=capability_id,
+            result={"status": "mocked"},
+        )
+
+    class TestProvider:
+        def generate(self, request):
+            return AILanguageResponse(
+                answer="Provider-generated response.",
+                provenance=(provider_source,),
+                uncertainties=(
+                    "Provider uncertainty.",
+                ),
+            )
+
+    monkeypatch.setattr(
+        "astrosphere.ai.orchestrator.execute_ai_capability",
+        fake_execute,
+    )
+
+    request = AIOrchestrationRequest(
+        question="What is Earth's scientific state?",
+        object_id="earth",
+        capability_ids=("scientific-data",),
+    )
+
+    result = orchestrate_ai_request(
+        request,
+        language_provider=TestProvider(),
+    )
+
+    assert provider_source in result.provenance
+    assert "Provider uncertainty." in result.uncertainties
+
+
 def test_orchestrate_without_language_provider_preserves_behavior(
     monkeypatch,
 ):
@@ -577,6 +680,5 @@ def test_orchestrate_without_language_provider_preserves_behavior(
     result = orchestrate_ai_request(request)
 
     assert result.answer == (
-        "AstroSphere retrieved the "
-        "scientific-data result for Earth."
+        "No grounded scientific facts are available for Earth."
     )

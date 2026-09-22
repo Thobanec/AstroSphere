@@ -1,5 +1,9 @@
-﻿from types import SimpleNamespace
+from types import SimpleNamespace
 
+from astrosphere.ai.explanation import (
+    AIExplanation,
+    AIExplanationSet,
+)
 from astrosphere.ai.facts import (
     AIFact,
     AIFactSet,
@@ -292,3 +296,62 @@ def test_openai_provider_preserves_grounded_request_data():
     assert request.observation_time == (
         "2026-09-17T00:00:00Z"
     )
+
+def test_openai_provider_includes_educational_explanations():
+    provider = OpenAILanguageProvider(
+        config=AIProviderConfig(
+            api_key="test-key",
+            model="test-model",
+        ),
+        client=FakeOpenAIClient(),
+    )
+
+    explanation = AIExplanation(
+        subject="velocity",
+        explanation=(
+            "Velocity describes how an object's position "
+            "changes over time."
+        ),
+        level="beginner",
+        explanation_type="what",
+    )
+
+    request = AILanguageRequest(
+        question="What is velocity?",
+        object=CelestialObject(
+            id="earth",
+            name="Earth",
+            object_type="planet",
+        ),
+        facts=AIFactSet(
+            object_id="earth",
+            facts=(
+                AIFact(
+                    name="velocity_x",
+                    value=5.0,
+                    unit="km/s",
+                ),
+            ),
+        ),
+        interpretations=AIInterpretationSet(
+            object_id="earth",
+        ),
+        explanations=AIExplanationSet(
+            object_id="earth",
+            explanations=(explanation,),
+            level="beginner",
+        ),
+    )
+
+    provider.generate(request)
+
+    call = provider.client.responses.calls[-1]
+
+    assert "Educational explanations:" in call["input"]
+    assert "velocity (what, beginner)" in call["input"]
+    assert (
+        "Velocity describes how an object's position "
+        "changes over time."
+        in call["input"]
+    )
+    assert "velocity_x: 5.0 km/s" in call["input"]

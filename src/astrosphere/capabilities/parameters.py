@@ -1,8 +1,9 @@
-﻿from datetime import datetime
+from datetime import datetime
 
 from astrosphere.capabilities.definitions import (
     CAPABILITY_CLOSE_APPROACHES,
     CAPABILITY_ORBITAL_ANALYSIS,
+    CAPABILITY_PLANETARY_TRAJECTORY,
     CAPABILITY_SPACE_WEATHER,
     CAPABILITY_TRACKING,
     CAPABILITY_TRAJECTORY,
@@ -61,6 +62,48 @@ def _validate_parameters_dict(parameters):
         )
 
     return parameters
+
+
+def get_capability_parameter_names(capability_id):
+    if capability_id == CAPABILITY_TRACKING:
+        return {
+            "observation_time",
+        }
+
+    if capability_id == CAPABILITY_TRAJECTORY:
+        return {
+            "samples",
+            "observation_time",
+        }
+
+    if capability_id == CAPABILITY_CLOSE_APPROACHES:
+        return {
+            "date_min",
+            "date_max",
+        }
+
+    if capability_id == CAPABILITY_SPACE_WEATHER:
+        return {
+            "observation_time",
+        }
+
+    if capability_id == CAPABILITY_PLANETARY_TRAJECTORY:
+        return {
+            "observation_time",
+            "days",
+            "samples",
+        }
+
+    if capability_id == CAPABILITY_ORBITAL_ANALYSIS:
+        return {
+            "reference_body",
+            "target_body",
+            "start_date",
+            "months",
+            "interval_days",
+        }
+
+    return set()
 
 
 def validate_capability_parameters(
@@ -127,6 +170,44 @@ def validate_capability_parameters(
         allowed = {
             "observation_time",
         }
+
+    elif capability_id == CAPABILITY_PLANETARY_TRAJECTORY:
+        allowed = {
+            "observation_time",
+            "days",
+            "samples",
+        }
+
+        _validate_iso_datetime(
+            parameters.get("observation_time"),
+            "observation_time",
+        )
+
+        days = parameters.get("days")
+
+        if days is not None:
+            if not isinstance(days, int):
+                raise ValueError(
+                    "Planetary-trajectory days must be an integer."
+                )
+
+            if days < 1:
+                raise ValueError(
+                    "Planetary-trajectory days must be at least 1."
+                )
+
+        samples = parameters.get("samples")
+
+        if samples is not None:
+            if not isinstance(samples, int):
+                raise ValueError(
+                    "Planetary-trajectory samples must be an integer."
+                )
+
+            if samples < 2:
+                raise ValueError(
+                    "Planetary-trajectory samples must be at least 2."
+                )
 
     elif capability_id == CAPABILITY_ORBITAL_ANALYSIS:
         allowed = {

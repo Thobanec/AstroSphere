@@ -1,10 +1,12 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 from astrosphere.capabilities.definitions import (
     CAPABILITY_CLOSE_APPROACHES,
     CAPABILITY_CONTEXT,
     CAPABILITY_ORBITAL_ANALYSIS,
+    CAPABILITY_PLANETARY_TRAJECTORY,
     CAPABILITY_RELATIONSHIPS,
     CAPABILITY_SCIENTIFIC_DATA,
     CAPABILITY_SPACE_WEATHER,
@@ -170,14 +172,98 @@ def normalize_capability_request(
             object_id=object_id,
         )
 
+    if capability_id == CAPABILITY_PLANETARY_TRAJECTORY:
+        if object_id not in {
+            "mercury",
+            "venus",
+            "earth",
+            "mars",
+            "jupiter",
+            "saturn",
+            "uranus",
+            "neptune",
+            "pluto",
+        }:
+            raise ValueError(
+                f"Planetary trajectory is not normalizable "
+                f"for object '{object_id}'."
+            )
+
+        return NormalizedCapabilityExecution(
+            capability_id=capability_id,
+            object_id=object_id,
+            arguments=(object_id,),
+            keyword_arguments={
+                "observation_time": parameters.get(
+                    "observation_time",
+                    request.observation_time,
+                ),
+                "days": parameters.get(
+                    "days",
+                    365,
+                ),
+                "samples": parameters.get(
+                    "samples",
+                    181,
+                ),
+            },
+        )
+
     if capability_id == CAPABILITY_ORBITAL_ANALYSIS:
+        start_date = parameters.get(
+            "start_date"
+        )
+
+        if start_date is None:
+            observation_time = request.observation_time
+
+            if observation_time:
+                try:
+                    start_date = datetime.fromisoformat(
+                        observation_time.replace(
+                            "Z",
+                            "+00:00",
+                        )
+                    ).replace(
+                        hour=0,
+                        minute=0,
+                        second=0,
+                        microsecond=0,
+                        tzinfo=None,
+                    )
+                except ValueError as exc:
+                    raise ValueError(
+                        "Invalid observation_time for "
+                        "orbital-analysis."
+                    ) from exc
+            else:
+                start_date = datetime.now(
+                    timezone.utc
+                ).replace(
+                    hour=0,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
+                    tzinfo=None,
+                )
+        else:
+            try:
+                start_date = datetime.fromisoformat(
+                    start_date
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Invalid start_date for "
+                    "orbital-analysis."
+                ) from exc
+
         return NormalizedCapabilityExecution(
             capability_id=capability_id,
             object_id=object_id,
             arguments=(
                 parameters["reference_body"],
                 parameters["target_body"],
-                parameters["start_date"],
+                start_date,
             ),
             keyword_arguments={
                 "months": parameters.get(

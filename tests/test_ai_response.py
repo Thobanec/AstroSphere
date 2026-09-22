@@ -1,4 +1,4 @@
-﻿from astrosphere.ai import (
+from astrosphere.ai import (
     AIResponse,
     build_ai_context,
     compose_ai_response,
@@ -84,6 +84,73 @@ def test_compose_multiple_capability_results():
     assert "tracking" in response.answer
     assert "trajectory" in response.answer
 
+
+def test_compose_planetary_trajectory_uses_grounded_trajectory_explanation():
+    context = build_ai_context(
+        "Show the trajectory of Earth.",
+        "earth",
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="planetary-trajectory",
+        result=[
+            {
+                "date": "2026-09-19T00:00:00+00:00",
+                "x_au": 1.0,
+                "y_au": 0.0,
+                "z_au": 0.0,
+            },
+            {
+                "date": "2026-10-19T00:00:00+00:00",
+                "x_au": 0.9,
+                "y_au": 0.4,
+                "z_au": 0.0,
+            },
+        ],
+    )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+    )
+
+    assert response.results == (result,)
+    assert "planetary-trajectory" in response.answer
+    assert "trajectory_sample_count" in response.answer
+    assert "trajectory_start_date" in response.answer
+    assert "trajectory_end_date" in response.answer
+
+    assert response.interpretations is not None
+
+    trajectory_interpretations = tuple(
+        interpretation
+        for interpretation in response.interpretations.interpretations
+        if any(
+            fact_name in interpretation.supporting_facts
+            for fact_name in (
+                "trajectory_sample_count",
+                "trajectory_start_date",
+                "trajectory_end_date",
+                "trajectory_start_x",
+                "trajectory_end_x",
+            )
+        )
+    )
+
+    assert len(trajectory_interpretations) >= 1
+
+    supporting_facts = {
+        fact_name
+        for interpretation in trajectory_interpretations
+        for fact_name in interpretation.supporting_facts
+    }
+
+    assert "trajectory_sample_count" in supporting_facts
+    assert "trajectory_start_date" in supporting_facts
+    assert "trajectory_end_date" in supporting_facts
+    assert "trajectory_start_x" in supporting_facts
+    assert "trajectory_end_x" in supporting_facts
 
 def test_compose_preserves_grounded_provenance():
     context = build_ai_context(
@@ -595,3 +662,58 @@ def test_compose_without_provider_preserves_deterministic_answer():
         "AstroSphere retrieved the "
         "scientific-data result for Earth."
     )
+
+def test_compose_merges_language_provider_provenance_and_uncertainties():
+    from astrosphere.ai.llm import (
+        AILanguageResponse,
+    )
+
+    provider_source = DataSource(
+        name="Provider Source",
+        provider="Provider",
+        dataset="Provider Dataset",
+    )
+
+    context = build_ai_context(
+        "What is the current position of Earth?",
+        "earth",
+    )
+
+    scientific_data = ScientificData(
+        object_id="earth",
+        position=Position(
+            x=1.0,
+            y=2.0,
+            z=3.0,
+            unit="AU",
+            frame="ICRF",
+        ),
+        provenance=ScientificProvenance(
+            sources=(),
+        ),
+    )
+
+    result = CapabilityExecutionResult(
+        object_id="earth",
+        capability_id="scientific-data",
+        result=scientific_data,
+    )
+
+    class TestProvider:
+        def generate(self, request):
+            return AILanguageResponse(
+                answer="Generated language.",
+                provenance=(provider_source,),
+                uncertainties=(
+                    "Provider uncertainty.",
+                ),
+            )
+
+    response = compose_ai_response(
+        context,
+        (result,),
+        language_provider=TestProvider(),
+    )
+
+    assert provider_source in response.provenance
+    assert "Provider uncertainty." in response.uncertainties

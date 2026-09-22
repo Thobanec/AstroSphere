@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from web.app import app
 
 from astrosphere.models.celestial import (
@@ -339,7 +341,7 @@ def test_get_celestial_object_capabilities_earth():
 
     assert data["status"] == "success"
     assert data["data"]["object"]["id"] == "earth"
-    assert data["data"]["count"] == 5
+    assert data["data"]["count"] == 6
 
     capability_ids = {
         capability["id"]
@@ -352,6 +354,7 @@ def test_get_celestial_object_capabilities_earth():
         "relationships",
         "space-weather",
         "orbital-analysis",
+        "planetary-trajectory",
     }
 
 
@@ -429,7 +432,7 @@ def test_get_celestial_object_capabilities_sun():
 
     assert data["status"] == "success"
     assert data["data"]["object"]["id"] == "sun"
-    assert data["data"]["count"] == 2
+    assert data["data"]["count"] == 3
 
     capability_ids = {
         capability["id"]
@@ -438,6 +441,7 @@ def test_get_celestial_object_capabilities_sun():
 
     assert capability_ids == {
         "context",
+        "scientific-data",
         "relationships",
     }
 
@@ -686,4 +690,889 @@ def test_execute_capability_accepts_parameters(monkeypatch):
     assert request_object.capability_id == "trajectory"
     assert request_object.parameters == {
         "samples": 2200,
+    }
+
+
+
+def test_get_planetary_trajectory(monkeypatch):
+
+    captured = {}
+
+    def fake_trajectory(
+        planet_name,
+        observation_time=None,
+        days=365,
+        samples=181,
+    ):
+
+        captured["planet_name"] = planet_name
+        captured["observation_time"] = observation_time
+        captured["days"] = days
+        captured["samples"] = samples
+
+        return [
+            {
+                "date": datetime(2026, 9, 19, tzinfo=timezone.utc),
+                "x_au": 1.0,
+                "y_au": 0.0,
+                "z_au": 0.0,
+            },
+            {
+                "date": datetime(2026, 10, 19, tzinfo=timezone.utc),
+                "x_au": 0.9,
+                "y_au": 0.4,
+                "z_au": 0.0,
+            },
+        ]
+
+    monkeypatch.setattr(
+        "web.api.calculate_planetary_trajectory",
+        fake_trajectory,
+    )
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/planets/earth/trajectory"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+
+    assert data["data"]["object_id"] == "earth"
+    assert data["data"]["name"] == "Earth"
+    assert data["data"]["days"] == 365
+
+    assert len(data["data"]["samples"]) == 2
+
+    assert (
+        data["data"]["samples"][0]["x_au"]
+        == 1.0
+    )
+
+    assert (
+        data["data"]["samples"][1]["y_au"]
+        == 0.4
+    )
+
+    assert captured["planet_name"] == "earth"
+    assert captured["days"] == 365
+    assert captured["samples"] == 181
+
+
+def test_get_planetary_trajectory_accepts_parameters(
+    monkeypatch,
+):
+
+    captured = {}
+
+    def fake_trajectory(
+        planet_name,
+        observation_time=None,
+        days=365,
+        samples=181,
+    ):
+
+        captured["planet_name"] = planet_name
+        captured["observation_time"] = observation_time
+        captured["days"] = days
+        captured["samples"] = samples
+
+        return [
+            {
+                "date": datetime(2026, 9, 19, tzinfo=timezone.utc),
+                "x_au": 1.0,
+                "y_au": 0.0,
+                "z_au": 0.0,
+            }
+        ]
+
+    monkeypatch.setattr(
+        "web.api.calculate_planetary_trajectory",
+        fake_trajectory,
+    )
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/planets/earth/trajectory"
+        "?days=30"
+        "&samples=5"
+        "&observation_time="
+        "2026-09-19T12:00:00%2B00:00"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["object_id"] == "earth"
+    assert data["data"]["days"] == 30
+    assert len(data["data"]["samples"]) == 1
+
+    assert captured["planet_name"] == "earth"
+    assert captured["days"] == 30
+    assert captured["samples"] == 5
+
+    assert (
+        captured["observation_time"].isoformat()
+        == "2026-09-19T12:00:00+00:00"
+    )
+
+
+def test_get_planetary_trajectory_rejects_invalid_planet():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/planets/pluto-like-object/trajectory"
+    )
+
+    assert response.status_code == 404
+
+    data = response.get_json()
+
+    assert data["error"] == (
+        "Invalid planetary body."
+    )
+
+
+def test_get_planetary_trajectory_rejects_invalid_parameters():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/planets/earth/trajectory"
+        "?days=not-an-integer"
+    )
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert "days and samples must be integers" in (
+        data["error"]
+    )
+
+
+def test_get_planetary_trajectory_rejects_invalid_observation_time():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/planets/earth/trajectory"
+        "?observation_time=not-a-date"
+    )
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert "Invalid observation_time" in (
+        data["error"]
+    )
+
+
+def test_get_planetary_trajectory_rejects_invalid_days():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/planets/earth/trajectory"
+        "?days=0"
+    )
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert "days must be at least 1" in (
+        data["error"]
+    )
+
+
+def test_get_planetary_trajectory_rejects_invalid_samples():
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/planets/earth/trajectory"
+        "?samples=1"
+    )
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert "samples must be at least 2" in (
+        data["error"]
+    )
+
+
+
+
+
+
+
+
+def test_get_celestial_object_graph_earth():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/earth/graph"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    assert data["id"] == "earth"
+    assert data["name"] == "Earth"
+    assert data["object_type"] == "planet"
+
+    assert data["parent"]["id"] == "sun"
+
+    assert [
+        ancestor["id"]
+        for ancestor in data["ancestors"]
+    ] == [
+        "sun",
+        "solar-system",
+        "milky-way",
+        "universe",
+    ]
+
+    assert {
+        child["id"]
+        for child in data["children"]
+    } == {
+        "moon",
+        "spacecraft:25544",
+    }
+
+    assert {
+        (
+            relationship["source_id"],
+            relationship["relationship_type"],
+            relationship["target_id"],
+        )
+        for relationship in data["relationships"]
+    } == {
+        ("earth", "orbits", "sun"),
+        ("earth", "contains", "moon"),
+        ("earth", "contains", "spacecraft:25544"),
+    }
+
+
+def test_get_celestial_object_graph_milky_way():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/milky-way/graph"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    assert data["id"] == "milky-way"
+    assert data["parent"]["id"] == "universe"
+
+    assert {
+        child["id"]
+        for child in data["children"]
+    } == {
+        "solar-system",
+        "sirius",
+        "proxima-centauri",
+        "betelgeuse",
+        "vega",
+    }
+
+
+def test_get_celestial_object_graph_leaf_object():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/sirius/graph"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    assert data["id"] == "sirius"
+    assert data["parent"]["id"] == "milky-way"
+    assert data["children"] == []
+
+
+def test_get_celestial_object_graph_unknown_object():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/not-a-real-object/graph"
+    )
+
+    assert response.status_code == 404
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert data["error"] == "Celestial object was not found."
+
+def test_get_celestial_object_ancestors_earth():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/earth/ancestors"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "earth"
+    assert data["data"]["name"] == "Earth"
+
+    assert data["data"]["ancestors"] == [
+        {
+            "id": "sun",
+            "name": "Sun",
+            "object_type": "star",
+        },
+        {
+            "id": "solar-system",
+            "name": "Solar System",
+            "object_type": "system",
+        },
+        {
+            "id": "milky-way",
+            "name": "Milky Way",
+            "object_type": "galaxy",
+        },
+        {
+            "id": "universe",
+            "name": "Universe",
+            "object_type": "universe",
+        },
+    ]
+
+
+def test_get_celestial_object_ancestors_universe():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/universe/ancestors"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "universe"
+    assert data["data"]["name"] == "Universe"
+    assert data["data"]["ancestors"] == []
+
+
+def test_get_celestial_object_ancestors_sirius():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/sirius/ancestors"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "sirius"
+    assert data["data"]["name"] == "Sirius"
+
+    assert data["data"]["ancestors"] == [
+        {
+            "id": "milky-way",
+            "name": "Milky Way",
+            "object_type": "galaxy",
+        },
+        {
+            "id": "universe",
+            "name": "Universe",
+            "object_type": "universe",
+        },
+    ]
+
+
+def test_get_celestial_object_ancestors_unknown_object():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/not-a-real-object/ancestors"
+    )
+
+    assert response.status_code == 404
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert data["error"] == "Celestial object was not found."
+
+
+def test_get_celestial_object_children_earth():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/earth/children"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "earth"
+    assert data["data"]["name"] == "Earth"
+
+    assert data["data"]["children"] == [
+        {
+            "id": "moon",
+            "name": "Moon",
+            "object_type": "moon",
+        },
+        {
+            "id": "spacecraft:25544",
+            "name": "ISS",
+            "object_type": "spacecraft",
+        },
+    ]
+
+
+def test_get_celestial_object_children_milky_way():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/milky-way/children"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "milky-way"
+    assert data["data"]["name"] == "Milky Way"
+
+    assert data["data"]["children"] == [
+        {
+            "id": "solar-system",
+            "name": "Solar System",
+            "object_type": "system",
+        },
+        {
+            "id": "sirius",
+            "name": "Sirius",
+            "object_type": "star",
+        },
+        {
+            "id": "proxima-centauri",
+            "name": "Proxima Centauri",
+            "object_type": "star",
+        },
+        {
+            "id": "betelgeuse",
+            "name": "Betelgeuse",
+            "object_type": "star",
+        },
+        {
+            "id": "vega",
+            "name": "Vega",
+            "object_type": "star",
+        },
+    ]
+
+
+def test_get_celestial_object_children_leaf_object():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/sirius/children"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "sirius"
+    assert data["data"]["name"] == "Sirius"
+    assert data["data"]["children"] == []
+
+
+def test_get_celestial_object_children_unknown_object():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/not-a-real-object/children"
+    )
+
+    assert response.status_code == 404
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert data["error"] == "Celestial object was not found."
+
+
+def test_get_celestial_object_relationships_earth():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/earth/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "earth"
+    assert data["data"]["name"] == "Earth"
+
+    assert data["data"]["parent"]["id"] == "sun"
+
+    relationships = data["data"]["relationships"]
+
+    assert relationships[0] == {
+        "source_id": "earth",
+        "relationship_type": "orbits",
+        "target_id": "sun",
+    }
+
+    assert [
+        relationship["target_id"]
+        for relationship in relationships
+        if relationship["relationship_type"] == "contains"
+    ] == [
+        "moon",
+        "spacecraft:25544",
+    ]
+
+
+def test_get_celestial_object_relationships_filter_contains():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/earth/relationships?relationship_type=contains"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    relationships = data["data"]["relationships"]
+
+    assert relationships == [
+        {
+            "source_id": "earth",
+            "relationship_type": "contains",
+            "target_id": "moon",
+        },
+        {
+            "source_id": "earth",
+            "relationship_type": "contains",
+            "target_id": "spacecraft:25544",
+        },
+    ]
+
+
+def test_get_celestial_object_relationships_filter_orbits():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/earth/relationships?relationship_type=orbits"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    relationships = data["data"]["relationships"]
+
+    assert relationships == [
+        {
+            "source_id": "earth",
+            "relationship_type": "orbits",
+            "target_id": "sun",
+        },
+    ]
+
+
+def test_get_celestial_object_relationships_filter_is_case_insensitive():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/earth/relationships?relationship_type=CONTAINS"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    relationships = data["data"]["relationships"]
+
+    assert [
+        relationship["target_id"]
+        for relationship in relationships
+    ] == [
+        "moon",
+        "spacecraft:25544",
+    ]
+
+
+def test_get_celestial_object_relationships_iss():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/spacecraft:25544/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "spacecraft:25544"
+
+    assert data["data"]["relationships"] == [
+        {
+            "source_id": "spacecraft:25544",
+            "relationship_type": "orbits",
+            "target_id": "earth",
+        }
+    ]
+
+
+def test_get_celestial_object_relationships_apophis():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/asteroid:99942/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "asteroid:99942"
+    assert data["data"]["name"] == "Apophis"
+
+    assert data["data"]["relationships"] == [
+        {
+            "source_id": "asteroid:99942",
+            "relationship_type": "orbits",
+            "target_id": "sun",
+        }
+    ]
+
+
+def test_get_celestial_object_relationships_sun_includes_orbiting_objects():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/sun/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["id"] == "sun"
+
+    assert [
+        relationship["target_id"]
+        for relationship in data["data"]["relationships"]
+        if relationship["relationship_type"] == "contains"
+    ] == [
+        "mercury",
+        "venus",
+        "earth",
+        "mars",
+        "jupiter",
+        "saturn",
+        "uranus",
+        "neptune",
+        "pluto",
+    ]
+
+    assert {
+        child["id"]
+        for child in data["data"]["children"]
+    } >= {
+        "mercury",
+        "venus",
+        "earth",
+        "mars",
+        "jupiter",
+        "saturn",
+        "uranus",
+        "neptune",
+        "pluto",
+    }
+
+
+def test_get_celestial_object_relationships_unknown():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/celestial-objects/not-real/relationships"
+    )
+
+    assert response.status_code == 404
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert "error" in data
+def test_get_celestial_object_relationships_moon():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/moon/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    assert data["id"] == "moon"
+    assert data["name"] == "Moon"
+    assert data["parent"]["id"] == "earth"
+
+    assert {
+        relationship["relationship_type"]
+        for relationship in data["relationships"]
+    } == {
+        "orbits",
+    }
+
+    assert data["relationships"][0]["target_id"] == "earth"
+
+
+def test_get_celestial_object_relationships_phobos():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/phobos/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    assert data["parent"]["id"] == "mars"
+    assert data["relationships"][0]["target_id"] == "mars"
+
+
+def test_get_celestial_object_relationships_jupiter_moons():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/jupiter/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    child_ids = {
+        child["id"]
+        for child in data["children"]
+    }
+
+    assert child_ids == {
+        "io",
+        "europa",
+        "ganymede",
+        "callisto",
+    }
+
+
+def test_get_celestial_object_relationships_saturn_moons():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/saturn/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    child_ids = {
+        child["id"]
+        for child in data["children"]
+    }
+
+    assert child_ids == {
+        "titan",
+        "enceladus",
+    }
+
+
+def test_get_celestial_object_relationships_uranus_moons():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/uranus/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    child_ids = {
+        child["id"]
+        for child in data["children"]
+    }
+
+    assert child_ids == {
+        "miranda",
+        "titania",
+        "oberon",
+    }
+
+
+def test_get_celestial_object_relationships_neptune_moon():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/neptune/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    child_ids = {
+        child["id"]
+        for child in data["children"]
+    }
+
+    assert child_ids == {
+        "triton",
+    }
+
+
+def test_get_celestial_object_relationships_pluto_moon():
+    client = app.test_client()
+    response = client.get(
+        "/api/v1/celestial-objects/pluto/relationships"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()["data"]
+
+    child_ids = {
+        child["id"]
+        for child in data["children"]
+    }
+
+    assert child_ids == {
+        "charon",
     }

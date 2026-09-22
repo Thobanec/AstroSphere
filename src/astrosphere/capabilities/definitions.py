@@ -17,6 +17,8 @@ CAPABILITY_SPACE_WEATHER = "space-weather"
 
 CAPABILITY_ORBITAL_ANALYSIS = "orbital-analysis"
 
+CAPABILITY_PLANETARY_TRAJECTORY = "planetary-trajectory"
+
 
 @dataclass(frozen=True)
 class CapabilityDefinition:
