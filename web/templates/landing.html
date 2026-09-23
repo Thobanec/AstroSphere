@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="AstroSphere &mdash; interactive astronomy for education, exploration and discovery.">
+<title>AstroSphere | Explore the Universe. Understand It.</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+<style id="astrosphere-crisp-hero">
+/* Keep commercial hero copy perfectly sharp.
+   3D depth remains on the astronomy visual only. */
+
+.hero-grid {
+    transform-style: flat !important;
+}
+
+.hero-copy {
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    will-change: auto !important;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+}
+
+.hero-copy h1,
+.hero-copy p,
+.hero-copy .lead,
+.hero-copy .eyebrow,
+.hero-copy .btn {
+    transform: none !important;
+    filter: none !important;
+    will-change: auto !important;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+}
+
+.hero-copy .btn:hover {
+    transform: translateY(-2px) !important;
+}
+</style>
+</head>
+<body>
+<header class="header"><div class="container nav">
+<a class="brand" href="#home"><span class="logo">&#9673;</span> AstroSphere</a>
+<button class="menu" aria-label="Menu">&#9776;</button>
+<nav>
+<a href="#home">Home</a><a href="#features">Features</a><a href="#education">For Education</a>
+<a href="#organisations">For Organisations</a><a href="#about">About</a><a class="navcta" href="#demo">Request a Demo</a>
+</nav></div></header>
+
+<main>
+<section class="hero" id="home">
+<div class="stars"></div><div class="sun"></div>
+<div class="container hero-grid">
+<div class="hero-copy">
+<div class="eyebrow">INTERACTIVE ASTRONOMY PLATFORM</div>
+<h1>Explore the Universe.<br><span>Understand It.</span></h1>
+<p class="lead">AstroSphere is an interactive astronomy platform for education, exploration and discovery.</p>
+<p>Explore the Milky Way, navigate the Solar System, discover planets and astronomical objects, and interact with astronomy information through a modern web experience.</p>
+<div class="actions"><a class="btn primary" href="#demo">Request a Demo &rarr;</a><a class="btn secondary" href="{{ url_for('index') }}">Explore AstroSphere</a></div>
+</div>
+<div class="visual"><div class="galaxy"></div><div class="orbit o1"></div><div class="orbit o2"></div><div class="earth"></div><div class="jupiter"></div><div class="mars"></div></div>
+</div>
+<div class="container capabilities">
+<div>&#10042; <b>Galaxy</b><small>Exploration</small></div><div>&#9673; <b>Solar System</b><small>Exploration</small></div>
+<div>&#9675; <b>Planetary</b><small>Information</small></div><div>&#9679; <b>Astronomical</b><small>Objects</small></div><div>&#10022; <b>AI Astronomy</b><small>Experience</small></div>
+</div>
+</section>
+
+<section class="section" id="features"><div class="container feature-layout">
+<div><div class="eyebrow">THE ASTROSPHERE EXPERIENCE</div><h2>Experience the Universe</h2>
+<p>From the Milky Way to the planets, AstroSphere provides an interactive journey through astronomical environments, allowing users to explore, learn and discover at their own pace.</p>
+<a class="link" href="#demo">Request a demonstration &rarr;</a></div>
+<div class="cards">
+<article><div class="card galaxy-card"></div><h3>Galaxy Exploration</h3><p>Explore the Milky Way through an interactive visual environment.</p></article>
+<article><div class="card solar-card"></div><h3>Solar System</h3><p>Navigate an interactive representation of our planetary system.</p></article>
+<article><div class="card planet-card"></div><h3>Planetary Information</h3><p>Explore planets and access astronomical information.</p></article>
+</div></div></section>
+
+<section class="dark section" id="education"><div class="container">
+<div class="eyebrow">DESIGNED FOR</div><h2>Education and Engagement</h2>
+<p class="intro">AstroSphere is designed to support educational and outreach environments, making astronomy more interactive, accessible and engaging.</p>
+<div class="audiences" id="organisations">
+<div><span>&#127891;</span><h3>Schools</h3><p>Interactive astronomy for learners and STEM programmes.</p></div>
+<div><span>&#128187;</span><h3>Universities</h3><p>A digital environment for astronomy, physics and STEM education.</p></div>
+<div><span>&#128101;</span><h3>Science Centres</h3><p>Interactive content for visitor engagement and exhibitions.</p></div>
+<div><span>&#128250;</span><h3>Planetariums & Astronomy Organisations</h3><p>A complementary digital experience for outreach and education.</p></div>
+</div></div></section>
+
+<section class="section journey"><div class="container"><div class="center"><div class="eyebrow">EXPLORE</div><h2>From the Galaxy to our Solar System</h2><p>Move between scales of the Universe through a single interactive experience.</p></div>
+<div class="steps"><div><b>01</b><h3>Galaxy</h3><p>Begin with the Milky Way and explore the galactic environment.</p></div><div><b>02</b><h3>Solar System</h3><p>Zoom into our planetary neighbourhood.</p></div><div><b>03</b><h3>Planets</h3><p>Explore worlds and their astronomical information.</p></div><div><b>04</b><h3>Discovery</h3><p>Use interactive tools to deepen the learning experience.</p></div></div></div></section>
+
+<section class="section about" id="about"><div class="container about-grid"><div><div class="eyebrow">ABOUT ASTROSPHERE</div><h2>Making astronomy something you can explore.</h2></div><div><p>AstroSphere is an interactive digital astronomy platform for education, exploration and public engagement.</p><p>The platform brings galaxy exploration, Solar System visualisation, planetary information, astronomical objects and AI-assisted astronomy interaction together in one web experience.</p></div></div></section>
+
+<section class="demo" id="demo"><div class="container"><div class="eyebrow">LET'S EXPLORE</div><h2>Ready to explore?</h2><p>Request an AstroSphere demonstration and experience the platform for yourself.</p><button class="btn primary" id="demoBtn">Request a Demo &rarr;</button></div></section>
+</main>
+
+<footer><div class="container footer-grid"><div><a class="brand" href="#home"><span class="logo">&#9673;</span> AstroSphere</a><p>Interactive astronomy for education, exploration and discovery.</p></div><div><b>Explore</b><a href="#features">Features</a><a href="#education">Education</a><a href="#organisations">Organisations</a></div><div><b>Contact</b><a href="#demo">Request a Demo</a></div></div><div class="container foot-bottom">&copy; <span id="year"></span> AstroSphere <span>Explore the Universe. Understand It.</span></div></footer>
+
+<div class="modal" id="modal"><div class="modal-box"><button class="close" id="close">&times;</button><div class="eyebrow">ASTROSPHERE DEMONSTRATION</div><h2>Request a Demo</h2><p>Tell us about your organisation and what you would like to explore.</p>
+<form id="form"><label>Name<input required name="name"></label><label>Organisation<input required name="organisation"></label><label>Email<input required type="email" name="email"></label><label>Organisation type<select name="type"><option>School</option><option>University</option><option>Science Centre</option><option>Planetarium</option><option>Astronomy Organisation</option><option>Other</option></select></label><label>Message<textarea name="message" rows="4"></textarea></label><button class="btn primary" type="submit">Prepare Request &rarr;</button></form>
+<small>This starter form is frontend-only. Connect it to your email/CRM endpoint before collecting live customer submissions.</small></div></div>
+<script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+</body></html>

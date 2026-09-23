@@ -1,33 +1,33 @@
 <nav class="global-nav" aria-label="Primary navigation">
 
-    <a href="{{ url_for('index') }}"
-       class="global-nav-link{% if request.endpoint == 'index' %} active{% endif %}"
-       {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>
-        ⌂ Home
+    <a href="{{ url_for('landing') }}"
+       class="global-nav-link{% if request.endpoint == 'landing' %} active{% endif %}"
+       {% if request.endpoint == 'landing' %}aria-current="page"{% endif %}>
+        &#8962; Home
     </a>
 
     <a href="{{ url_for('celestial_object_page', object_id='universe') }}"
        class="global-nav-link{% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'universe' %} active{% endif %}"
        {% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'universe' %}aria-current="page"{% endif %}>
-        🌌 Universe
+        &#9673; Universe
     </a>
 
     <a href="{{ url_for('celestial_object_page', object_id='milky-way') }}"
        class="global-nav-link{% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'milky-way' %} active{% endif %}"
        {% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'milky-way' %}aria-current="page"{% endif %}>
-        🌌 Milky Way
+        &#9673; Milky Way
     </a>
 
     <a href="{{ url_for('solar_system') }}"
        class="global-nav-link{% if request.endpoint == 'solar_system' %} active{% endif %}"
        {% if request.endpoint == 'solar_system' %}aria-current="page"{% endif %}>
-        ☀️ Solar System
+        &#9788; Solar System
     </a>
 
     <a href="{{ url_for('overview') }}"
        class="global-nav-link{% if request.endpoint == 'overview' %} active{% endif %}"
        {% if request.endpoint == 'overview' %}aria-current="page"{% endif %}>
-        ◉ Overview
+        &#9673; Overview
     </a>
 
 </nav>
