@@ -114,7 +114,7 @@ jobs:
             --image "$IMAGE" \
             --target-port "${{ env.TARGET_PORT }}" \
             --is-main true \
-            --start-up-command "${{ env.STARTUP_COMMAND }}"
+            --startup-cmd "${{ env.STARTUP_COMMAND }}"
 
       - name: Configure health check
         run: |
