@@ -1,4 +1,4 @@
-name: Deploy AstroSphere to Azure
+﻿name: Deploy AstroSphere to Azure
 
 on:
   push:
@@ -8,11 +8,16 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: AstroSphere-Azure
+  AZURE_RESOURCE_GROUP: AstroSphere-RG
   ACR_NAME: astrosphereacr
   IMAGE_NAME: astrosphere
+  CONTAINER_NAME: main
+  TARGET_PORT: 5000
+  STARTUP_COMMAND: gunicorn --bind 0.0.0.0:5000 web.app:app
+  HEALTH_PATH: /api/v1/planets
 
 jobs:
-  build-and-deploy:
+  build-test-and-deploy:
     runs-on: ubuntu-latest
 
     permissions:
@@ -23,36 +28,19 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Verify Azure configuration
-        env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install project
         run: |
-          echo "Client ID length: ${#AZURE_CLIENT_ID}"
-          echo "Tenant ID length: ${#AZURE_TENANT_ID}"
-          echo "Subscription ID length: ${#AZURE_SUBSCRIPTION_ID}"
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
 
-          if [ "$AZURE_TENANT_ID" = "c11f68a3-f8be-4fd2-b2ba-348abc06f657" ]; then
-            echo "Tenant ID matches expected Azure tenant."
-          else
-            echo "Tenant ID DOES NOT match expected Azure tenant."
-            exit 1
-          fi
-
-          if [ "$AZURE_CLIENT_ID" = "dfddbc64-c045-476f-b5dd-cc2317fc1d40" ]; then
-            echo "Client ID matches expected App Registration."
-          else
-            echo "Client ID DOES NOT match expected App Registration."
-            exit 1
-          fi
-
-          if [ "$AZURE_SUBSCRIPTION_ID" = "62b6400e-f0fd-4812-934d-60a74b23fc6b" ]; then
-            echo "Subscription ID matches expected subscription."
-          else
-            echo "Subscription ID DOES NOT match expected subscription."
-            exit 1
-          fi
+      - name: Run tests before deployment
+        run: |
+          python -m pytest tests -v
 
       - name: Log in to Azure
         uses: azure/login@v2
@@ -61,16 +49,288 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Verify Azure Web App exists
+        run: |
+          echo "Checking Azure Web App..."
+
+          az webapp show \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --query "{name:name,state:state,defaultHostName:defaultHostName,linuxFxVersion:siteConfig.linuxFxVersion,appCommandLine:siteConfig.appCommandLine,healthCheckPath:siteConfig.healthCheckPath}" \
+            -o json
+
+      - name: Get production hostname
+        shell: bash
+        run: |
+          HOSTNAME=$(az webapp show \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --query "defaultHostName" \
+            -o tsv)
+
+          if [ -z "$HOSTNAME" ]; then
+            echo "ERROR: Azure Web App hostname could not be determined."
+            exit 1
+          fi
+
+          echo "Production hostname: $HOSTNAME"
+          echo "APP_HOSTNAME=$HOSTNAME" >> "$GITHUB_ENV"
+
       - name: Log in to Azure Container Registry
-        run: az acr login --name ${{ env.ACR_NAME }}
+        run: |
+          az acr login --name "${{ env.ACR_NAME }}"
 
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          IMAGE="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
 
-      - name: Deploy container to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          images: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          echo "Building image:"
+          echo "$IMAGE"
+
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Configure Azure Site Container
+        run: |
+          IMAGE="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+
+          echo "=============================================="
+          echo "Configuring Azure Site Container"
+          echo "=============================================="
+          echo "Image: $IMAGE"
+          echo "Startup: ${{ env.STARTUP_COMMAND }}"
+          echo "Port: ${{ env.TARGET_PORT }}"
+
+          az webapp config set \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --linux-fx-version "sitecontainers" \
+            --startup-file "${{ env.STARTUP_COMMAND }}"
+
+          az webapp sitecontainers update \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --container-name "${{ env.CONTAINER_NAME }}" \
+            --image "$IMAGE" \
+            --target-port "${{ env.TARGET_PORT }}" \
+            --is-main true \
+            --start-up-command "${{ env.STARTUP_COMMAND }}"
+
+      - name: Configure health check
+        run: |
+          az webapp config set \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --generic-configurations '{"healthCheckPath":"/api/v1/planets"}'
+
+      - name: Verify deployment configuration
+        shell: bash
+        run: |
+          echo "=============================================="
+          echo "Verifying Azure configuration"
+          echo "=============================================="
+
+          WEBAPP_CONFIG=$(az webapp show \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --query "{state:state,linuxFxVersion:siteConfig.linuxFxVersion,appCommandLine:siteConfig.appCommandLine,healthCheckPath:siteConfig.healthCheckPath}" \
+            -o json)
+
+          echo "$WEBAPP_CONFIG"
+
+          LINUX_FX=$(echo "$WEBAPP_CONFIG" | jq -r '.linuxFxVersion')
+          STARTUP=$(echo "$WEBAPP_CONFIG" | jq -r '.appCommandLine')
+          HEALTH=$(echo "$WEBAPP_CONFIG" | jq -r '.healthCheckPath')
+
+          if [ "$LINUX_FX" != "sitecontainers" ]; then
+            echo "ERROR: Azure Web App is not using Site Containers."
+            exit 1
+          fi
+
+          if [ "$STARTUP" != "${{ env.STARTUP_COMMAND }}" ]; then
+            echo "ERROR: App Service startup command is incorrect."
+            echo "Expected: ${{ env.STARTUP_COMMAND }}"
+            echo "Actual:   $STARTUP"
+            exit 1
+          fi
+
+          if [ "$HEALTH" != "${{ env.HEALTH_PATH }}" ]; then
+            echo "ERROR: Health check path is incorrect."
+            echo "Expected: ${{ env.HEALTH_PATH }}"
+            echo "Actual:   $HEALTH"
+            exit 1
+          fi
+
+          echo ""
+          echo "Site Container configuration:"
+
+          az webapp sitecontainers show \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --container-name "${{ env.CONTAINER_NAME }}" \
+            --query "{image:image,isMain:isMain,startUpCommand:startUpCommand,targetPort:targetPort}" \
+            -o json
+
+          CONTAINER_CONFIG=$(az webapp sitecontainers show \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --container-name "${{ env.CONTAINER_NAME }}" \
+            -o json)
+
+          CONTAINER_IMAGE=$(echo "$CONTAINER_CONFIG" | jq -r '.image')
+          CONTAINER_MAIN=$(echo "$CONTAINER_CONFIG" | jq -r '.isMain')
+          CONTAINER_STARTUP=$(echo "$CONTAINER_CONFIG" | jq -r '.startUpCommand')
+          CONTAINER_PORT=$(echo "$CONTAINER_CONFIG" | jq -r '.targetPort')
+
+          EXPECTED_IMAGE="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+
+          if [ "$CONTAINER_IMAGE" != "$EXPECTED_IMAGE" ]; then
+            echo "ERROR: Site Container image is incorrect."
+            echo "Expected: $EXPECTED_IMAGE"
+            echo "Actual:   $CONTAINER_IMAGE"
+            exit 1
+          fi
+
+          if [ "$CONTAINER_MAIN" != "true" ]; then
+            echo "ERROR: Site Container is not configured as the main container."
+            exit 1
+          fi
+
+          if [ "$CONTAINER_STARTUP" != "${{ env.STARTUP_COMMAND }}" ]; then
+            echo "ERROR: Site Container startup command is incorrect."
+            exit 1
+          fi
+
+          if [ "$CONTAINER_PORT" != "${{ env.TARGET_PORT }}" ]; then
+            echo "ERROR: Site Container target port is incorrect."
+            exit 1
+          fi
+
+          echo ""
+          echo "Azure deployment configuration verified successfully."
+
+      - name: Restart application
+        run: |
+          echo "Restarting AstroSphere..."
+
+          az webapp restart \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}"
+
+      - name: Wait for application startup
+        shell: bash
+        run: |
+          echo "=============================================="
+          echo "Waiting for Azure application startup"
+          echo "=============================================="
+
+          RUNNING=false
+
+          for i in {1..30}; do
+            STATE=$(az webapp show \
+              --name "${{ env.AZURE_WEBAPP_NAME }}" \
+              --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+              --query "state" \
+              -o tsv)
+
+            echo "Attempt $i/30 - Azure state: $STATE"
+
+            if [ "$STATE" = "Running" ]; then
+              RUNNING=true
+              break
+            fi
+
+            sleep 10
+          done
+
+          if [ "$RUNNING" != "true" ]; then
+            echo ""
+            echo "ERROR: Azure application did not reach Running state within 5 minutes."
+            exit 1
+          fi
+
+          echo ""
+          echo "Azure application is Running."
+
+      - name: Smoke test production API
+        shell: bash
+        run: |
+          URL="https://${APP_HOSTNAME}${{ env.HEALTH_PATH }}"
+
+          echo "=============================================="
+          echo "Production API smoke test"
+          echo "=============================================="
+          echo "Testing: $URL"
+
+          SUCCESS=false
+
+          for i in {1..18}; do
+            echo "Smoke test attempt $i/18..."
+
+            if curl --fail --silent --show-error \
+              --max-time 20 \
+              "$URL" \
+              -o /tmp/planets.json; then
+
+              if [ ! -s /tmp/planets.json ]; then
+                echo "API response was empty."
+                exit 1
+              fi
+
+              echo "Production API responded successfully."
+              echo "API response received:"
+              head -c 500 /tmp/planets.json
+              echo ""
+
+              SUCCESS=true
+              break
+            fi
+
+            sleep 10
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo ""
+            echo "ERROR: Production API smoke test failed."
+            exit 1
+          fi
+
+      - name: Verify production landing page
+        shell: bash
+        run: |
+          URL="https://${APP_HOSTNAME}/"
+
+          echo "=============================================="
+          echo "Production landing page smoke test"
+          echo "=============================================="
+          echo "Testing: $URL"
+
+          curl --fail --silent --show-error \
+            --max-time 20 \
+            "$URL" \
+            -o /tmp/landing.html
+
+          if [ ! -s /tmp/landing.html ]; then
+            echo "ERROR: Landing page response was empty."
+            exit 1
+          fi
+
+          if grep -q "AstroSphere" /tmp/landing.html; then
+            echo "Production landing page verified successfully."
+          else
+            echo "ERROR: AstroSphere landing page content was not detected."
+            exit 1
+          fi
+
+      - name: Deployment completed
+        run: |
+          echo "=============================================="
+          echo "AstroSphere deployment completed successfully"
+          echo "=============================================="
+          echo "Commit: ${{ github.sha }}"
+          echo "Image: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "Hostname: https://${APP_HOSTNAME}"
+          echo "Startup: ${{ env.STARTUP_COMMAND }}"
+          echo "Port: ${{ env.TARGET_PORT }}"
+          echo "Health: ${{ env.HEALTH_PATH }}"
+          echo "=============================================="
