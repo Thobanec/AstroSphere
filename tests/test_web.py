@@ -319,7 +319,7 @@ def test_galaxy_visualization_page():
 
     assert response.status_code == 200
 
-def test_generic_celestial_object_page_has_ai_assistant():
+def test_generic_celestial_object_page_has_global_ai_entrypoint():
     client = app.test_client()
 
     response = client.get(
@@ -329,22 +329,17 @@ def test_generic_celestial_object_page_has_ai_assistant():
     assert response.status_code == 200
 
     assert (
-        b"ASTROSPHERE AI"
+        b"AstroSphere AI"
         in response.data
     )
 
     assert (
-        b"celestialAiInput"
+        b"/ai"
         in response.data
     )
 
     assert (
-        b"celestialAiAsk"
-        in response.data
-    )
-
-    assert (
-        b"/api/v1/ai/query"
+        b"Sirius"
         in response.data
     )
 

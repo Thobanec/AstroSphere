@@ -96,6 +96,12 @@ def solar_system():
         "solar_system.html"
     )
 
+@app.route("/ai")
+def ai_workspace():
+    return render_template(
+        "ai.html"
+    )
+
 @app.route("/overview")
 def overview():
 

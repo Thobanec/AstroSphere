@@ -43,38 +43,38 @@ def process_assistant_message(
 
     message = message.strip()
 
-    effective_object_id = object_id
+    conversation_object_id = None
 
-    if effective_object_id is None:
-        conversation_object = resolve_conversation_object(
-            conversation
-        )
+    conversation_object = resolve_conversation_object(
+        conversation
+    )
 
-        if conversation_object is not None:
-            effective_object_id = conversation_object.id
+    if conversation_object is not None:
+        conversation_object_id = conversation_object.id
 
-    if effective_object_id is not None:
+    if object_id is not None:
         if not isinstance(
-            effective_object_id,
+            object_id,
             str,
-        ) or not effective_object_id.strip():
+        ) or not object_id.strip():
             raise ValueError(
                 "Celestial object ID is required."
             )
 
-        effective_object_id = (
-            effective_object_id.strip().lower()
-        )
+        object_id = object_id.strip().lower()
+
+    resolution = resolve_object_or_default(
+        message,
+        explicit_object_id=object_id,
+        conversation_object_id=conversation_object_id,
+    )
+
+    effective_object_id = resolution.reference_object_id
 
     user_message = AssistantMessage(
         role="user",
         content=message,
         object_id=effective_object_id,
-    )
-
-    resolution = resolve_object_or_default(
-        message,
-        explicit_object_id=effective_object_id,
     )
 
     request_metadata = {

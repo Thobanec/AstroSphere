@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>AstroSphere AI</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/astrosphere-ai.css') }}"
+    >
+
+    <style>
+        /* =====================================================
+           ASTROSPHERE AI WORKSPACE
+           ===================================================== */
+
+        :root {
+            --ai-bg: #050b16;
+            --ai-panel: rgba(10, 20, 38, .92);
+            --ai-panel-soft: rgba(15, 28, 50, .78);
+            --ai-border: rgba(120, 200, 255, .16);
+            --ai-border-strong: rgba(120, 200, 255, .28);
+            --ai-text: #edf5ff;
+            --ai-muted: #8fa6c2;
+            --ai-accent: #72c8ff;
+        }
+
+        body.ai-page {
+            min-height: 100vh;
+            margin: 0;
+
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    rgba(45, 100, 170, .20),
+                    transparent 42%
+                ),
+                var(--ai-bg);
+
+            color: var(--ai-text);
+        }
+
+        .ai-shell {
+            width: min(1180px, calc(100% - 40px));
+            margin: 0 auto;
+            padding: 110px 0 90px;
+        }
+
+        .ai-hero {
+            margin-bottom: 28px;
+        }
+
+        .ai-eyebrow {
+            margin-bottom: 10px;
+
+            color: var(--ai-accent);
+
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .ai-hero h1 {
+            margin: 0;
+
+            font-size: clamp(32px, 5vw, 56px);
+            line-height: 1.05;
+            letter-spacing: -.03em;
+        }
+
+        .ai-hero p {
+            max-width: 760px;
+            margin: 18px 0 0;
+
+            color: var(--ai-muted);
+
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .ai-workspace {
+            overflow: hidden;
+
+            border: 1px solid var(--ai-border);
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(15, 29, 52, .94),
+                    rgba(6, 14, 27, .96)
+                );
+
+            box-shadow:
+                0 25px 80px rgba(0, 0, 0, .32);
+        }
+
+        .ai-workspace-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+
+            padding: 20px 24px;
+
+            border-bottom: 1px solid var(--ai-border);
+        }
+
+        .ai-workspace-title {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color: #8fb7d8;
+
+            font-size: 12px;
+        }
+
+        .ai-status-dot {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #65d6a1;
+
+            box-shadow:
+                0 0 12px rgba(101, 214, 161, .55);
+        }
+
+        .ai-messages {
+            min-height: 500px;
+            max-height: 62vh;
+
+            overflow-y: auto;
+
+            padding: 30px;
+        }
+
+        .ai-welcome {
+            max-width: 700px;
+            margin: 80px auto;
+
+            text-align: center;
+        }
+
+        .ai-welcome-icon {
+            width: 58px;
+            height: 58px;
+
+            margin: 0 auto 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(60, 120, 185, .9),
+                    rgba(18, 35, 62, .95)
+                );
+
+            font-size: 25px;
+        }
+
+        .ai-welcome h2 {
+            margin: 0 0 12px;
+
+            font-size: 26px;
+        }
+
+        .ai-welcome p {
+            margin: 0;
+
+            color: var(--ai-muted);
+
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .ai-message {
+            max-width: 860px;
+            margin: 0 auto 22px;
+        }
+
+        .ai-message-role {
+            margin-bottom: 7px;
+
+            color: var(--ai-accent);
+
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
+        .ai-message-content {
+            padding: 16px 18px;
+
+            border: 1px solid var(--ai-border);
+
+            border-radius: 14px;
+
+            background: var(--ai-panel-soft);
+
+            color: var(--ai-text);
+
+            font-size: 15px;
+            line-height: 1.7;
+
+            white-space: pre-wrap;
+        }
+
+        .ai-message-user .ai-message-content {
+            background: rgba(35, 70, 105, .45);
+            border-color: rgba(120, 200, 255, .20);
+        }
+
+        .ai-message-error .ai-message-content {
+            border-color: rgba(255, 100, 100, .25);
+        }
+
+        .ai-provenance {
+            max-width: 860px;
+            margin: 10px auto 24px;
+
+            color: var(--ai-muted);
+
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .ai-provenance strong {
+            color: #bfd4e9;
+        }
+
+        .ai-composer {
+            padding: 20px;
+
+            border-top: 1px solid var(--ai-border);
+
+            background: rgba(4, 11, 22, .82);
+        }
+
+        .ai-composer-form {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .ai-input {
+            flex: 1;
+
+            min-height: 54px;
+            max-height: 180px;
+
+            resize: vertical;
+
+            padding: 15px 16px;
+
+            border: 1px solid var(--ai-border-strong);
+            border-radius: 13px;
+
+            outline: none;
+
+            background: rgba(12, 24, 42, .92);
+
+            color: var(--ai-text);
+
+            font: inherit;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .ai-input::placeholder {
+            color: #7089a5;
+        }
+
+        .ai-input:focus {
+            border-color: rgba(120, 200, 255, .55);
+
+            box-shadow:
+                0 0 0 3px rgba(120, 200, 255, .08);
+        }
+
+        .ai-ask {
+            min-height: 54px;
+
+            padding: 0 22px;
+
+            border: 1px solid rgba(120, 200, 255, .35);
+            border-radius: 13px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(55, 110, 165, .96),
+                    rgba(25, 55, 90, .96)
+                );
+
+            color: #ffffff;
+
+            cursor: pointer;
+
+            font: inherit;
+            font-weight: 700;
+        }
+
+        .ai-ask:hover {
+            filter: brightness(1.1);
+        }
+
+        .ai-ask:disabled {
+            opacity: .5;
+            cursor: wait;
+        }
+
+        .ai-composer-footer {
+            max-width: 900px;
+            margin: 9px auto 0;
+
+            color: #647d98;
+
+            font-size: 11px;
+        }
+
+        .ai-clear {
+            padding: 6px 10px;
+
+            border: 1px solid var(--ai-border);
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: var(--ai-muted);
+
+            cursor: pointer;
+        }
+
+        .ai-clear:hover {
+            color: var(--ai-text);
+            border-color: var(--ai-border-strong);
+        }
+
+        @media (max-width: 700px) {
+            .ai-shell {
+                width: min(100% - 24px, 1180px);
+                padding-top: 85px;
+            }
+
+            .ai-messages {
+                min-height: 430px;
+                padding: 20px;
+            }
+
+            .ai-composer-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .ai-ask {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="ai-page">
+
+    {% include "_navigation.html" %}
+
+    <main class="ai-shell">
+
+        <section class="ai-hero">
+            <div class="ai-eyebrow">ASTROSPHERE INTELLIGENCE</div>
+
+            <h1>Ask AstroSphere AI</h1>
+
+            <p>
+                Ask scientific questions naturally. AstroSphere AI can resolve
+                celestial objects, distances, trajectories, close approaches,
+                planetary-defence information, astronomy concepts, and
+                follow-up questions across a persistent conversation.
+            </p>
+        </section>
+
+        <section class="ai-workspace">
+
+            <header class="ai-workspace-header">
+
+                <div class="ai-workspace-title">
+                    AstroSphere AI
+                </div>
+
+                <div class="ai-status">
+                    <span class="ai-status-dot"></span>
+                    <span id="aiStatus">Ready</span>
+
+                    <button
+                        type="button"
+                        class="ai-clear"
+                        id="aiClear"
+                    >
+                        New conversation
+                    </button>
+                </div>
+
+            </header>
+
+            <div
+                class="ai-messages"
+                id="aiMessages"
+                aria-live="polite"
+            >
+
+                <div
+                    class="ai-welcome"
+                    id="aiWelcome"
+                >
+                    <div class="ai-welcome-icon">✦</div>
+
+                    <h2>What would you like to explore?</h2>
+
+                    <p>
+                        You do not need to select an object first.
+                        Ask your question directly.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="ai-composer">
+
+                <form
+                    class="ai-composer-form"
+                    id="aiForm"
+                >
+
+                    <textarea
+                        id="aiInput"
+                        class="ai-input"
+                        rows="2"
+                        maxlength="4000"
+                        placeholder="Ask AstroSphere AI anything about space..."
+                        autocomplete="off"
+                    ></textarea>
+
+                    <button
+                        type="submit"
+                        class="ai-ask"
+                        id="aiAsk"
+                    >
+                        Ask
+                    </button>
+
+                </form>
+
+                <div class="ai-composer-footer">
+                    AstroSphere AI uses the question as the primary source
+                    of object context. Page context is never used to override
+                    an explicitly named object.
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+        (() => {
+            "use strict";
+
+            const STORAGE_KEY =
+                "astrosphere.ai.conversation_id";
+
+            const MESSAGES_STORAGE_KEY =
+                "astrosphere.ai.messages";
+
+            const input =
+                document.getElementById("aiInput");
+
+            const form =
+                document.getElementById("aiForm");
+
+            const askButton =
+                document.getElementById("aiAsk");
+
+            const clearButton =
+                document.getElementById("aiClear");
+
+            const messagesElement =
+                document.getElementById("aiMessages");
+
+            const welcomeElement =
+                document.getElementById("aiWelcome");
+
+            const statusElement =
+                document.getElementById("aiStatus");
+
+            let conversationId =
+                sessionStorage.getItem(STORAGE_KEY);
+
+            let conversationMessages = [];
+
+            try {
+                const storedMessages =
+                    sessionStorage.getItem(
+                        MESSAGES_STORAGE_KEY
+                    );
+
+                if (storedMessages) {
+                    const parsedMessages =
+                        JSON.parse(storedMessages);
+
+                    if (Array.isArray(parsedMessages)) {
+                        conversationMessages =
+                            parsedMessages
+                                .filter(
+                                    (message) =>
+                                        message &&
+                                        (
+                                            message.role ===
+                                                "user" ||
+                                            message.role ===
+                                                "assistant"
+                                        ) &&
+                                        typeof message.content ===
+                                            "string"
+                                )
+                                .slice(-24);
+                    }
+                }
+            }
+            catch (error) {
+                conversationMessages = [];
+            }
+
+            let requestInProgress = false;
+
+
+            function setStatus(message) {
+                statusElement.textContent = message;
+            }
+
+
+            function scrollMessagesToBottom() {
+                messagesElement.scrollTop =
+                    messagesElement.scrollHeight;
+            }
+
+
+            function removeWelcome() {
+                if (welcomeElement) {
+                    welcomeElement.remove();
+                }
+            }
+
+
+            function persistConversationMessages() {
+                try {
+                    sessionStorage.setItem(
+                        MESSAGES_STORAGE_KEY,
+                        JSON.stringify(
+                            conversationMessages.slice(-24)
+                        )
+                    );
+                }
+                catch (error) {
+                    // Session storage is optional browser state.
+                }
+            }
+
+
+            function restoreConversationMessages() {
+                if (!conversationMessages.length) {
+                    return;
+                }
+
+                conversationMessages.forEach(
+                    (message) => {
+                        addMessage(
+                            message.role,
+                            message.content
+                        );
+                    }
+                );
+
+                scrollMessagesToBottom();
+            }
+
+
+            function addMessage(role, content) {
+                removeWelcome();
+
+                const message =
+                    document.createElement("article");
+
+                message.className =
+                    "ai-message " +
+                    (
+                        role === "user"
+                            ? "ai-message-user"
+                            : role === "error"
+                                ? "ai-message-error"
+                                : "ai-message-assistant"
+                    );
+
+                const roleElement =
+                    document.createElement("div");
+
+                roleElement.className =
+                    "ai-message-role";
+
+                roleElement.textContent =
+                    role === "user"
+                        ? "You"
+                        : role === "error"
+                            ? "Error"
+                            : "AstroSphere AI";
+
+                const contentElement =
+                    document.createElement("div");
+
+                contentElement.className =
+                    "ai-message-content";
+
+                contentElement.textContent =
+                    content || "";
+
+                message.appendChild(roleElement);
+                message.appendChild(contentElement);
+
+                messagesElement.appendChild(message);
+
+                scrollMessagesToBottom();
+
+                return message;
+            }
+
+
+            function addProvenance(provenance) {
+                if (
+                    !Array.isArray(provenance) ||
+                    provenance.length === 0
+                ) {
+                    return;
+                }
+
+                const element =
+                    document.createElement("div");
+
+                element.className =
+                    "ai-provenance";
+
+                const names =
+                    provenance
+                        .map(source => {
+                            if (!source) {
+                                return "";
+                            }
+
+                            return (
+                                source.name ||
+                                source.provider ||
+                                source.dataset ||
+                                ""
+                            );
+                        })
+                        .filter(Boolean);
+
+                if (names.length === 0) {
+                    return;
+                }
+
+                const uniqueNames =
+                    [...new Set(names)];
+
+                const strong =
+                    document.createElement("strong");
+
+                strong.textContent =
+                    "Sources: ";
+
+                element.appendChild(strong);
+
+                element.appendChild(
+                    document.createTextNode(
+                        uniqueNames.join(" • ")
+                    )
+                );
+
+                messagesElement.appendChild(element);
+
+                scrollMessagesToBottom();
+            }
+
+
+            function setBusy(busy) {
+                requestInProgress = busy;
+
+                askButton.disabled = busy;
+                input.disabled = busy;
+
+                setStatus(
+                    busy
+                        ? "Thinking…"
+                        : "Ready"
+                );
+            }
+
+
+            async function askAI(question) {
+
+                if (
+                    !question ||
+                    requestInProgress
+                ) {
+                    return;
+                }
+
+                addMessage(
+                    "user",
+                    question
+                );
+
+                conversationMessages.push({
+                    role: "user",
+                    content: question
+                });
+
+                persistConversationMessages();
+
+                input.value = "";
+
+                setBusy(true);
+
+                try {
+
+                    /*
+                     * Deliberately do NOT send object_id.
+                     *
+                     * AstroSphere AI is question-first.
+                     * The backend resolves the scientific subject
+                     * from the user's actual question.
+                     */
+
+                    const response =
+                        await fetch(
+                            "/api/v1/ai/query",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+                                    message: question,
+
+                                    conversation_id:
+                                        conversationId ||
+                                        (
+                                            globalThis.crypto &&
+                                            typeof crypto.randomUUID ===
+                                                "function"
+                                                ? crypto.randomUUID()
+                                                : (
+                                                    "ai-" +
+                                                    Date.now() +
+                                                    "-" +
+                                                    Math.random()
+                                                        .toString(36)
+                                                        .slice(2)
+                                                )
+                                        ),
+
+                                    capability_ids: [],
+
+                                    messages:
+                                        conversationMessages
+                                            .slice(0, -1)
+                                })
+                            }
+                        );
+
+
+                    const payload =
+                        await response.json();
+
+
+                    if (!response.ok) {
+                        throw new Error(
+                            payload?.error ||
+                            payload?.message ||
+                            "AI request failed."
+                        );
+                    }
+
+
+                    const data =
+                        payload.data || payload;
+
+
+                    if (
+                        data.conversation_id
+                    ) {
+                        conversationId =
+                            data.conversation_id;
+
+                        sessionStorage.setItem(
+                            STORAGE_KEY,
+                            conversationId
+                        );
+                    }
+
+
+                    const answer =
+                        data.answer ||
+                        data.response ||
+                        data.message ||
+                        "AstroSphere AI returned no answer.";
+
+
+                    addMessage(
+                        "assistant",
+                        answer
+                    );
+
+                    conversationMessages.push({
+                        role: "assistant",
+                        content: answer
+                    });
+
+                    persistConversationMessages();
+
+                    addProvenance(
+                        data.provenance
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "AstroSphere AI request failed:",
+                        error
+                    );
+
+                    addMessage(
+                        "error",
+                        error?.message ||
+                        "AstroSphere AI could not complete that request."
+                    );
+
+                }
+                finally {
+
+                    setBusy(false);
+
+                    input.focus();
+                }
+            }
+
+
+            form.addEventListener(
+                "submit",
+                event => {
+                    event.preventDefault();
+
+                    const question =
+                        input.value.trim();
+
+                    if (question) {
+                        askAI(question);
+                    }
+                }
+            );
+
+
+            input.addEventListener(
+                "keydown",
+                event => {
+
+                    if (
+                        event.key === "Enter" &&
+                        !event.shiftKey
+                    ) {
+                        event.preventDefault();
+
+                        form.requestSubmit();
+                    }
+
+                }
+            );
+
+
+            restoreConversationMessages();
+
+            clearButton.addEventListener(
+                "click",
+                () => {
+
+                    conversationId = null;
+                    conversationMessages = [];
+
+                    sessionStorage.removeItem(
+                        STORAGE_KEY
+                    );
+
+                    sessionStorage.removeItem(
+                        MESSAGES_STORAGE_KEY
+                    );
+
+                    messagesElement.innerHTML = "";
+
+                    messagesElement.appendChild(
+                        welcomeElement ||
+                        (() => {
+                            const element =
+                                document.createElement("div");
+
+                            element.className =
+                                "ai-welcome";
+
+                            element.id =
+                                "aiWelcome";
+
+                            element.innerHTML =
+                                `
+                                <div class="ai-welcome-icon">✦</div>
+                                <h2>What would you like to explore?</h2>
+                                <p>
+                                    You do not need to select an object first.
+                                    Ask your question directly.
+                                </p>
+                                `;
+
+                            return element;
+                        })()
+                    );
+
+                    setStatus("Ready");
+
+                    input.value = "";
+                    input.focus();
+                }
+            );
+
+            input.focus();
+
+        })();
+    </script>
+
+</body>
+</html>

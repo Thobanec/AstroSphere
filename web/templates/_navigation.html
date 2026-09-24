@@ -6,16 +6,12 @@
         &#8962; Home
     </a>
 
-    <a href="{{ url_for('celestial_object_page', object_id='universe') }}"
-       class="global-nav-link{% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'universe' %} active{% endif %}"
-       {% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'universe' %}aria-current="page"{% endif %}>
-        &#9673; Universe
-    </a>
 
-    <a href="{{ url_for('celestial_object_page', object_id='milky-way') }}"
-       class="global-nav-link{% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'milky-way' %} active{% endif %}"
-       {% if request.endpoint == 'celestial_object_page' and request.view_args and request.view_args.get('object_id') == 'milky-way' %}aria-current="page"{% endif %}>
-        &#9673; Milky Way
+
+    <a href="{{ url_for('galaxy') }}"
+       class="global-nav-link{% if request.endpoint == 'galaxy' %} active{% endif %}"
+       {% if request.endpoint == 'galaxy' %}aria-current="page"{% endif %}>
+        &#9673; Explore
     </a>
 
     <a href="{{ url_for('solar_system') }}"
@@ -31,3 +27,6 @@
     </a>
 
 </nav>
+
+{% include "_ai_floating_button.html" %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/astrosphere-ai.css') }}">

@@ -1158,312 +1158,7 @@
             }
         }
 
-/* ============================================================
-   AstroSphere AI Assistant
-   ============================================================ */
-
-.ai-assistant-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.ai-assistant-clear {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    min-width: 76px;
-    height: 30px;
-    padding: 5px 10px;
-    border: 1px solid rgba(120, 180, 255, 0.35) !important;
-    border-radius: 7px;
-    background: rgba(20, 35, 60, 0.95) !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 1;
-    cursor: pointer;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.ai-assistant-clear:hover {
-    background: rgba(35, 55, 90, 1) !important;
-    border-color: rgba(120, 180, 255, 0.65) !important;
-}
-
-.ai-assistant-clear:active {
-    transform: translateY(1px);
-}.ai-assistant-clear:hover {
-    background: rgba(35, 55, 90, 0.9);
-    border-color: rgba(120, 180, 255, 0.45);
-}
-
-.ai-assistant-clear:active {
-    transform: translateY(1px);
-}
-/* ============================================================
-   SOLAR SYSTEM + AI ASSISTANT LAYOUT
-   ============================================================ */
-
-.simulation-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
-    gap: 18px;
-    align-items: stretch;
-    width: 100%;
-}
-
-.simulation-layout > .simulation {
-    min-width: 0;
-}
-
-/* ============================================================
-   AI ASSISTANT
-   ============================================================ */
-
-.ai-assistant-panel {
-    position: relative;
-    right: auto;
-    bottom: auto;
-    z-index: auto;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-width: 0;
-    min-height: 590px;
-    height: min(69vh, 740px);
-    max-height: none;
-    margin: 0;
-    padding: 18px;
-    border: 1px solid rgba(120, 180, 255, 0.18);
-    border-radius: 14px;
-    background: rgba(7, 14, 28, 0.92);
-    box-shadow: 0 12px 35px rgba(0,0,0,0.35);
-    backdrop-filter: blur(12px);
-    box-sizing: border-box;
-}
-@media (max-width: 1180px) {
-    .simulation-layout {
-        grid-template-columns: minmax(0, 1fr) 350px;
-    }
-}
-
-@media (max-width: 900px) {
-    .simulation-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .ai-assistant-panel {
-        height: auto;
-        min-height: 520px;
-    }
-}
-
-@media (max-width: 700px) {
-    .ai-assistant-panel {
-        min-height: 480px;
-    }
-}
-
-.ai-assistant-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-
-.ai-assistant-eyebrow {
-    margin-bottom: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    opacity: 0.65;
-}
-
-.ai-assistant-header h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-}
-
-.ai-assistant-status {
-    padding: 4px 8px;
-    border: 1px solid rgba(100, 220, 160, 0.25);
-    border-radius: 999px;
-    font-size: 10px;
-    white-space: nowrap;
-    opacity: 0.85;
-}
-
-.ai-assistant-context {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-bottom: 14px;
-    padding: 10px 12px;
-    border-radius: 9px;
-    background: rgba(255, 255, 255, 0.035);
-}
-
-.ai-context-label {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    opacity: 0.5;
-}
-
-#aiAssistantObject {
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.ai-assistant-messages {
-    flex: 1;
-    min-height: 180px;
-    max-height: 330px;
-    overflow-y: auto;
-    padding-right: 4px;
-    margin-bottom: 14px;
-}
-
-.ai-message {
-    margin-bottom: 12px;
-    padding: 11px 12px;
-    border-radius: 10px;
-    line-height: 1.5;
-}
-
-.ai-message-system {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.ai-message-user {
-    background: rgba(70, 130, 220, 0.12);
-    border: 1px solid rgba(90, 150, 240, 0.16);
-}
-
-.ai-message-assistant {
-    background: rgba(100, 220, 170, 0.07);
-    border: 1px solid rgba(100, 220, 170, 0.12);
-}
-
-.ai-message-label {
-    margin-bottom: 5px;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    opacity: 0.55;
-}
-
-.ai-message-content {
-    font-size: 12px;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: normal;
-}
-
-.ai-assistant-input-area {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    padding-top: 14px;
-}
-
-.ai-assistant-input {
-    display: block;
-    width: 100%;
-    min-height: 72px;
-    padding: 10px 11px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 9px;
-    outline: none;
-    resize: vertical;
-    box-sizing: border-box;
-    background: rgba(0, 0, 0, 0.18);
-    font: inherit;
-    font-size: 12px;
-    line-height: 1.45;
-}
-
-.ai-assistant-input:focus {
-    border-color: rgba(100, 170, 255, 0.45);
-}
-
-.ai-assistant-input-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 9px;
-}
-
-.ai-assistant-hint {
-    max-width: 220px;
-    font-size: 9px;
-    line-height: 1.35;
-    opacity: 0.45;
-}
-
-.ai-assistant-ask {
-    flex-shrink: 0;
-    padding: 8px 14px;
-    border: 0;
-    border-radius: 8px;
-    cursor: pointer;
-    font: inherit;
-    font-size: 11px;
-    font-weight: 600;
-    background: rgba(90, 150, 240, 0.85);
-}
-
-.ai-assistant-ask:hover {
-    filter: brightness(1.12);
-}
-
-.ai-assistant-ask:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-}
-/* AI Assistant readability overrides */
-.ai-assistant-panel,
-.ai-assistant-panel h2,
-.ai-assistant-panel .ai-assistant-eyebrow,
-.ai-assistant-panel .ai-assistant-status,
-.ai-assistant-panel .ai-context-label,
-.ai-assistant-panel #aiAssistantObject,
-.ai-assistant-panel .ai-message-label,
-.ai-assistant-panel .ai-message-content,
-.ai-assistant-panel .ai-assistant-hint {
-    color: #e8f0ff;
-}
-
-.ai-assistant-panel .ai-assistant-input {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    caret-color: #ffffff !important;
-}
-
-.ai-assistant-panel .ai-assistant-input::placeholder {
-    color: #8290aa;
-    opacity: 1;
-}
-
-.ai-assistant-panel .ai-assistant-ask {
-    color: #ffffff;
-}
-
-.ai-assistant-panel .ai-message-user .ai-message-content,
-.ai-assistant-panel .ai-message-assistant .ai-message-content,
-.ai-assistant-panel .ai-message-error .ai-message-content {
-    color: #e8f0ff;
-}
-
-/* ============================================================
-   SOLAR SYSTEM VIEWPORT FIT
+/* ============================================================`r`n   SOLAR SYSTEM VIEWPORT FIT
    Compact desktop planetarium layout
    ============================================================ */
 
@@ -1481,8 +1176,7 @@
 
     .simulation-layout {
         grid-template-columns:
-            minmax(0, 1fr)
-            350px;
+            minmax(0, 1fr);
 
         gap: 12px;
         align-items: stretch;
@@ -1494,8 +1188,7 @@
        title + simulation + controls + planet cards together.
     */
 
-    .simulation,
-    .ai-assistant-panel {
+    .simulation {
 
         height:
             clamp(
@@ -1512,9 +1205,6 @@
 
     /* Reduce internal panel padding slightly */
 
-    .ai-assistant-panel {
-        padding: 14px;
-    }
 
 
     /* Compact control bar */
@@ -1568,15 +1258,13 @@
     .simulation-layout {
 
         grid-template-columns:
-            minmax(0, 1fr)
-            360px;
+            minmax(0, 1fr);
 
         gap: 14px;
 
     }
 
-    .simulation,
-    .ai-assistant-panel {
+    .simulation {
 
         height:
             min(
@@ -1601,8 +1289,7 @@
         grid-template-columns: 1fr;
     }
 
-    .simulation,
-    .ai-assistant-panel {
+    .simulation {
         height: auto;
         min-height: 520px;
         max-height: none;
@@ -1917,69 +1604,6 @@
         </div>
 
     </div>
-    <aside class="ai-assistant-panel" id="aiAssistantPanel">
-    <div class="ai-assistant-header">
-        <div>
-            <div class="ai-assistant-eyebrow">ASTROSPHERE AI</div>
-            <h2>AI Assistant</h2>
-        </div>
-
-        <div class="ai-assistant-header-actions">
-            <button
-                type="button"
-                id="aiAssistantClear"
-                class="ai-assistant-clear"
-            >
-                Clear Chat
-            </button>
-
-            <span class="ai-assistant-status" id="aiAssistantStatus">
-                Ready
-            </span>
-        </div>
-    </div>
-
-    <div class="ai-assistant-context" id="aiAssistantContext">
-        <span class="ai-context-label">Current context</span>
-        <span id="aiAssistantObject">No object selected</span>
-    </div>
-
-    <div class="ai-assistant-messages" id="aiAssistantMessages">
-        <div class="ai-message ai-message-system">
-            <div class="ai-message-label">ASTROSPHERE AI</div>
-            <div class="ai-message-content">
-                Select a celestial object and ask a question about its
-                position, velocity, trajectory, or other available
-                scientific data.
-            </div>
-        </div>
-    </div>
-
-    <div class="ai-assistant-input-area">
-        <textarea
-            id="aiAssistantInput"
-            class="ai-assistant-input"
-            rows="3"
-            placeholder="Ask AstroSphere AI..."
-            aria-label="Ask AstroSphere AI"
-            style="color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff !important;"
-        ></textarea>
-
-        <div class="ai-assistant-input-footer">
-            <span class="ai-assistant-hint">
-                AI responses are grounded in AstroSphere data.
-            </span>
-
-            <button
-                type="button"
-                id="aiAssistantAsk"
-                class="ai-assistant-ask"
-            >
-                Ask AI
-            </button>
-        </div>
-    </div>
-</aside>
     </div>
 
 
@@ -2494,10 +2118,6 @@ let selectedObjectGraphRequestId = 0;
 let selectedObjectGraphLoading = false;
 let selectedObjectGraphError = null;
 
-/* AI Assistant state */
-let aiConversationId = null;
-let aiConversationMessages = [];
-let aiRequestInProgress = false;
 
 /* ============================================================
    Planetary trajectory visualization state
@@ -5486,473 +5106,6 @@ function updateSelectedApophisTelemetry() {
 }
 
 
-/* ============================================================
-   AstroSphere AI Assistant - Selection Context
-   ============================================================ */
-
-function updateAIAssistantContext() {
-
-    const contextElement =
-        document.getElementById("aiAssistantObject");
-
-    if (!contextElement) {
-        return;
-    }
-
-    if (selectedTrackedObject === "Apophis") {
-
-        contextElement.textContent =
-            "Apophis";
-
-        return;
-    }
-
-    if (selectedPlanet) {
-
-        contextElement.textContent =
-            selectedPlanet.name;
-
-        return;
-    }
-
-    if (
-        selectedObjectGraph &&
-        selectedObjectGraph.name
-    ) {
-
-        contextElement.textContent =
-            selectedObjectGraph.name;
-
-        return;
-    }
-
-    contextElement.textContent =
-        "No object selected";
-}
-async function askAIAssistant() {
-    const input =
-        document.getElementById("aiAssistantInput");
-    const askButton =
-        document.getElementById("aiAssistantAsk");
-    const status =
-        document.getElementById("aiAssistantStatus");
-    const messages =
-        document.getElementById("aiAssistantMessages");
-
-    if (!input || !askButton || !status || !messages) {
-        console.error(
-            "AI Assistant UI elements were not found."
-        );
-        return;
-    }
-
-    const question = input.value.trim();
-
-    if (!question) {
-        status.textContent = "Enter a question";
-        input.focus();
-        return;
-    }
-
-    if (aiRequestInProgress) {
-        return;
-    }
-
-    const objectId =
-        selectedCelestialObjectId ||
-        (
-            selectedTrackedObject
-                ? "asteroid:99942"
-                : null
-        );
-
-    aiRequestInProgress = true;
-    askButton.disabled = true;
-    input.disabled = true;
-    status.textContent = "Thinking...";
-
-    const userMessage = {
-        role: "user",
-        content: question
-    };
-
-    if (objectId) {
-        userMessage.object_id = objectId;
-    }
-
-    aiConversationMessages.push(userMessage);
-
-    const userBubble =
-        document.createElement("div");
-    userBubble.className =
-        "ai-message ai-message-user";
-    userBubble.innerHTML = `
-        <div class="ai-message-label">YOU</div>
-        <div class="ai-message-content"></div>
-    `;
-
-    userBubble.querySelector(
-        ".ai-message-content"
-    ).textContent = question;
-
-    messages.appendChild(userBubble);
-    messages.scrollTop = messages.scrollHeight;
-
-    input.value = "";
-
-    if (!aiConversationId) {
-        aiConversationId =
-            `astrosphere-${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2, 10)}`;
-    }
-
-    try {
-        const response = await fetch(
-            "/api/v1/ai/query",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-                body: JSON.stringify({
-                    message: question,
-                    conversation_id:
-                        aiConversationId,
-                    ...(objectId
-                        ? { object_id: objectId }
-                        : {}),
-                    capability_ids: [],
-                    messages:
-                        aiConversationMessages.slice(
-                            0,
-                            -1
-                        )
-                })
-            }
-        );
-
-        const payload = await response.json();
-
-        if (!response.ok ||
-            payload.status !== "success") {
-            throw new Error(
-                payload.error ||
-                "AI Assistant request failed."
-            );
-        }
-
-        const data = payload.data || {};
-
-        aiConversationId =
-            data.conversation_id ||
-            aiConversationId;
-
-        if (Array.isArray(data.messages)) {
-            aiConversationMessages =
-                data.messages;
-        } else {
-            aiConversationMessages.push({
-                role: "assistant",
-                content: data.answer || "",
-                object_id:
-                    data.object_id || objectId || null
-            });
-        }
-
-        const assistantBubble =
-            document.createElement("div");
-
-        assistantBubble.className =
-            "ai-message ai-message-assistant";
-
-        assistantBubble.innerHTML = `
-            <div class="ai-message-label">
-                ASTROSPHERE AI
-            </div>
-            <div class="ai-message-content"></div>
-        `;
-
-        assistantBubble.querySelector(
-            ".ai-message-content"
-        ).textContent =
-            data.answer ||
-            "No answer was returned.";
-
-        messages.appendChild(assistantBubble);
-        messages.scrollTop = messages.scrollHeight;
-
-        status.textContent = "Ready";
-    } catch (error) {
-        console.error(
-            "AI Assistant request failed:",
-            error
-        );
-
-        aiConversationMessages =
-            aiConversationMessages.filter(
-                (message, index, array) =>
-                    !(
-                        index === array.length - 1 &&
-                        message.role === "user" &&
-                        message.content === question
-                    )
-            );
-
-        const errorBubble =
-            document.createElement("div");
-
-        errorBubble.className =
-            "ai-message ai-message-error";
-
-        errorBubble.innerHTML = `
-            <div class="ai-message-label">
-                ASTROSPHERE AI
-            </div>
-            <div class="ai-message-content"></div>
-        `;
-
-        errorBubble.querySelector(
-            ".ai-message-content"
-        ).textContent =
-            error.message ||
-            "Unable to process the AI request.";
-
-        messages.appendChild(errorBubble);
-        messages.scrollTop = messages.scrollHeight;
-
-        status.textContent = "Error";
-    } finally {
-        aiRequestInProgress = false;
-        askButton.disabled = false;
-        input.disabled = false;
-        input.focus();
-    }
-}
-
-/* AI Assistant event handlers */
-const aiAssistantAskButton =
-    document.getElementById("aiAssistantAsk");
-
-const aiAssistantInput =
-    document.getElementById("aiAssistantInput");
-
-const aiAssistantClearButton =
-    document.getElementById("aiAssistantClear");
-
-if (aiAssistantClearButton) {
-    aiAssistantClearButton.addEventListener(
-        "click",
-        function () {
-            resetAIAssistantConversation();
-
-            if (aiAssistantInput) {
-                aiAssistantInput.value = "";
-                aiAssistantInput.focus();
-            }
-        }
-    );
-}
-
-if (aiAssistantAskButton) {
-    aiAssistantAskButton.addEventListener(
-        "click",
-        askAIAssistant
-    );
-}
-
-if (aiAssistantInput) {
-    aiAssistantInput.addEventListener(
-        "keydown",
-        function (event) {
-            if (
-                event.key === "Enter" &&
-                !event.shiftKey
-            ) {
-                event.preventDefault();
-                askAIAssistant();
-            }
-        }
-    );
-}
-function resetAIAssistantConversation() {
-    aiConversationId = null;
-    aiConversationMessages = [];
-
-    const messages =
-        document.getElementById("aiAssistantMessages");
-
-    const status =
-        document.getElementById("aiAssistantStatus");
-
-    if (messages) {
-        messages.innerHTML = `
-            <div class="ai-message ai-message-system">
-                <div class="ai-message-label">
-                    ASTROSPHERE AI
-                </div>
-                <div class="ai-message-content">
-                    Select a celestial object and ask a question about its
-                    position, velocity, trajectory, or other available
-                    scientific data.
-                </div>
-            </div>
-        `;
-        messages.scrollTop = 0;
-    }
-
-    if (status) {
-        status.textContent = "Ready";
-    }
-}
-function selectApophis() {
-
-    if (
-        !trackedApophis ||
-        !trackedObjectLoaded
-    ) {
-
-        return;
-
-    }
-
-
-    selectedTrackedObject =
-        "Apophis";
-
-    updateAIAssistantContext();
-
-
-    selectedPlanet =
-        null;
-
-
-    loadTrackedApophis(
-        getSimulationDate(),
-        true
-    );
-
-    loadApophisTrajectory(
-        getSimulationDate()
-    );
-
-
-    focusPlanet =
-        null;
-
-
-    focusMode =
-        false;
-
-
-    document.getElementById(
-        "selectedName"
-    ).textContent =
-        "Apophis";
-
-
-    document.getElementById(
-        "selectedDescription"
-    ).textContent =
-        "Near-Earth asteroid 99942 Apophis. Live telemetry and its calculated heliocentric position are shown using MPC orbital elements and Skyfield.";
-
-
-    document.getElementById(
-        "selectedOrbitLabel"
-    ).textContent =
-        "Distance from Earth";
-
-
-    document.getElementById(
-        "selectedOrbit"
-    ).textContent =
-        `${formatTrackedNumber(
-            trackedApophis.distance_from_earth_km,
-            0
-        )} km`;
-
-
-    document.getElementById(
-        "selectedRotationLabel"
-    ).textContent =
-        "Relative velocity";
-
-
-    document.getElementById(
-        "selectedRotation"
-    ).textContent =
-        `${formatTrackedNumber(
-            trackedApophis.relative_velocity_km_s,
-            3
-        )} km/s`;
-
-
-    document.getElementById(
-        "selectedObservation"
-    ).textContent =
-        formatTrackedObservationTime(
-            trackedApophis.observation_time ||
-            trackedApophis.observed_at ||
-            trackedApophis.observationTime ||
-            trackedApophis.epoch
-        );
-
-
-    document.getElementById(
-        "selectedObservationStat"
-    ).style.display =
-        "block";
-
-
-    document.querySelectorAll(
-        ".planet-card"
-    ).forEach(
-        card =>
-            card.classList.remove(
-                "active"
-            )
-    );
-
-
-    draw(
-        performance.now()
-    );
-
-}
-
-
-function isApophisHit(
-    mouseX,
-    mouseY
-) {
-
-    if (
-        !trackedApophis ||
-        !trackedObjectLoaded
-    ) {
-
-        return false;
-
-    }
-
-
-    const position =
-        getApophisVisualPosition();
-
-
-    const distance =
-        Math.hypot(
-            mouseX - position.x,
-            mouseY - position.y
-        );
-
-
-    return distance <= 24;
-
-}
-
-
 /* ================================================================
    DRAW FRAME
 ================================================================ */
@@ -6512,8 +5665,6 @@ document.getElementById(
         selectedTrackedObject =
             null;
 
-        updateAIAssistantContext();
-
         /*
          * Invalidate any in-flight relationship graph
          * request and clear the relationship panel.
@@ -6825,8 +5976,6 @@ function selectPlanet(
     selectedTrackedObject =
         null;
 
-    updateAIAssistantContext();
-
     /*
      * Load the scientific object graph for the
      * newly selected celestial object.
@@ -6993,8 +6142,6 @@ async function loadSelectedObjectGraph(objectId) {
                 selectedObjectGraph.name ||
                 selectedObjectGraph.id;
         }
-
-        updateAIAssistantContext();
     } catch (error) {
         if (
             requestId !== selectedObjectGraphRequestId
@@ -7493,8 +6640,6 @@ function selectCelestialObjectById(objectId) {
     loadSelectedObjectGraph(
         normalizedId
     );
-
-    updateAIAssistantContext();
     updateSelectedExploreLink();
 }
 
@@ -7521,8 +6666,6 @@ function clearSelectedCelestialObject() {
     loadSelectedObjectGraph(null);
 
     updateSelectedExploreLink();
-
-    updateAIAssistantContext();
 
     const clearButton =
         document.getElementById(
