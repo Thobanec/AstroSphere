@@ -5566,11 +5566,6 @@ async function askAIAssistant() {
                 : null
         );
 
-    if (!objectId) {
-        status.textContent = "Select an object first";
-        return;
-    }
-
     aiRequestInProgress = true;
     askButton.disabled = true;
     input.disabled = true;
@@ -5578,9 +5573,12 @@ async function askAIAssistant() {
 
     const userMessage = {
         role: "user",
-        content: question,
-        object_id: objectId
+        content: question
     };
+
+    if (objectId) {
+        userMessage.object_id = objectId;
+    }
 
     aiConversationMessages.push(userMessage);
 
@@ -5622,7 +5620,9 @@ async function askAIAssistant() {
                     message: question,
                     conversation_id:
                         aiConversationId,
-                    object_id: objectId,
+                    ...(objectId
+                        ? { object_id: objectId }
+                        : {}),
                     capability_ids: [],
                     messages:
                         aiConversationMessages.slice(
@@ -5657,7 +5657,7 @@ async function askAIAssistant() {
                 role: "assistant",
                 content: data.answer || "",
                 object_id:
-                    data.object_id || objectId
+                    data.object_id || objectId || null
             });
         }
 

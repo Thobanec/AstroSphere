@@ -91,14 +91,16 @@ def resolve_question_entities(question: str) -> AIEntityResolution:
     )
 
 
-def resolve_object_or_default(question: str, explicit_object_id: str | None = None, conversation_object_id: str | None = None):
-    """Resolve the primary subject while preserving explicit/conversation context.
+def resolve_object_or_default(
+    question: str,
+    explicit_object_id: str | None = None,
+    conversation_object_id: str | None = None,
+):
+    """Resolve the question subject while preserving contextual follow-ups."""
 
-    An explicit or conversation object represents the subject of a follow-up
-    question. Entities discovered in the question may still represent a target
-    body, such as Earth in "When is its closest approach to Earth?".
-    """
     resolved = resolve_question_entities(question)
+
+    contextual_subject = None
 
     for candidate in (explicit_object_id, conversation_object_id):
         if (
@@ -106,20 +108,53 @@ def resolve_object_or_default(question: str, explicit_object_id: str | None = No
             and candidate.strip()
             and get_celestial_object(candidate.strip().lower())
         ):
-            subject = candidate.strip().lower()
-            return AIEntityResolution(
-                entities=tuple(
-                    dict.fromkeys(
-                        (subject,) + tuple(resolved.entities)
-                    )
-                ),
-                reference_object_id=subject,
-                target_object_id=resolved.target_object_id,
-            )
+            contextual_subject = candidate.strip().lower()
+            break
 
+    normalized_question = " ".join(question.lower().split())
+
+    # A contextual pronoun means the selected/conversation object remains
+    # the subject while an explicitly named body becomes the target.
+    context_pronouns = (
+        " it ",
+        " its ",
+        " this ",
+        " that ",
+        " they ",
+        " their ",
+    )
+
+    uses_context_subject = (
+        contextual_subject is not None
+        and any(
+            token in f" {normalized_question} "
+            for token in context_pronouns
+        )
+    )
+
+    if uses_context_subject and resolved.reference_object_id:
+        return AIEntityResolution(
+            entities=tuple(
+                dict.fromkeys(
+                    (contextual_subject,) + tuple(resolved.entities)
+                )
+            ),
+            reference_object_id=contextual_subject,
+            target_object_id=resolved.reference_object_id,
+        )
+
+    # Explicit entities named directly in the question take precedence
+    # over passive page/selection context.
     if resolved.reference_object_id:
         return resolved
 
+    if contextual_subject is not None:
+        return AIEntityResolution(
+            entities=(contextual_subject,),
+            reference_object_id=contextual_subject,
+        )
+
+    # Final canonical fallback.
     return AIEntityResolution(
         entities=("universe",),
         reference_object_id="universe",
