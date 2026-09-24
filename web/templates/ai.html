@@ -349,6 +349,28 @@
             font-size: 11px;
         }
 
+        .ai-close {
+            padding: 6px 10px;
+
+            border: 1px solid var(--ai-border);
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: var(--ai-muted);
+
+            cursor: pointer;
+
+            font: inherit;
+            font-size: 13px;
+        }
+
+        .ai-close:hover {
+            color: var(--ai-text);
+            border-color: var(--ai-border-strong);
+
+            background: rgba(120, 200, 255, .06);
+        }
         .ai-clear {
             padding: 6px 10px;
 
@@ -418,6 +440,16 @@
                 </div>
 
                 <div class="ai-status">
+
+                    <button
+                        type="button"
+                        class="ai-close"
+                        id="aiClose"
+                        title="Close AstroSphere AI"
+                        aria-label="Close AstroSphere AI"
+                    >
+                        × Close AI
+                    </button>
                     <span class="ai-status-dot"></span>
                     <span id="aiStatus">Ready</span>
 
@@ -921,6 +953,47 @@
 
 
             restoreConversationMessages();
+
+            const closeButton =
+                document.getElementById("aiClose");
+
+            function closeAIWorkspace() {
+
+                const referrer =
+                    document.referrer;
+
+                if (referrer) {
+
+                    try {
+
+                        const referrerUrl =
+                            new URL(referrer);
+
+                        if (
+                            referrerUrl.origin ===
+                            window.location.origin
+                        ) {
+                            window.history.back();
+                            return;
+                        }
+
+                    }
+                    catch (error) {
+                        console.warn(
+                            "Could not inspect referrer:",
+                            error
+                        );
+                    }
+                }
+
+                window.location.href =
+                    "{{ url_for('galaxy') }}";
+            }
+
+            closeButton.addEventListener(
+                "click",
+                closeAIWorkspace
+            );
 
             clearButton.addEventListener(
                 "click",

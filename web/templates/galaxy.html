@@ -21,12 +21,6 @@
         href="{{ url_for('static', filename='style.css') }}"
     >
 
-    {% include "_ai_floating_button.html" %}
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/astrosphere-ai.css') }}"
-    >
-
     <style>
 
         /* =====================================================
@@ -1432,7 +1426,7 @@
 
 .galaxy-explorer-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 360px;
     gap: 14px;
     align-items: stretch;
 }
@@ -1582,7 +1576,8 @@
     text-transform: uppercase;
 }
 
-.galaxy-selected-object h3 {
+.galaxy-selected-object h3,
+.galaxy-ai-header h2 {
     margin: 0;
     color: #f3f7ff;
 }
@@ -1728,7 +1723,7 @@
 @media (max-width: 1000px) {
 
     .galaxy-explorer-grid {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) 330px;
     }
 
     .galaxy-visual-panel {
@@ -1769,7 +1764,24 @@
         height: 500px;
     }
 
+    .galaxy-viewer-top {
+        flex-wrap: wrap;
+    }
 
+    .galaxy-visual-info {
+        display: none;
+    }
+
+    .galaxy-selected-object {
+        right: 12px;
+        width: auto;
+    }
+
+    .galaxy-facts {
+        grid-template-columns: 1fr;
+    }
+
+}
 
 /* ============================================================
    GALAXY VIEWPORT POLISH
@@ -1822,7 +1834,458 @@
 
 }
 
-/* GALAXY V2 FULL WIDTH */ .galaxy-explorer-v2{width:calc(100% - 40px)!important;max-width:none!important;margin-left:auto!important;margin-right:auto!important}.galaxy-explorer-grid{width:100%!important;max-width:none!important;grid-template-columns:minmax(0,1fr);gap:14px}.galaxy-controls,.galaxy-facts{width:calc(100% - 40px)!important;max-width:none!important;margin-left:auto!important;margin-right:auto!important}.galaxy-visual-panel,;
+/* GALAXY V2 FULL WIDTH */ .galaxy-explorer-v2{width:calc(100% - 40px)!important;max-width:none!important;margin-left:auto!important;margin-right:auto!important}.galaxy-explorer-grid{width:100%!important;max-width:none!important;grid-template-columns:minmax(0,1fr);gap:14px}.galaxy-controls,.galaxy-facts{width:calc(100% - 40px)!important;max-width:none!important;margin-left:auto!important;margin-right:auto!important}.galaxy-visual-panel{min-width:0}@media(max-width:900px){.galaxy-explorer-grid{grid-template-columns:1fr}}@media(max-width:560px){.galaxy-explorer-v2,.galaxy-controls,.galaxy-facts{width:calc(100% - 20px)!important}}\n</style>
+
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/astrosphere-ai.css') }}"
+    >
+</head>
+
+
+<body>
+    {% include "_ai_floating_button.html" %}
+
+<div class="galaxy-page">
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="galaxy-header galaxy-v2-header">
+
+    <div class="galaxy-brand">
+
+        <div class="galaxy-logo">
+            🌌
+        </div>
+
+        <div>
+            <h1>AstroSphere</h1>
+            <p>Milky Way Explorer</p>
+        </div>
+
+    </div>
+
+    <nav class="galaxy-v2-nav" aria-label="AstroSphere navigation">
+
+        <a href="/celestial/universe">
+            ⌂ <span>Home</span>
+        </a>
+
+        <a href="/celestial/universe">
+            🔵 <span>Universe</span>
+        </a>
+
+        <a href="/galaxy" class="active">
+            🌌 <span>Milky Way</span>
+        </a>
+
+        <a href="/solar-system">
+            ☀ <span>Solar System</span>
+        </a>
+
+        <a href="/overview">
+            ◉ <span>Overview</span>
+        </a>
+
+    </nav>
+
+    <div class="galaxy-search">
+
+        <span>⌕</span>
+
+        <input
+            type="text"
+            placeholder="Search objects, galaxies..."
+            aria-label="Search objects"
+        >
+
+        <span>⌕</span>
+
+    </div>
+
+</header>
+
+
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="galaxy-hero galaxy-v2-hidden-hero">
+
+        <h2>
+            🌌 The Milky Way
+        </h2>
+
+        <p>
+            Explore our galactic home, discover its
+            structure, and see where the Solar System
+            resides within the galaxy.
+        </p>
+
+    </section>
+
+
+    <!-- =====================================================
+         GALAXY VIEWER
+         ===================================================== -->
+
+        <!-- =====================================================
+         MILKY WAY EXPLORER V2
+         ===================================================== -->
+
+    <div class="galaxy-explorer-v2">
+
+        <div class="galaxy-explorer-grid">
+
+            <!-- =================================================
+                 GALAXY VISUALIZATION
+                 ================================================= -->
+
+            <section
+                class="galaxy-container galaxy-visual-panel"
+                id="galaxyContainer"
+            >
+
+                <canvas
+                    id="galaxyCanvas"
+                ></canvas>
+
+
+                <!-- TOP OVERLAY -->
+
+                <div class="galaxy-viewer-top">
+
+                    <div class="viewer-chip galaxy-map-chip">
+                        MILKY WAY · GALACTIC MAP
+                    </div>
+
+
+                    <div class="galaxy-v2-zoom">
+
+                        <button
+                            type="button"
+                            id="galaxyZoomOut"
+                            aria-label="Zoom out"
+                        >
+                            −
+                        </button>
+
+                        <span id="galaxyZoomValue">
+                            Zoom 1.0×
+                        </span>
+
+                        <button
+                            type="button"
+                            id="galaxyZoomIn"
+                            aria-label="Zoom in"
+                        >
+                            +
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="viewer-chip"
+                        id="viewerStatus"
+                    >
+                        Exploring
+                    </div>
+
+                </div>
+
+
+                <!-- SELECTED OBJECT -->
+
+                <div
+                    class="galaxy-selected-object"
+                    id="galaxyInfo"
+                >
+
+                    <div class="galaxy-panel-kicker">
+                        SELECTED OBJECT
+                    </div>
+
+                    <h3 id="infoTitle">
+                        Milky Way
+                    </h3>
+
+                    <p id="infoText">
+                        Explore the structure of our galaxy and
+                        discover where the Solar System resides.
+                    </p>
+
+                    <div
+                        class="info-distance"
+                        id="infoDistance"
+                    >
+                        Approximately 26,000 light-years
+                        from the Galactic Center.
+                    </div>
+
+                </div>
+
+
+                <!-- VISUALIZATION INFORMATION -->
+
+                <div class="galaxy-visual-info">
+
+                    <div class="galaxy-panel-kicker">
+                        VISUALIZATION SCALE
+                    </div>
+
+                    <strong>
+                        Galactic structure
+                    </strong>
+
+                    <span>
+                        Planetary distances are intentionally
+                        adjusted for visibility.
+                    </span>
+
+                </div>
+
+
+            </section>
+
+
+            <!-- =================================================
+                 AI ASSISTANT
+                 ================================================= -->
+</div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CONTROLS
+         ===================================================== -->
+
+    <div class="galaxy-controls">
+
+        <button
+            type="button"
+            class="galaxy-control"
+            id="rotationButton"
+        >
+            ⏸ Pause Rotation
+        </button>
+
+
+        <button
+            type="button"
+            class="galaxy-control"
+            id="resetButton"
+        >
+            ↺ Reset View
+        </button>
+
+
+        <button
+            type="button"
+            class="galaxy-control"
+            onclick="window.location.href='/'"
+        >
+            ← AstroSphere Home
+        </button>
+
+
+        <a
+            class="galaxy-control"
+            href="/solar-system"
+            style="
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                font-weight: 700;
+                border-color: rgba(255,216,90,0.45);
+                background: rgba(55,42,12,0.55);
+            "
+        >
+            ☀️ Enter Solar System
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         FACTS
+         ===================================================== -->
+
+    <section class="galaxy-facts">
+
+
+        <article class="fact-card">
+
+            <h3>
+                🌌 Barred Spiral Galaxy
+            </h3>
+
+            <p>
+                The Milky Way has a central bar
+                surrounded by a disk containing
+                curved spiral structures.
+            </p>
+
+        </article>
+
+
+        <article class="fact-card">
+
+            <h3>
+                ☀️ Orion Spur
+            </h3>
+
+            <p>
+                Our Solar System lies in the
+                Orion Spur, a smaller structure
+                between major spiral arms.
+            </p>
+
+        </article>
+
+
+        <article class="fact-card">
+
+            <h3>
+                ✨ Galactic Scale
+            </h3>
+
+            <p>
+                The Milky Way extends roughly
+                100,000 light-years across.
+                The galaxy is vastly larger than
+                our Solar System.
+            </p>
+
+        </article>
+
+
+    </section>
+
+
+    <footer class="galaxy-footer">
+
+        AstroSphere · Milky Way Explorer
+
+    </footer>
+
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   CANVAS SETUP
+   ============================================================ */
+
+const canvas =
+    document.getElementById(
+        "galaxyCanvas"
+    );
+
+const context =
+    canvas.getContext("2d");
+
+const container =
+    document.getElementById(
+        "galaxyContainer"
+    );
+
+
+/* ============================================================
+   UI ELEMENTS
+   ============================================================ */
+
+const rotationButton =
+    document.getElementById(
+        "rotationButton"
+    );
+
+const resetButton =
+    document.getElementById(
+        "resetButton"
+    );
+
+const viewerStatus =
+    document.getElementById(
+        "viewerStatus"
+    );
+
+const infoTitle =
+    document.getElementById(
+        "infoTitle"
+    );
+
+const infoText =
+    document.getElementById(
+        "infoText"
+    );
+
+const infoDistance =
+    document.getElementById(
+        "infoDistance"
+    );
+
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+let width = 0;
+let height = 0;
+
+let centerX = 0;
+let centerY = 0;
+
+let rotation = 0;
+
+let zoom = 1;
+
+let offsetX = 0;
+let offsetY = 0;
+
+let rotationEnabled = true;
+
+let dragging = false;
+
+let previousX = 0;
+let previousY = 0;
+
+let stars = [];
+
+let dust = [];
+
+let nebulae = [];
+
+
+/* ============================================================
+   GALAXY PARAMETERS
+   ============================================================ */
+
+const galaxy = {
+
+    armCount: 4,
+
+    radius: 1,
+
+    armCurve: 5.7,
+
+    thickness: 0.14,
+
+    solarRadius: 0.63,
+
+    solarAngle: -0.25
+
+};
 
 
 /* ============================================================
