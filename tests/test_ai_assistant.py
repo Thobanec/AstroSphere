@@ -180,23 +180,21 @@ def test_assistant_requires_message():
         )
 
 
-def test_assistant_requires_object():
+def test_assistant_allows_question_resolved_object():
     conversation = AIConversation(
         conversation_id="test-005",
     )
 
-    try:
-        process_assistant_message(
-            conversation,
-            "Where are you?",
-            language_provider=DeterministicLanguageProvider(),
-        )
-    except ValueError as exc:
-        assert str(exc) == "Celestial object ID is required."
-    else:
-        raise AssertionError(
-            "Expected celestial object validation error."
-        )
+    updated, result = process_assistant_message(
+        conversation,
+        "Tell me about Mars.",
+        language_provider=DeterministicLanguageProvider(),
+    )
+
+    assert updated.object_id == "mars"
+    assert result.object_id == "mars"
+    assert updated.messages[-1].role == "assistant"
+    assert "Mars" in updated.messages[-1].content
 from astrosphere.ai.assistant import (
     process_assistant_message,
 )

@@ -44,13 +44,40 @@ def compose_ai_response(
                 "CapabilityExecutionResult instances."
             )
 
+    # Resolve the object that the question is actually about.
+    # Universe remains the canonical AIContext fallback, but a concrete
+    # reference body identified from the question should drive response
+    # facts, interpretations, explanations, and language generation.
+    response_object_id = context.object.id
+
+    if (
+        context.metadata
+        and isinstance(context.metadata.get("reference_body"), str)
+        and context.metadata["reference_body"].strip()
+    ):
+        response_object_id = (
+            context.metadata["reference_body"].strip().lower()
+        )
+
+    response_object = context.object
+
+    if response_object_id != context.object.id:
+        from astrosphere.models.celestial_registry import (
+            get_celestial_object,
+        )
+
+        resolved_object = get_celestial_object(response_object_id)
+
+        if resolved_object is not None:
+            response_object = resolved_object
+
     relationship_result_present = any(
         result.capability_id == "relationships"
         for result in results
     )
 
     facts = extract_ai_facts(
-        context.object.id,
+        response_object.id,
         results,
         (
             context.object_graph
@@ -61,7 +88,7 @@ def compose_ai_response(
     )
 
     interpretations = interpret_ai_facts(
-        context.object.name,
+        response_object.name,
         facts,
     )
 
@@ -72,8 +99,20 @@ def compose_ai_response(
         interpretations,
     )
 
+    # Render the answer against the question-resolved object rather than
+    # the canonical Universe fallback.
+    answer_context = context
+
+    if response_object is not context.object:
+        from dataclasses import replace
+
+        answer_context = replace(
+            context,
+            object=response_object,
+        )
+
     answer = _compose_answer(
-        context,
+        answer_context,
         results,
         facts,
     )
@@ -83,17 +122,17 @@ def compose_ai_response(
 
     if language_provider is not None:
         language_request = AILanguageRequest(
-            question=context.question,
-            object=context.object,
+            question=answer_context.question,
+            object=answer_context.object,
             facts=facts,
             interpretations=interpretations,
             explanations=explanations,
-            provenance=tuple(context.provenance),
-            uncertainties=context.uncertainties,
+            provenance=tuple(answer_context.provenance),
+            uncertainties=answer_context.uncertainties,
             observation_time=(
                 facts.observation_time
                 if facts.observation_time is not None
-                else context.observation_time
+                else answer_context.observation_time
             ),
         )
 
@@ -135,7 +174,7 @@ def compose_ai_response(
 
     return AIResponse(
         question=context.question,
-        object_id=context.object.id,
+        object_id=response_object_id,
         answer=answer,
         observation_time=(
             facts.observation_time

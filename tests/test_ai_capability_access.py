@@ -157,7 +157,7 @@ def test_execute_ai_capability_normalizes_capability_id():
     assert result.capability_id == "space-weather"
 
 
-def test_execute_ai_capability_requires_canonical_object():
+def test_execute_ai_capability_uses_reference_body_without_canonical_object():
     context = replace(
         build_ai_context(
             "Test capability access.",
@@ -166,8 +166,11 @@ def test_execute_ai_capability_requires_canonical_object():
         object=None,
     )
 
-    with pytest.raises(ValueError, match="canonical celestial object"):
-        execute_ai_capability(
-            context,
-            "space-weather",
-        )
+    result = execute_ai_capability(
+        context,
+        "space-weather",
+    )
+
+    assert isinstance(result, CapabilityExecutionResult)
+    assert result.object_id == "earth"
+    assert result.capability_id == "space-weather"

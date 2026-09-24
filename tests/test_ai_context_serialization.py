@@ -115,7 +115,8 @@ def test_ai_context_to_dict_serializes_empty_optional_fields():
     assert data["scientific_data"] is None
     assert data["provenance"] == []
     assert data["capability_results"] == []
-    assert data["metadata"] is None
+    assert data["metadata"]["reference_body"] == "moon"
+    assert data["metadata"]["resolved_entities"] == ("moon",)
 
 
 def test_ai_context_to_dict_rejects_invalid_context():

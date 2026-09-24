@@ -11,6 +11,9 @@ from astrosphere.ai.llm import (
 from astrosphere.ai.orchestration import (
     AIOrchestrationRequest,
 )
+from astrosphere.ai.entity_resolution import (
+    resolve_object_or_default,
+)
 from astrosphere.ai.orchestrator import (
     orchestrate_ai_request,
 )
@@ -50,17 +53,18 @@ def process_assistant_message(
         if conversation_object is not None:
             effective_object_id = conversation_object.id
 
-    if not isinstance(
-        effective_object_id,
-        str,
-    ) or not effective_object_id.strip():
-        raise ValueError(
-            "Celestial object ID is required."
-        )
+    if effective_object_id is not None:
+        if not isinstance(
+            effective_object_id,
+            str,
+        ) or not effective_object_id.strip():
+            raise ValueError(
+                "Celestial object ID is required."
+            )
 
-    effective_object_id = (
-        effective_object_id.strip().lower()
-    )
+        effective_object_id = (
+            effective_object_id.strip().lower()
+        )
 
     user_message = AssistantMessage(
         role="user",
@@ -68,12 +72,30 @@ def process_assistant_message(
         object_id=effective_object_id,
     )
 
+    resolution = resolve_object_or_default(
+        message,
+        explicit_object_id=effective_object_id,
+    )
+
+    request_metadata = {
+        "reference_body": resolution.reference_object_id,
+    }
+
+    if resolution.target_object_id is not None:
+        request_metadata["target_body"] = resolution.target_object_id
+
+    if resolution.entities:
+        request_metadata["resolved_entities"] = tuple(
+            resolution.entities
+        )
+
     orchestration_request = AIOrchestrationRequest(
         question=message,
         object_id=effective_object_id,
         capability_ids=tuple(capability_ids),
         observation_time=observation_time,
         parameters=parameters,
+        metadata=request_metadata,
     )
 
     result = orchestrate_ai_request(

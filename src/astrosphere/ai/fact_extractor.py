@@ -237,6 +237,12 @@ def _extract_result_facts(result):
     capability_id = result.capability_id
     value = result.result
 
+    if capability_id == "context":
+        return _extract_context(
+            value,
+            capability_id,
+        )
+
     if capability_id == "scientific-data":
         return _extract_scientific_data(
             value,
@@ -267,6 +273,12 @@ def _extract_result_facts(result):
             capability_id,
         )
 
+    if capability_id == "distance":
+        return _extract_distance(value, capability_id)
+
+    if capability_id == "planetary-defence":
+        return _extract_planetary_defence(value, capability_id)
+
     if capability_id == "orbital-analysis":
         return _extract_orbital_analysis(
             value,
@@ -275,6 +287,81 @@ def _extract_result_facts(result):
 
     return {
         "facts": (),
+        "observation_time": None,
+        "provenance": (),
+    }
+
+
+def _extract_context(value, capability_id):
+    if not isinstance(value, dict):
+        return {
+            "facts": (),
+            "observation_time": None,
+            "provenance": (),
+        }
+
+    facts = []
+
+    obj = value.get("object")
+
+    if obj is not None:
+        if getattr(obj, "name", None):
+            facts.append(
+                AIFact(
+                    name="object_name",
+                    value=obj.name,
+                    source_capability=capability_id,
+                )
+            )
+
+        if getattr(obj, "object_type", None):
+            facts.append(
+                AIFact(
+                    name="object_type",
+                    value=obj.object_type,
+                    source_capability=capability_id,
+                )
+            )
+
+        if getattr(obj, "description", None):
+            facts.append(
+                AIFact(
+                    name="object_description",
+                    value=obj.description,
+                    source_capability=capability_id,
+                )
+            )
+
+    parent = value.get("parent")
+    if parent is not None:
+        facts.append(
+            AIFact(
+                name="parent_object",
+                value=parent.name,
+                source_capability=capability_id,
+                metadata={
+                    "object_id": parent.id,
+                    "object_type": parent.object_type,
+                },
+            )
+        )
+
+    system = value.get("system")
+    if system is not None:
+        facts.append(
+            AIFact(
+                name="system",
+                value=system.name,
+                source_capability=capability_id,
+                metadata={
+                    "object_id": system.id,
+                    "object_type": system.object_type,
+                },
+            )
+        )
+
+    return {
+        "facts": tuple(facts),
         "observation_time": None,
         "provenance": (),
     }
@@ -833,3 +920,29 @@ def _extract_orbital_analysis(
         "observation_time": None,
         "provenance": (),
     }
+
+
+def _extract_distance(value, capability_id):
+    if not isinstance(value, dict):
+        return {"facts": (), "observation_time": None, "provenance": ()}
+    facts = []
+    metadata = {"reference_body": value.get("reference_name"), "target_body": value.get("target_name")}
+    if value.get("distance_km") is not None:
+        facts.append(AIFact(name="distance", value=value["distance_km"], unit="km", source_capability=capability_id, metadata=metadata))
+    if value.get("relative_velocity_km_s") is not None:
+        facts.append(AIFact(name="relative_velocity", value=value["relative_velocity_km_s"], unit="km/s", source_capability=capability_id, metadata=metadata))
+    return {"facts": tuple(facts), "observation_time": value.get("observation_time"), "provenance": ()}
+
+
+def _extract_planetary_defence(value, capability_id):
+    if not isinstance(value, dict):
+        return {"facts": (), "observation_time": None, "provenance": ()}
+    facts = []
+    counts = value.get("counts", {})
+    facts.append(AIFact(name="impact_risk_object_count", value=counts.get("impact_risk_objects", 0), source_capability=capability_id))
+    facts.append(AIFact(name="close_approach_count", value=counts.get("close_approaches", 0), source_capability=capability_id))
+    for item in value.get("impact_risk_objects", []):
+        facts.append(AIFact(name="impact_risk_object", value=item.get("name"), source_capability=capability_id, metadata=item))
+    for item in value.get("upcoming_close_approaches", []):
+        facts.append(AIFact(name="close_approach_event", value=item.get("name"), source_capability=capability_id, metadata=item))
+    return {"facts": tuple(facts), "observation_time": value.get("generated_at"), "provenance": tuple(value.get("sources", ())) }

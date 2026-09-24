@@ -24,6 +24,7 @@ class AIOrchestrationRequest:
     capability_ids: tuple[str, ...] = ()
     observation_time: Any | None = None
     parameters: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
