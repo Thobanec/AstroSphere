@@ -1,0 +1,107 @@
+﻿/* ============================================================
+   ASTROSPHERE GLOBAL AI
+   Floating entry point
+   ============================================================ */
+
+.astrosphere-ai-fab-wrap {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9999;
+}
+
+.astrosphere-ai-fab {
+    position: relative;
+
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    border: 1px solid rgba(120, 200, 255, .35);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(40, 80, 130, .96),
+            rgba(15, 30, 55, .96)
+        );
+
+    color: #ffffff;
+    text-decoration: none;
+
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, .35);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.astrosphere-ai-fab:hover {
+    transform: translateY(-3px) scale(1.04);
+
+    box-shadow:
+        0 12px 36px rgba(0, 0, 0, .45);
+}
+
+.astrosphere-ai-fab:focus-visible {
+    outline: 2px solid rgba(120, 200, 255, .9);
+    outline-offset: 4px;
+}
+
+.astrosphere-ai-fab-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.astrosphere-ai-fab-label {
+    position: absolute;
+    right: 68px;
+
+    white-space: nowrap;
+
+    padding: 8px 12px;
+
+    border-radius: 8px;
+
+    background: rgba(8, 16, 31, .96);
+    border: 1px solid rgba(120, 200, 255, .2);
+
+    color: #e8f0ff;
+    font-size: 12px;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transform: translateX(5px);
+
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+}
+
+.astrosphere-ai-fab:hover .astrosphere-ai-fab-label,
+.astrosphere-ai-fab:focus-visible .astrosphere-ai-fab-label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+@media (max-width: 700px) {
+    .astrosphere-ai-fab-wrap {
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .astrosphere-ai-fab {
+        width: 52px;
+        height: 52px;
+    }
+
+    .astrosphere-ai-fab-label {
+        display: none;
+    }
+}
