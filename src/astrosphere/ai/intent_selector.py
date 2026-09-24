@@ -1,4 +1,4 @@
-from astrosphere.ai.intent import (
+﻿from astrosphere.ai.intent import (
     AICapabilityIntent,
 )
 
@@ -26,6 +26,10 @@ _CAPABILITY_KEYWORDS = {
         "closest to earth",
         "approach earth",
         "near earth",
+        "how close does",
+        "how close will",
+        "how near does",
+        "how near will",
     ),
     "space-weather": (
         "space weather",
@@ -284,3 +288,6 @@ def select_capability_intents(
         return specific_intents
 
     return tuple(intents)
+
+
+

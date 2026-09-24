@@ -1,4 +1,4 @@
-from astrosphere.ai.intent import (
+﻿from astrosphere.ai.intent import (
     AICapabilityIntent,
 )
 from astrosphere.ai.question_understanding import (
@@ -71,6 +71,20 @@ def test_understands_close_approach_question():
         for intent in result.intents
     ] == ["close-approaches"]
 
+
+def test_understands_how_close_apophis_gets_to_earth():
+    result = understand_scientific_question(
+        "How close does Apophis get to Earth?",
+        object_id="asteroid:99942",
+    )
+
+    assert result.requested_information == (
+        "close_approach",
+    )
+    assert [
+        intent.capability_id
+        for intent in result.intents
+    ] == ["close-approaches"]
 
 def test_understands_space_weather_question():
     result = understand_scientific_question(
@@ -246,3 +260,4 @@ def test_understanding_earth_position_and_space_weather():
         "space_weather",
     )
     assert result.temporal_context == "current"
+

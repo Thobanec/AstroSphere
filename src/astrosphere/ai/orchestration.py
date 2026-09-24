@@ -20,7 +20,7 @@ class AICapabilityPlanItem:
 @dataclass(frozen=True)
 class AIOrchestrationRequest:
     question: str
-    object_id: str
+    object_id: str | None = None
     capability_ids: tuple[str, ...] = ()
     observation_time: Any | None = None
     parameters: dict[str, Any] | None = None

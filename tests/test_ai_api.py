@@ -1,4 +1,4 @@
-from astrosphere.ai.deterministic_provider import (
+﻿from astrosphere.ai.deterministic_provider import (
     DeterministicLanguageProvider,
 )
 
@@ -174,7 +174,7 @@ def test_ai_query_requires_question():
     assert data["error"] == "question is required."
 
 
-def test_ai_query_requires_object_id():
+def test_ai_query_allows_missing_object_id():
     client = app.test_client()
 
     response = client.post(
@@ -184,12 +184,15 @@ def test_ai_query_requires_object_id():
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 200
 
     data = response.get_json()
 
-    assert data["status"] == "error"
-    assert data["error"] == "object_id is required."
+    assert data["status"] == "success"
+    assert data["data"]["object_id"] == "earth"
+    assert data["data"]["question"] == "What is Earth?"
+    assert data["data"]["answer"]
+    assert data["data"]["capabilities"] == ["context"]
 
 
 def test_ai_query_rejects_non_json():
@@ -1291,3 +1294,4 @@ def test_ai_query_supports_generic_celestial_object_sirius(monkeypatch):
     assert data["data"]["object_id"] == "sirius"
     assert data["data"]["question"] == "What is Sirius?"
     assert data["data"]["answer"]
+

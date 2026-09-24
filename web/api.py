@@ -2037,12 +2037,15 @@ def ai_query():
                 }
             ), 400
 
-        except Exception:
+        except Exception as exc:
             return jsonify(
                 {
                     "status": "error",
                     "error": (
-                        "AI assistant processing failed."
+                        "AI assistant processing failed: "
+                        + type(exc).__name__
+                        + ": "
+                        + str(exc)
                     ),
                 }
             ), 500
@@ -2058,11 +2061,13 @@ def ai_query():
             }
         ), 400
 
-    if not isinstance(object_id, str) or not object_id.strip():
+    if object_id is not None and (
+        not isinstance(object_id, str) or not object_id.strip()
+    ):
         return jsonify(
             {
                 "status": "error",
-                "error": "object_id is required.",
+                "error": "object_id must be a non-empty string when provided.",
             }
         ), 400
 
@@ -2090,7 +2095,7 @@ def ai_query():
     try:
         orchestration_request = AIOrchestrationRequest(
             question=question.strip(),
-            object_id=object_id.strip(),
+            object_id=object_id.strip() if object_id is not None else None,
             capability_ids=tuple(capability_ids),
             observation_time=observation_time,
             parameters=parameters,
