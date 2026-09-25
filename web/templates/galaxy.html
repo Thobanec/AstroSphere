@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html lang="en">
 
@@ -4263,6 +4263,16 @@ window.addEventListener(
 container.addEventListener(
     "wheel",
     function(event) {
+
+
+        /*
+         * Normal wheel movement belongs to the page.
+         * Hold Ctrl while scrolling to zoom the
+         * Galaxy visualization intentionally.
+         */
+        if (!event.ctrlKey) {
+            return;
+        }
 
         event.preventDefault();
 

@@ -1,4 +1,4 @@
-from astrosphere.ai.context import AIContext, AIObjectGraph
+﻿from astrosphere.ai.context import AIContext, AIObjectGraph
 from astrosphere.ai.entity_resolution import resolve_object_or_default
 from astrosphere.ai.time import normalize_observation_time
 from astrosphere.capabilities.registry import get_capabilities_for_object
@@ -29,16 +29,15 @@ def build_ai_context(question, object_id=None, observation_time=None, metadata=N
         explicit_object_id=object_id,
     )
 
-    # Preserve the existing grounding contract: when the caller does not
-    # explicitly select a celestial object, the primary context remains
-    # Universe. Question entities are still retained below for AI reasoning
-    # and capability routing.
-    if object_id is None:
-        context_object_id = "universe"
-    else:
-        # An explicitly supplied object is authoritative. Any additional
-        # entity found in the question remains available as target metadata.
+    # The question's explicitly named scientific subject takes precedence
+    # over passive page/selection context. The supplied object_id remains
+    # contextual when the question does not name another subject.
+    if resolution.reference_object_id is not None:
+        context_object_id = resolution.reference_object_id
+    elif object_id is not None:
         context_object_id = explicit_object_id
+    else:
+        context_object_id = "universe"
 
     if not isinstance(context_object_id, str) or not context_object_id.strip():
         raise ValueError("A canonical question context could not be resolved.")
@@ -56,13 +55,9 @@ def build_ai_context(question, object_id=None, observation_time=None, metadata=N
             tuple(resolution.entities),
         )
 
-    if object_id is None:
-        if resolution.reference_object_id is not None:
-            resolved_metadata.setdefault(
-                "reference_body",
-                resolution.reference_object_id,
-            )
-    else:
+    if resolution.reference_object_id is not None:
+        resolved_metadata["reference_body"] = resolution.reference_object_id
+    elif object_id is not None:
         resolved_metadata["reference_body"] = explicit_object_id
 
     if resolution.target_object_id is not None:
@@ -98,3 +93,4 @@ def build_ai_context(question, object_id=None, observation_time=None, metadata=N
         scientific_data=scientific_data, capabilities=tuple(capabilities), provenance=provenance,
         object_graph=object_graph, metadata=(resolved_metadata if resolved_metadata else None),
     )
+

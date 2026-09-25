@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 
@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>AstroSphere — Solar System Explorer V5.2.1</title>
+    <title>AstroSphere â€” Solar System Explorer V5.2.1</title>
 
 
     <style>
@@ -410,6 +410,21 @@
             left: 18px;
 
             bottom: 18px;
+            /*
+             * Keep the selected-object panel fully inside
+             * the simulation viewport. If the relationship
+             * graph becomes taller than the available space,
+             * scroll the panel itself instead of clipping
+             * its upper content.
+             */
+            max-height:
+                calc(100% - 36px);
+
+            overflow-y:
+                auto;
+
+            overflow-x:
+                hidden;
 
             width: 315px;
 
@@ -1352,7 +1367,7 @@
 <section class="hero">
 
     <div class="hero-kicker">
-        Universe Explorer · V5.2.1
+        Universe Explorer Â· V5.2.1
     </div>
 
 
@@ -1391,7 +1406,7 @@
             <div class="hud-left">
 
                 <div class="hud-chip version">
-                    SOLAR SYSTEM · V5.2.1
+                    SOLAR SYSTEM Â· V5.2.1
                 </div>
 
                 <div class="hud-chip">
@@ -1479,7 +1494,7 @@
                         class="stat-value"
                         id="selectedOrbit"
                     >
-                        —
+                        â€”
                     </div>
 
                 </div>
@@ -1498,7 +1513,7 @@
                         class="stat-value"
                         id="selectedRotation"
                     >
-                        —
+                        â€”
                     </div>
 
                 </div>
@@ -1519,7 +1534,7 @@
                         class="stat-value"
                         id="selectedObservation"
                     >
-                        —
+                        â€”
                     </div>
 
                 </div>
@@ -1687,7 +1702,7 @@
             class="nav-button"
             href="{{ url_for('index') }}"
         >
-            ¦ AstroSphere
+            Â¦ AstroSphere
         </a>
 
     </div>
@@ -1913,7 +1928,7 @@
 
 <footer class="footer">
 
-    AstroSphere · Interactive astronomical visualization · V5.2.1
+    AstroSphere Â· Interactive astronomical visualization Â· V5.2.1
 
 </footer>
 
@@ -3894,7 +3909,7 @@ function updateFocusCamera() {
 
 
 /* ================================================================
-   V5.2.1 LIVE TRACKED OBJECTS · ORBITAL PATH
+   V5.2.1 LIVE TRACKED OBJECTS Â· ORBITAL PATH
 ================================================================ */
 
 const APHOPHIS_API =
@@ -4830,6 +4845,154 @@ function drawPlanetaryTrajectory() {
 
     ctx.restore();
 }
+function isApophisHit(
+    mouseX,
+    mouseY
+) {
+
+    if (
+        !trackedApophis ||
+        !trackedObjectLoaded
+    ) {
+
+        return false;
+
+    }
+
+
+    const position =
+        getApophisVisualPosition();
+
+    if (!position) {
+
+        return false;
+
+    }
+
+
+    const distance =
+        Math.hypot(
+            mouseX - position.x,
+            mouseY - position.y
+        );
+
+
+    /*
+     * Keep the hit target slightly larger than the
+     * visible marker so Apophis remains easy to select.
+     */
+    return distance <= 24;
+
+}
+
+
+function selectApophis() {
+
+    selectedPlanet =
+        null;
+
+    selectedCelestialObjectId =
+        null;
+
+    selectedTrackedObject =
+        "Apophis";
+
+    focusPlanet =
+        null;
+
+    focusMode =
+        false;
+
+
+    const selectedNameElement =
+        document.getElementById(
+            "selectedName"
+        );
+
+    if (selectedNameElement) {
+
+        selectedNameElement.textContent =
+            "Apophis | 99942";
+
+    }
+
+
+    const selectedDescriptionElement =
+        document.getElementById(
+            "selectedDescription"
+        );
+
+    if (selectedDescriptionElement) {
+
+        selectedDescriptionElement.textContent =
+            "Near-Earth asteroid Apophis, tracked using its current simulated heliocentric position.";
+
+    }
+
+
+    const selectedOrbitLabel =
+        document.getElementById(
+            "selectedOrbitLabel"
+        );
+
+    if (selectedOrbitLabel) {
+
+        selectedOrbitLabel.textContent =
+            "Distance from Earth";
+
+    }
+
+
+    const selectedRotationLabel =
+        document.getElementById(
+            "selectedRotationLabel"
+        );
+
+    if (selectedRotationLabel) {
+
+        selectedRotationLabel.textContent =
+            "Relative velocity";
+
+    }
+
+
+    const selectedObservationStat =
+        document.getElementById(
+            "selectedObservationStat"
+        );
+
+    if (selectedObservationStat) {
+
+        selectedObservationStat.style.display =
+            "";
+
+    }
+
+
+    const clearButton =
+        document.getElementById(
+            "clearSelectedObjectButton"
+        );
+
+    if (clearButton) {
+
+        clearButton.style.display =
+            "";
+
+    }
+
+
+    updateSelectedApophisTelemetry();
+
+    updateSelectedExploreLink();
+
+    draw(
+        performance.now()
+    );
+
+}
+
+
 function drawTrackedApophis() {
 
     if (
@@ -5014,7 +5177,7 @@ function formatTrackedNumber(
         )
     ) {
 
-        return "—";
+        return "â€”";
 
     }
 
@@ -5035,7 +5198,7 @@ function formatTrackedObservationTime(
 ) {
 
     if (!value) {
-        return "—";
+        return "â€”";
     }
 
 
@@ -5720,13 +5883,13 @@ document.getElementById(
         document.getElementById(
             "selectedOrbit"
         ).textContent =
-            "—";
+            "â€”";
 
 
         document.getElementById(
             "selectedRotation"
         ).textContent =
-            "—";
+            "â€”";
 
 
         document.querySelectorAll(
@@ -6246,7 +6409,7 @@ function renderSelectedObjectCosmicLocation(graph) {
                 separator.className =
                     "object-cosmic-location-separator";
 
-                separator.textContent = "›";
+                separator.textContent = "\u203a";
 
                 items.appendChild(
                     separator
@@ -6816,6 +6979,40 @@ canvas.addEventListener(
         }
 
 
+        /* ================================================================
+           SUN SELECTION
+        ================================================================ */
+
+        const sunCenter =
+            getWorldCenter();
+
+        const sunRadius =
+            34 *
+            Math.max(
+                .85,
+                zoom
+            );
+
+        const sunDistance =
+            Math.hypot(
+                mouseX - sunCenter.x,
+                mouseY - sunCenter.y
+            );
+
+        if (
+            sunDistance <=
+            sunRadius + 12
+        ) {
+
+            selectCelestialObjectById(
+                "sun"
+            );
+
+            return;
+
+        }
+
+
         for (
             const planet of planets
         ) {
@@ -6991,6 +7188,16 @@ canvas.addEventListener(
     "wheel",
     event => {
 
+        
+        /*
+         * Normal wheel movement belongs to the page.
+         * Hold Ctrl while scrolling to zoom the
+         * Solar System visualization intentionally.
+         */
+        if (!event.ctrlKey) {
+            return;
+        }
+
         event.preventDefault();
 
 
@@ -7107,3 +7314,8 @@ requestAnimationFrame(
 
 </body>
 </html>
+
+
+
+
+

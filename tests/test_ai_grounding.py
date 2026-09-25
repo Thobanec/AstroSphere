@@ -296,3 +296,24 @@ def test_build_ai_context_includes_earth_incoming_relationships():
         "orbits",
         "earth",
     ) in incoming
+
+def test_build_ai_context_question_subject_overrides_page_context():
+    context = build_ai_context(
+        "When will Apophis approach Earth?",
+        "milky-way",
+    )
+
+    assert context.object.id == "asteroid:99942"
+    assert context.object.name == "Apophis"
+
+    assert context.metadata["reference_body"] == "asteroid:99942"
+    assert context.metadata["target_body"] == "earth"
+
+    capability_ids = {
+        capability.id
+        for capability in context.capabilities
+    }
+
+    assert "tracking" in capability_ids
+    assert "trajectory" in capability_ids
+    assert "close-approaches" in capability_ids
