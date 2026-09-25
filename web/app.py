@@ -243,7 +243,7 @@ def celestial_object_page(object_id):
     try:
         celestial_context = get_celestial_object_context(
             object_id,
-            observation_time=get_current_time(),
+            observation_time=datetime.now(timezone.utc),
         )
 
     except ValueError:
