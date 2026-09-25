@@ -1,0 +1,93 @@
+﻿<nav class="celestial-children-nav" aria-label="Related celestial objects">
+
+    {% if celestial_context and celestial_context.children %}
+
+        <span class="celestial-children-label">
+            {% if request.endpoint == 'galaxy' %}
+                Milky Way Objects
+            {% elif request.endpoint == 'solar_system' %}
+                Solar System Objects
+            {% else %}
+                Related Objects
+            {% endif %}
+        </span>
+
+        {% for child in celestial_context.children %}
+
+            {% set child_url = celestial_url(child.id) %}
+
+            {% if child_url %}
+                <a
+                    href="{{ child_url }}"
+                    class="celestial-child-link"
+                >
+                    {{ child.name }}
+                </a>
+            {% endif %}
+
+        {% endfor %}
+
+    {% endif %}
+
+</nav>
+
+<style>
+    .celestial-children-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 7px;
+        padding: 7px 20px 10px;
+        margin: 0 auto;
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    .celestial-children-label {
+        color: #667796;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .11em;
+        text-transform: uppercase;
+        margin-right: 4px;
+    }
+
+    .celestial-child-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border: 1px solid rgba(88, 139, 220, .20);
+        border-radius: 7px;
+        background: rgba(10, 25, 50, .42);
+        color: #9fb2d8;
+        font-size: 12px;
+        line-height: 1.3;
+        text-decoration: none;
+        transition:
+            color .18s ease,
+            background .18s ease,
+            border-color .18s ease;
+    }
+
+    .celestial-child-link:hover {
+        color: #ffffff;
+        background: rgba(42, 83, 150, .24);
+        border-color: rgba(88, 139, 220, .42);
+    }
+
+    .celestial-child-link::before {
+        content: "•";
+        margin-right: 6px;
+        color: #5e9cff;
+    }
+
+    @media (max-width: 600px) {
+        .celestial-children-nav {
+            justify-content: flex-start;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+            padding: 6px 12px 9px;
+        }
+    }
+</style>

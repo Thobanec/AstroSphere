@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
 
 from flask import Flask, render_template, request
 
@@ -86,14 +86,27 @@ def index():
 @app.route("/galaxy")
 def galaxy():
 
+    celestial_context = get_celestial_object_context(
+        "milky-way",
+        observation_time=datetime.now(timezone.utc),
+    )
+
     return render_template(
-        "galaxy.html"
+        "galaxy.html",
+        celestial_context=celestial_context,
     )
 
 @app.route("/solar-system")
 def solar_system():
+
+    celestial_context = get_celestial_object_context(
+        "solar-system",
+        observation_time=datetime.now(timezone.utc),
+    )
+
     return render_template(
-        "solar_system.html"
+        "solar_system.html",
+        celestial_context=celestial_context,
     )
 
 @app.route("/ai")

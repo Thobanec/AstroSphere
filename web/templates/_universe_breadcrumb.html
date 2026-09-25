@@ -1,0 +1,90 @@
+﻿<style>
+    .universe-breadcrumb {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 20px;
+        margin: 0 auto;
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #9aa8c7;
+    }
+
+    .universe-breadcrumb a {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 9px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        color: #9aa8c7;
+        text-decoration: none;
+        transition:
+            color .18s ease,
+            background .18s ease,
+            border-color .18s ease;
+    }
+
+    .universe-breadcrumb a:hover {
+        color: #ffffff;
+        background: rgba(42, 83, 150, 0.18);
+        border-color: rgba(88, 139, 220, 0.24);
+    }
+
+    .universe-breadcrumb a.active {
+        color: #f4f8ff;
+        background: rgba(20, 73, 143, 0.28);
+        border-color: rgba(88, 139, 220, 0.34);
+    }
+
+    .universe-breadcrumb-separator {
+        color: #52617f;
+        user-select: none;
+    }
+
+    @media (max-width: 600px) {
+        .universe-breadcrumb {
+            justify-content: flex-start;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+            padding: 7px 12px;
+        }
+    }
+</style>
+
+<nav class="universe-breadcrumb" aria-label="Universe hierarchy">
+
+    <a href="/celestial/universe">
+        Universe
+    </a>
+
+    <span class="universe-breadcrumb-separator" aria-hidden="true">
+        &#8250;
+    </span>
+
+    {% if request.endpoint == 'galaxy' %}
+
+        <a href="/galaxy" class="active" aria-current="page">
+            Milky Way
+        </a>
+
+    {% elif request.endpoint == 'solar_system' %}
+
+        <a href="/galaxy">
+            Milky Way
+        </a>
+
+        <span class="universe-breadcrumb-separator" aria-hidden="true">
+            &#8250;
+        </span>
+
+        <a href="/solar-system" class="active" aria-current="page">
+            Solar System
+        </a>
+
+    {% endif %}
+
+</nav>
