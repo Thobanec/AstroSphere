@@ -318,6 +318,7 @@ class MonitoringStore:
         *,
         limit: int = 100,
         acknowledged: bool | None = None,
+        event_id: str | None = None,
     ) -> list[MonitoringAlert]:
         query = """
             SELECT *
@@ -325,10 +326,18 @@ class MonitoringStore:
         """
 
         parameters: list[Any] = []
+        conditions: list[str] = []
 
         if acknowledged is not None:
-            query += " WHERE acknowledged = ?"
+            conditions.append("acknowledged = ?")
             parameters.append(int(acknowledged))
+
+        if event_id is not None:
+            conditions.append("event_id = ?")
+            parameters.append(event_id)
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
 
         query += """
             ORDER BY created_at DESC

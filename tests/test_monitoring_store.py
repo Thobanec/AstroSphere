@@ -212,3 +212,40 @@ def test_list_source_statuses(tmp_path):
         "cneos",
         "noaa",
     ]
+
+
+
+def test_list_alerts_can_filter_by_event_id(tmp_path):
+    store = MonitoringStore(tmp_path / "monitoring.db")
+
+    now = datetime.now(timezone.utc)
+
+    store.save_alert(
+        MonitoringAlert(
+            alert_id="alert-event-001",
+            event_id="event-001",
+            severity="warning",
+            title="Warning event 001",
+            message="Test warning.",
+            created_at=now,
+        )
+    )
+
+    store.save_alert(
+        MonitoringAlert(
+            alert_id="alert-event-002",
+            event_id="event-002",
+            severity="critical",
+            title="Critical event 002",
+            message="Test critical.",
+            created_at=now,
+        )
+    )
+
+    alerts = store.list_alerts(
+        event_id="event-001"
+    )
+
+    assert len(alerts) == 1
+    assert alerts[0].alert_id == "alert-event-001"
+    assert alerts[0].event_id == "event-001"
