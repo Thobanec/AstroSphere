@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -288,7 +288,7 @@
                 {% endif %}
             {% endif %}
 
-            {% if celestial_context.system %}
+            {% if celestial_context.system and (not celestial_context.parent or celestial_context.system.id != celestial_context.parent.id) %}
                 {% set system_url = celestial_url(celestial_context.system.id) %}
 
                 {% if system_url %}
