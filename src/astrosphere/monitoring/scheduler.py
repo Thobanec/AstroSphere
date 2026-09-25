@@ -6,6 +6,10 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .engine import MonitoringEngine, MonitoringProcessResult
+from .sources.production import (
+    build_cneos_monitoring_source,
+    build_noaa_monitoring_source,
+)
 
 
 @dataclass(frozen=True)
@@ -59,15 +63,13 @@ class MonitoringScheduler:
                     self.engine.process_event(event)
                 )
 
-            data_time = (
-                max(
-                    (
-                        result.event.event_time
-                        or result.event.detected_at
-                        for result in processed
-                    ),
-                    default=None,
-                )
+            data_time = max(
+                (
+                    result.event.event_time
+                    or result.event.detected_at
+                    for result in processed
+                ),
+                default=None,
             )
 
             self.engine.record_source_success(
@@ -134,3 +136,19 @@ class MonitoringScheduler:
                 healthy=False,
                 error=str(error),
             )
+
+
+def build_monitoring_scheduler(
+    *,
+    engine: MonitoringEngine,
+    cneos_lookahead_days: int = 30,
+) -> MonitoringScheduler:
+    """Build a scheduler using AstroSphere's real monitoring sources."""
+
+    return MonitoringScheduler(
+        engine=engine,
+        cneos_source=build_cneos_monitoring_source(
+            lookahead_days=cneos_lookahead_days,
+        ),
+        noaa_source=build_noaa_monitoring_source(),
+    )
