@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
 
 from web.app import app
 
@@ -13,6 +13,55 @@ from astrosphere.models.scientific import (
 from astrosphere.models.scientific import (
     ScientificData,
 )
+
+def test_get_monitoring_status(monkeypatch):
+    def fake_monitoring_status():
+        return {
+            "enabled": True,
+            "healthy": True,
+            "sources": [
+                {
+                    "source": "NASA/JPL CNEOS",
+                    "healthy": True,
+                    "checked_at": (
+                        "2026-09-26T04:00:00+00:00"
+                    ),
+                    "last_success_at": (
+                        "2026-09-26T04:00:00+00:00"
+                    ),
+                    "last_data_at": (
+                        "2026-09-26T04:00:00+00:00"
+                    ),
+                    "error": None,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "web.api.get_monitoring_status",
+        fake_monitoring_status,
+    )
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/status"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["enabled"] is True
+    assert data["data"]["healthy"] is True
+    assert len(data["data"]["sources"]) == 1
+
+    source = data["data"]["sources"][0]
+
+    assert source["source"] == "NASA/JPL CNEOS"
+    assert source["healthy"] is True
+    assert source["error"] is None
 
 def test_get_spacecraft_tracking(
     monkeypatch,

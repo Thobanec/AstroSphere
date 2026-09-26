@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
 
 from flask import (
     Blueprint,
@@ -82,6 +82,9 @@ from astrosphere.scientific.space_weather import (
 )
 from astrosphere.scientific.service import (
     get_scientific_data,
+)
+from astrosphere.monitoring.service import (
+    get_monitoring_status,
 )
 from astrosphere.capabilities import (
     get_capabilities_for_object,
@@ -1756,6 +1759,25 @@ def analysis():
     )
 
 @api.post("/ai/query")
+@api.get("/monitoring/status")
+def monitoring_status():
+    """Return the persisted health of monitoring sources."""
+
+    try:
+        return jsonify(
+            {
+                "status": "success",
+                "data": get_monitoring_status(),
+            }
+        )
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Monitoring status retrieval failed.",
+            }
+        ), 500
+
 def ai_query():
     payload = request.get_json(silent=True)
 
