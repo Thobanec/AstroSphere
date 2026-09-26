@@ -125,3 +125,31 @@ def utc_now() -> datetime:
     """
 
     return datetime.now(timezone.utc)
+
+@dataclass(frozen=True)
+class MonitoringWorkerStatus:
+    worker_id: str
+    status: str
+    started_at: datetime | None = None
+    last_cycle_at: datetime | None = None
+    last_success_at: datetime | None = None
+    last_failure_at: datetime | None = None
+    last_cycle_duration_seconds: float | None = None
+    next_cycle_at: datetime | None = None
+    interval_seconds: int | None = None
+    last_processed_events: int | None = None
+    last_error: str | None = None
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "started_at",
+            "last_cycle_at",
+            "last_success_at",
+            "last_failure_at",
+            "next_cycle_at",
+        ):
+            value = getattr(self, field_name)
+            if value is not None and value.tzinfo is None:
+                raise ValueError(
+                    f"{field_name} must be timezone-aware."
+                )

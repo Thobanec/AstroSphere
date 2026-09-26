@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 from flask import (
     Blueprint,
@@ -86,6 +86,7 @@ from astrosphere.scientific.service import (
 from astrosphere.monitoring.service import (
     acknowledge_monitoring_alert,
     get_monitoring_status,
+    get_monitoring_worker_status,
     list_monitoring_alerts,
     list_monitoring_events,
 )
@@ -1792,6 +1793,28 @@ def _monitoring_limit():
         raise ValueError("limit must be between 1 and 500.")
 
     return limit
+
+
+@api.get("/monitoring/worker")
+def monitoring_worker():
+    """Return persisted monitoring worker health."""
+
+    try:
+        worker = get_monitoring_worker_status()
+
+        return jsonify(
+            {
+                "status": "success",
+                "data": worker,
+            }
+        )
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Monitoring worker status retrieval failed.",
+            }
+        ), 500
 
 
 @api.get("/monitoring/events")

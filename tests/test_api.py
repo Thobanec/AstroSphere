@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 from web.app import app
 
@@ -62,6 +62,44 @@ def test_get_monitoring_status(monkeypatch):
     assert source["source"] == "NASA/JPL CNEOS"
     assert source["healthy"] is True
     assert source["error"] is None
+
+def test_get_monitoring_worker(monkeypatch):
+    def fake_monitoring_worker_status():
+        return {
+            "worker_id": "primary",
+            "status": "running",
+            "started_at": "2026-09-26T04:00:00+00:00",
+            "last_cycle_at": "2026-09-26T04:15:00+00:00",
+            "last_success_at": "2026-09-26T04:15:00+00:00",
+            "last_failure_at": None,
+            "last_cycle_duration_seconds": 2.75,
+            "next_cycle_at": "2026-09-26T04:30:00+00:00",
+            "interval_seconds": 900,
+            "last_processed_events": 19,
+            "last_error": None,
+        }
+
+    monkeypatch.setattr(
+        "web.api.get_monitoring_worker_status",
+        fake_monitoring_worker_status,
+    )
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/worker"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["worker_id"] == "primary"
+    assert data["data"]["status"] == "running"
+    assert data["data"]["interval_seconds"] == 900
+    assert data["data"]["last_processed_events"] == 19
+    assert data["data"]["last_error"] is None
 
 def test_get_spacecraft_tracking(
     monkeypatch,

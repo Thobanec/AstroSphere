@@ -60,6 +60,8 @@ def build_monitoring_worker() -> MonitoringWorker:
 
     return MonitoringWorker(
         scheduler=scheduler,
+        store=store,
+        worker_id="primary",
     )
 
 

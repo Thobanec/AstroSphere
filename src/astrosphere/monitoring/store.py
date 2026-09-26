@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -11,6 +11,7 @@ from .models import (
     MonitoringAlert,
     MonitoringEvent,
     MonitoringSourceStatus,
+    MonitoringWorkerStatus,
 )
 
 
@@ -109,6 +110,20 @@ class MonitoringStore:
                     last_success_at TEXT,
                     last_data_at TEXT,
                     error TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS monitoring_worker (
+                    worker_id TEXT PRIMARY KEY,
+                    status TEXT NOT NULL,
+                    started_at TEXT,
+                    last_cycle_at TEXT,
+                    last_success_at TEXT,
+                    last_failure_at TEXT,
+                    last_cycle_duration_seconds REAL,
+                    next_cycle_at TEXT,
+                    interval_seconds INTEGER,
+                    last_processed_events INTEGER,
+                    last_error TEXT
                 );
                 """
             )
@@ -426,6 +441,112 @@ class MonitoringStore:
             return None
 
         return self._source_status_from_row(row)
+
+    def save_worker_status(
+        self,
+        status: MonitoringWorkerStatus,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO monitoring_worker (
+                    worker_id,
+                    status,
+                    started_at,
+                    last_cycle_at,
+                    last_success_at,
+                    last_failure_at,
+                    last_cycle_duration_seconds,
+                    next_cycle_at,
+                    interval_seconds,
+                    last_processed_events,
+                    last_error
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(worker_id) DO UPDATE SET
+                    status = excluded.status,
+                    started_at = excluded.started_at,
+                    last_cycle_at = excluded.last_cycle_at,
+                    last_success_at = excluded.last_success_at,
+                    last_failure_at = excluded.last_failure_at,
+                    last_cycle_duration_seconds =
+                        excluded.last_cycle_duration_seconds,
+                    next_cycle_at = excluded.next_cycle_at,
+                    interval_seconds = excluded.interval_seconds,
+                    last_processed_events =
+                        excluded.last_processed_events,
+                    last_error = excluded.last_error
+                """,
+                (
+                    status.worker_id,
+                    status.status,
+                    self._serialize_datetime(
+                        status.started_at
+                    ),
+                    self._serialize_datetime(
+                        status.last_cycle_at
+                    ),
+                    self._serialize_datetime(
+                        status.last_success_at
+                    ),
+                    self._serialize_datetime(
+                        status.last_failure_at
+                    ),
+                    status.last_cycle_duration_seconds,
+                    self._serialize_datetime(
+                        status.next_cycle_at
+                    ),
+                    status.interval_seconds,
+                    status.last_processed_events,
+                    status.last_error,
+                ),
+            )
+
+
+    def get_worker_status(
+        self,
+        worker_id: str = "primary",
+    ) -> MonitoringWorkerStatus | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM monitoring_worker
+                WHERE worker_id = ?
+                """,
+                (worker_id,),
+            ).fetchone()
+
+        if row is None:
+            return None
+
+        return MonitoringWorkerStatus(
+            worker_id=row["worker_id"],
+            status=row["status"],
+            started_at=self._deserialize_datetime(
+                row["started_at"]
+            ),
+            last_cycle_at=self._deserialize_datetime(
+                row["last_cycle_at"]
+            ),
+            last_success_at=self._deserialize_datetime(
+                row["last_success_at"]
+            ),
+            last_failure_at=self._deserialize_datetime(
+                row["last_failure_at"]
+            ),
+            last_cycle_duration_seconds=(
+                row["last_cycle_duration_seconds"]
+            ),
+            next_cycle_at=self._deserialize_datetime(
+                row["next_cycle_at"]
+            ),
+            interval_seconds=row["interval_seconds"],
+            last_processed_events=(
+                row["last_processed_events"]
+            ),
+            last_error=row["last_error"],
+        )
 
     def list_source_statuses(self) -> list[MonitoringSourceStatus]:
         with self._connect() as connection:

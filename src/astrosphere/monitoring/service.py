@@ -50,6 +50,57 @@ def get_monitoring_status() -> dict:
     }
 
 
+def get_monitoring_worker_status(
+    *,
+    worker_id: str = "primary",
+) -> dict | None:
+    """Return persisted monitoring worker health."""
+
+    store = get_monitoring_store()
+    status = store.get_worker_status(worker_id)
+
+    if status is None:
+        return None
+
+    return {
+        "worker_id": status.worker_id,
+        "status": status.status,
+        "started_at": (
+            status.started_at.isoformat()
+            if status.started_at
+            else None
+        ),
+        "last_cycle_at": (
+            status.last_cycle_at.isoformat()
+            if status.last_cycle_at
+            else None
+        ),
+        "last_success_at": (
+            status.last_success_at.isoformat()
+            if status.last_success_at
+            else None
+        ),
+        "last_failure_at": (
+            status.last_failure_at.isoformat()
+            if status.last_failure_at
+            else None
+        ),
+        "last_cycle_duration_seconds": (
+            status.last_cycle_duration_seconds
+        ),
+        "next_cycle_at": (
+            status.next_cycle_at.isoformat()
+            if status.next_cycle_at
+            else None
+        ),
+        "interval_seconds": status.interval_seconds,
+        "last_processed_events": (
+            status.last_processed_events
+        ),
+        "last_error": status.last_error,
+    }
+
+
 def list_monitoring_events(
     *,
     limit: int = 100,

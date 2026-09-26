@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -77,6 +77,36 @@
 
     </section>
 
+
+    <section class="monitoring-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">
+                    MONITORING ENGINE
+                </span>
+
+                <h2>Worker Health</h2>
+            </div>
+
+            <span
+                class="section-status"
+                id="monitoring-worker-status"
+            >
+                Loading...
+            </span>
+        </div>
+
+        <div
+            class="monitoring-worker-card"
+            id="monitoring-worker"
+        >
+            <div class="monitoring-empty">
+                Loading worker health...
+            </div>
+        </div>
+
+    </section>
 
     <section class="monitoring-section">
 
@@ -360,7 +390,8 @@ body {
 
 .monitoring-source-card,
 .monitoring-alert-card,
-.monitoring-risk-card {
+.monitoring-risk-card,
+.monitoring-worker-card {
     border: 1px solid rgba(106, 130, 180, .28);
     border-radius: 12px;
     background: rgba(8, 15, 30, .72);
@@ -370,6 +401,59 @@ body {
 .monitoring-source-card {
     padding: 20px;
 }
+
+.monitoring-worker-card {
+    padding: 24px;
+}
+
+.monitoring-worker-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+}
+
+.monitoring-worker-item {
+    padding: 14px;
+    border: 1px solid rgba(106, 130, 180, .18);
+    border-radius: 9px;
+    background: rgba(255,255,255,.025);
+}
+
+.monitoring-worker-label {
+    color: #7f8da6;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 7px;
+}
+
+.monitoring-worker-value {
+    color: #edf3ff;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.monitoring-worker-value.healthy {
+    color: #7fe0aa;
+}
+
+.monitoring-worker-value.warning {
+    color: #f1c86b;
+}
+
+.monitoring-worker-value.error {
+    color: #f18b8b;
+}
+
+.monitoring-worker-error {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-left: 3px solid #d84a4a;
+    background: rgba(216, 74, 74, .08);
+    color: #f18b8b;
+}
+
 
 .monitoring-source-top {
     display: flex;
@@ -881,6 +965,190 @@ body {
 
     }
 
+
+    function renderWorkerHealth(worker) {
+
+        const container =
+            document.getElementById(
+                "monitoring-worker"
+            );
+
+        const status =
+            document.getElementById(
+                "monitoring-worker-status"
+            );
+
+        if (!worker) {
+
+            status.textContent =
+                "No worker data";
+
+            container.innerHTML =
+                '<div class="monitoring-empty">' +
+                'Monitoring worker status is not available.' +
+                '</div>';
+
+            return;
+        }
+
+        const workerStatus =
+            String(
+                worker.status ||
+                "unknown"
+            ).toLowerCase();
+
+        let statusClass = "warning";
+
+        if (workerStatus === "running") {
+            statusClass = "healthy";
+        } else if (
+            workerStatus === "error" ||
+            workerStatus === "failed"
+        ) {
+            statusClass = "error";
+        }
+
+        status.textContent =
+            workerStatus === "running"
+                ? "Worker running"
+                : `Worker ${workerStatus}`;
+
+        const intervalSeconds =
+            Number(worker.interval_seconds);
+
+        const intervalText =
+            Number.isFinite(intervalSeconds)
+                ? `${intervalSeconds} seconds`
+                : "—";
+
+        container.innerHTML = `
+
+            <div class="monitoring-worker-grid">
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Status
+                    </div>
+
+                    <div
+                        class="
+                            monitoring-worker-value
+                            ${statusClass}
+                        "
+                    >
+                        ${escapeHtml(workerStatus)}
+                    </div>
+                </div>
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Worker ID
+                    </div>
+
+                    <div class="monitoring-worker-value">
+                        ${escapeHtml(
+                            worker.worker_id ||
+                            "—"
+                        )}
+                    </div>
+                </div>
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Monitoring Interval
+                    </div>
+
+                    <div class="monitoring-worker-value">
+                        ${escapeHtml(intervalText)}
+                    </div>
+                </div>
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Last Cycle
+                    </div>
+
+                    <div class="monitoring-worker-value">
+                        ${formatDate(
+                            worker.last_cycle_at
+                        )}
+                    </div>
+                </div>
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Last Successful Cycle
+                    </div>
+
+                    <div class="monitoring-worker-value">
+                        ${formatDate(
+                            worker.last_success_at
+                        )}
+                    </div>
+                </div>
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Next Cycle
+                    </div>
+
+                    <div class="monitoring-worker-value">
+                        ${formatDate(
+                            worker.next_cycle_at
+                        )}
+                    </div>
+                </div>
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Events Processed
+                    </div>
+
+                    <div class="monitoring-worker-value">
+                        ${
+                            worker.last_processed_events ??
+                            "—"
+                        }
+                    </div>
+                </div>
+
+                <div class="monitoring-worker-item">
+                    <div class="monitoring-worker-label">
+                        Last Cycle Duration
+                    </div>
+
+                    <div class="monitoring-worker-value">
+                        ${
+                            Number.isFinite(
+                                Number(
+                                    worker.last_cycle_duration_seconds
+                                )
+                            )
+                                ? Number(
+                                    worker.last_cycle_duration_seconds
+                                  ).toFixed(2) + " seconds"
+                                : "—"
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+            ${
+                worker.last_error
+                    ? `
+                        <div class="monitoring-worker-error">
+                            <strong>Last error:</strong>
+                            ${escapeHtml(
+                                worker.last_error
+                            )}
+                        </div>
+                      `
+                    : ""
+            }
+
+        `;
+    }
 
     function renderSources(sources) {
 
@@ -1489,12 +1757,17 @@ body {
 
             const [
                 status,
+                worker,
                 alerts,
                 events
             ] = await Promise.all([
 
                 fetchJson(
                     "/api/v1/monitoring/status"
+                ),
+
+                fetchJson(
+                    "/api/v1/monitoring/worker"
                 ),
 
                 fetchJson(
@@ -1512,6 +1785,10 @@ body {
 
             renderSources(
                 status.sources || []
+            );
+
+            renderWorkerHealth(
+                worker
             );
 
             renderAlerts(

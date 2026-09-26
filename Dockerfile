@@ -14,7 +14,7 @@ COPY requirements.txt .
 
 COPY src ./src
 COPY web ./web
-
+COPY App_Data ./App_Data
 RUN python -m pip install --upgrade pip \
     && python -m pip install . \
     && python -m pip install gunicorn==23.0.0

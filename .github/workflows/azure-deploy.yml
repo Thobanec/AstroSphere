@@ -123,6 +123,28 @@ jobs:
             --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
             --generic-configurations '{"healthCheckPath":"/api/v1/planets"}'
 
+      - name: Configure AstroSphere monitoring
+        run: |
+          echo "=============================================="
+          echo "Configuring AstroSphere monitoring"
+          echo "=============================================="
+
+          az webapp config appsettings set \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --settings \
+              WEBSITES_ENABLE_APP_SERVICE_STORAGE=true \
+              WEBSITE_SKIP_RUNNING_KUDUAGENT=false \
+              ASTROSPHERE_MONITORING_INTERVAL_SECONDS=900 \
+              ASTROSPHERE_MONITORING_DATABASE=/home/data/monitoring.db
+
+          az webapp config set \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --generic-configurations '{"alwaysOn":true,"healthCheckPath":"/api/v1/planets"}'
+
+          echo "AstroSphere monitoring configuration applied."
+
       - name: Verify deployment configuration
         shell: bash
         run: |
@@ -160,6 +182,60 @@ jobs:
             echo "Actual:   $HEALTH"
             exit 1
           fi
+
+          echo ""
+          echo "Verifying AstroSphere monitoring configuration:"
+
+          MONITORING_CONFIG=$(az webapp config appsettings list \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --query "[?name=='WEBSITES_ENABLE_APP_SERVICE_STORAGE' || name=='WEBSITE_SKIP_RUNNING_KUDUAGENT' || name=='ASTROSPHERE_MONITORING_INTERVAL_SECONDS' || name=='ASTROSPHERE_MONITORING_DATABASE'] | {storage: [?name=='WEBSITES_ENABLE_APP_SERVICE_STORAGE'].value | [0], kudu: [?name=='WEBSITE_SKIP_RUNNING_KUDUAGENT'].value | [0], interval: [?name=='ASTROSPHERE_MONITORING_INTERVAL_SECONDS'].value | [0], database: [?name=='ASTROSPHERE_MONITORING_DATABASE'].value | [0]}" \
+            -o json)
+
+          echo "$MONITORING_CONFIG"
+
+          STORAGE_ENABLED=$(echo "$MONITORING_CONFIG" | jq -r '.storage')
+          KUDUAGENT_ENABLED=$(echo "$MONITORING_CONFIG" | jq -r '.kudu')
+          MONITORING_INTERVAL=$(echo "$MONITORING_CONFIG" | jq -r '.interval')
+          MONITORING_DATABASE=$(echo "$MONITORING_CONFIG" | jq -r '.database')
+
+          if [ "$STORAGE_ENABLED" != "true" ]; then
+            echo "ERROR: App Service persistent storage is not enabled."
+            exit 1
+          fi
+
+          if [ "$KUDUAGENT_ENABLED" != "false" ]; then
+            echo "ERROR: WEBSITE_SKIP_RUNNING_KUDUAGENT must be false."
+            echo "Actual:   $KUDUAGENT_ENABLED"
+            exit 1
+          fi
+
+          if [ "$MONITORING_INTERVAL" != "900" ]; then
+            echo "ERROR: Monitoring interval is incorrect."
+            echo "Expected: 900"
+            echo "Actual:   $MONITORING_INTERVAL"
+            exit 1
+          fi
+
+          if [ "$MONITORING_DATABASE" != "/home/data/monitoring.db" ]; then
+            echo "ERROR: Monitoring database path is incorrect."
+            echo "Expected: /home/data/monitoring.db"
+            echo "Actual:   $MONITORING_DATABASE"
+            exit 1
+          fi
+
+          ALWAYS_ON=$(az webapp show \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --query "siteConfig.alwaysOn" \
+            -o tsv)
+
+          if [ "$ALWAYS_ON" != "true" ]; then
+            echo "ERROR: Always On is not enabled."
+            exit 1
+          fi
+
+          echo "AstroSphere monitoring configuration verified successfully."
 
           echo ""
           echo "Site Container configuration:"
