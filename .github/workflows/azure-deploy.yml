@@ -1,4 +1,4 @@
-﻿name: Deploy AstroSphere to Azure
+name: Deploy AstroSphere to Azure
 
 on:
   push:
@@ -328,6 +328,171 @@ jobs:
           echo ""
           echo "Azure application is Running."
 
+      - name: Deploy AstroSphere monitoring WebJob
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          WEBJOB_DIR="App_Data/jobs/continuous/astrosphere-monitoring"
+          WEBJOB_ZIP="${RUNNER_TEMP}/astrosphere-monitoring.zip"
+
+          echo "=============================================="
+          echo "Preparing AstroSphere monitoring WebJob"
+          echo "=============================================="
+
+          if [ ! -f "${WEBJOB_DIR}/run.py" ]; then
+            echo "ERROR: ${WEBJOB_DIR}/run.py not found."
+            exit 1
+          fi
+
+          if [ ! -f "${WEBJOB_DIR}/settings.job" ]; then
+            echo "ERROR: ${WEBJOB_DIR}/settings.job not found."
+            exit 1
+          fi
+
+          cd "${WEBJOB_DIR}"
+
+          zip -j "${WEBJOB_ZIP}" run.py settings.job
+
+          echo "WebJob package:"
+          unzip -l "${WEBJOB_ZIP}"
+
+          echo "Obtaining Azure access token..."
+
+          TOKEN=$(az account get-access-token \
+            --resource https://management.azure.com/ \
+            --query accessToken \
+            -o tsv)
+
+          echo "Resolving Kudu SCM hostname..."
+
+          SCM_HOST=$(az webapp deployment list-publishing-profiles \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --xml \
+            | python -c '
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.fromstring(sys.stdin.read())
+
+          for profile in root.findall(".//publishProfile"):
+              if profile.attrib.get("publishMethod") == "ZipDeploy":
+                  print(profile.attrib["publishUrl"].split(":")[0])
+                  break
+          else:
+              raise SystemExit("ZipDeploy publishing profile not found.")
+          '
+
+          echo "SCM host: ${SCM_HOST}"
+
+          echo "Deploying Continuous WebJob..."
+
+          curl --fail-with-body \
+            --silent \
+            --show-error \
+            -X PUT \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/zip" \
+            --data-binary "@${WEBJOB_ZIP}" \
+            "https://${SCM_HOST}/api/zip/site/wwwroot/App_Data/jobs/continuous/astrosphere-monitoring/"
+
+          echo "AstroSphere monitoring WebJob package deployed."
+
+      - name: Verify AstroSphere monitoring WebJob
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "=============================================="
+          echo "Verifying AstroSphere monitoring WebJob"
+          echo "=============================================="
+
+          WEBJOBS=$(az webapp webjob continuous list \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            -o json)
+
+          echo "$WEBJOBS"
+
+          STATUS=$(echo "$WEBJOBS" | python -c '
+          import json
+          import sys
+
+          jobs = json.load(sys.stdin)
+
+          for job in jobs:
+              if job.get("name", "").endswith("/astrosphere-monitoring"):
+                  print(job.get("status", ""))
+                  break
+          else:
+              print("")
+          ')
+
+          if [ "$STATUS" != "Running" ]; then
+            echo ""
+            echo "ERROR: astrosphere-monitoring WebJob is not Running."
+            echo "Actual status: ${STATUS:-NOT_FOUND}"
+            exit 1
+          fi
+
+          echo ""
+          echo "AstroSphere monitoring WebJob is Running."
+
+      - name: Verify AstroSphere monitoring worker
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          WORKER_URL="https://${APP_HOSTNAME}/api/v1/monitoring/worker"
+
+          echo "=============================================="
+          echo "Verifying AstroSphere monitoring worker"
+          echo "=============================================="
+          echo "Testing: $WORKER_URL"
+
+          SUCCESS=false
+
+          for attempt in {1..18}; do
+            echo "Worker health attempt $attempt/18..."
+
+            RESPONSE=$(curl \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 20 \
+              "$WORKER_URL")
+
+            echo "$RESPONSE" | python -m json.tool
+
+            HEALTH=$(echo "$RESPONSE" | python -c '
+          import json
+          import sys
+
+          payload = json.load(sys.stdin)
+          worker = payload.get("data")
+
+          if worker and worker.get("status") == "running":
+              print("healthy")
+          else:
+              print("not-ready")
+          ')
+
+            if [ "$HEALTH" = "healthy" ]; then
+              echo ""
+              echo "AstroSphere monitoring worker is healthy."
+              SUCCESS=true
+              break
+            fi
+
+            sleep 10
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo ""
+            echo "ERROR: AstroSphere monitoring worker did not become healthy."
+            exit 1
+          fi
       - name: Smoke test production API
         shell: bash
         run: |
