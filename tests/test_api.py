@@ -1625,3 +1625,229 @@ def test_get_celestial_object_relationships_pluto_moon():
     assert child_ids == {
         "charon",
     }
+
+# =========================================================
+# Monitoring API
+# =========================================================
+
+def test_get_monitoring_events(monkeypatch):
+    def fake_events(**kwargs):
+        assert kwargs["limit"] == 10
+        assert kwargs["severity"] == "warning"
+        assert kwargs["source"] == "NASA/JPL CNEOS"
+
+        return [
+            {
+                "event_id": "event-001",
+                "event_type": "asteroid_close_approach",
+                "source": "NASA/JPL CNEOS",
+                "detected_at": "2026-09-26T04:00:00+00:00",
+                "event_time": None,
+                "object_id": "asteroid:2026 SA8",
+                "object_name": "(2026 SA8)",
+                "affected_body": "Earth",
+                "severity": "warning",
+                "status": "active",
+                "summary": (
+                    "(2026 SA8) has a recorded Earth "
+                    "close approach."
+                ),
+                "source_url": (
+                    "https://ssd-api.jpl.nasa.gov/cad.api"
+                ),
+                "data": {},
+                "fingerprint": "fingerprint-001",
+            }
+        ]
+
+    monkeypatch.setattr(
+        "web.api.list_monitoring_events",
+        fake_events,
+    )
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/events"
+        "?limit=10"
+        "&severity=warning"
+        "&source=NASA/JPL%20CNEOS"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["count"] == 1
+
+    event = data["data"]["events"][0]
+
+    assert event["event_id"] == "event-001"
+    assert event["severity"] == "warning"
+    assert event["source"] == "NASA/JPL CNEOS"
+    assert event["object_name"] == "(2026 SA8)"
+
+
+def test_get_monitoring_events_rejects_invalid_limit():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/events?limit=invalid"
+    )
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert data["error"] == "limit must be an integer."
+
+
+def test_get_monitoring_events_rejects_limit_out_of_range():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/events?limit=501"
+    )
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert (
+        data["error"]
+        == "limit must be between 1 and 500."
+    )
+
+
+def test_get_monitoring_alerts(monkeypatch):
+    def fake_alerts(**kwargs):
+        assert kwargs["limit"] == 10
+        assert kwargs["acknowledged"] is False
+
+        return [
+            {
+                "alert_id": "alert-001",
+                "event_id": "event-001",
+                "severity": "warning",
+                "title": "WARNING: asteroid close approach",
+                "message": (
+                    "(2026 SA8) has a recorded Earth "
+                    "close approach."
+                ),
+                "created_at": (
+                    "2026-09-26T04:00:00+00:00"
+                ),
+                "acknowledged": False,
+                "metadata": {
+                    "source": "NASA/JPL CNEOS",
+                    "object_id": "asteroid:2026 SA8",
+                    "affected_body": "Earth",
+                },
+            }
+        ]
+
+    monkeypatch.setattr(
+        "web.api.list_monitoring_alerts",
+        fake_alerts,
+    )
+
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/alerts"
+        "?limit=10"
+        "&acknowledged=false"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert data["data"]["count"] == 1
+
+    alert = data["data"]["alerts"][0]
+
+    assert alert["alert_id"] == "alert-001"
+    assert alert["event_id"] == "event-001"
+    assert alert["severity"] == "warning"
+    assert alert["acknowledged"] is False
+
+
+def test_get_monitoring_alerts_rejects_invalid_acknowledged():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/alerts"
+        "?acknowledged=maybe"
+    )
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert (
+        data["error"]
+        == "acknowledged must be true or false."
+    )
+
+
+def test_acknowledge_monitoring_alert(monkeypatch):
+    def fake_acknowledge(alert_id):
+        assert alert_id == "alert-001"
+        return True
+
+    monkeypatch.setattr(
+        "web.api.acknowledge_monitoring_alert",
+        fake_acknowledge,
+    )
+
+    client = app.test_client()
+
+    response = client.post(
+        "/api/v1/monitoring/alerts/alert-001/acknowledge"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "success"
+    assert (
+        data["data"]["alert_id"]
+        == "alert-001"
+    )
+    assert data["data"]["acknowledged"] is True
+
+
+def test_acknowledge_monitoring_alert_not_found(
+    monkeypatch,
+):
+    def fake_acknowledge(alert_id):
+        assert alert_id == "missing-alert"
+        return False
+
+    monkeypatch.setattr(
+        "web.api.acknowledge_monitoring_alert",
+        fake_acknowledge,
+    )
+
+    client = app.test_client()
+
+    response = client.post(
+        "/api/v1/monitoring/alerts/missing-alert/acknowledge"
+    )
+
+    assert response.status_code == 404
+
+    data = response.get_json()
+
+    assert data["status"] == "error"
+    assert (
+        data["error"]
+        == "Monitoring alert not found."
+    )

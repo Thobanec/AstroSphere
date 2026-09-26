@@ -48,3 +48,87 @@ def get_monitoring_status() -> dict:
         "healthy": healthy,
         "sources": sources,
     }
+
+
+def list_monitoring_events(
+    *,
+    limit: int = 100,
+    event_type: str | None = None,
+    severity: str | None = None,
+    status: str | None = None,
+    source: str | None = None,
+) -> list[dict]:
+    """Return persisted monitoring events."""
+
+    store = get_monitoring_store()
+
+    events = store.list_events(
+        limit=limit,
+        event_type=event_type,
+        severity=severity,
+        status=status,
+        source=source,
+    )
+
+    return [
+        {
+            "event_id": event.event_id,
+            "event_type": event.event_type,
+            "source": event.source,
+            "detected_at": event.detected_at.isoformat(),
+            "event_time": (
+                event.event_time.isoformat()
+                if event.event_time
+                else None
+            ),
+            "object_id": event.object_id,
+            "object_name": event.object_name,
+            "affected_body": event.affected_body,
+            "severity": event.severity,
+            "status": event.status,
+            "summary": event.summary,
+            "source_url": event.source_url,
+            "data": event.data,
+            "fingerprint": event.fingerprint,
+        }
+        for event in events
+    ]
+
+
+def list_monitoring_alerts(
+    *,
+    limit: int = 100,
+    acknowledged: bool | None = None,
+) -> list[dict]:
+    """Return persisted monitoring alerts."""
+
+    store = get_monitoring_store()
+
+    alerts = store.list_alerts(
+        limit=limit,
+        acknowledged=acknowledged,
+    )
+
+    return [
+        {
+            "alert_id": alert.alert_id,
+            "event_id": alert.event_id,
+            "severity": alert.severity,
+            "title": alert.title,
+            "message": alert.message,
+            "created_at": alert.created_at.isoformat(),
+            "acknowledged": alert.acknowledged,
+            "metadata": alert.metadata,
+        }
+        for alert in alerts
+    ]
+
+
+def acknowledge_monitoring_alert(
+    alert_id: str,
+) -> bool:
+    """Acknowledge a persisted monitoring alert."""
+
+    store = get_monitoring_store()
+
+    return store.acknowledge_alert(alert_id)

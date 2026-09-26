@@ -231,6 +231,7 @@ class MonitoringStore:
         event_type: str | None = None,
         severity: str | None = None,
         status: str | None = None,
+        source: str | None = None,
     ) -> list[MonitoringEvent]:
         query = """
             SELECT *
@@ -251,6 +252,10 @@ class MonitoringStore:
         if status is not None:
             conditions.append("status = ?")
             parameters.append(status)
+
+        if source is not None:
+            conditions.append("source = ?")
+            parameters.append(source)
 
         if conditions:
             query += " WHERE " + " AND ".join(conditions)

@@ -84,7 +84,10 @@ from astrosphere.scientific.service import (
     get_scientific_data,
 )
 from astrosphere.monitoring.service import (
+    acknowledge_monitoring_alert,
     get_monitoring_status,
+    list_monitoring_alerts,
+    list_monitoring_events,
 )
 from astrosphere.capabilities import (
     get_capabilities_for_object,
@@ -1775,6 +1778,158 @@ def monitoring_status():
             {
                 "status": "error",
                 "error": "Monitoring status retrieval failed.",
+            }
+        ), 500
+
+def _monitoring_limit():
+    value = request.args.get("limit", "100")
+
+    try:
+        limit = int(value)
+    except ValueError:
+        raise ValueError("limit must be an integer.")
+
+    if limit < 1 or limit > 500:
+        raise ValueError("limit must be between 1 and 500.")
+
+    return limit
+
+
+@api.get("/monitoring/events")
+def monitoring_events():
+    """Return persisted monitoring events."""
+
+    try:
+        limit = _monitoring_limit()
+
+        events = list_monitoring_events(
+            limit=limit,
+            event_type=request.args.get("event_type"),
+            severity=request.args.get("severity"),
+            status=request.args.get("status"),
+            source=request.args.get("source"),
+        )
+
+        return jsonify(
+            {
+                "status": "success",
+                "data": {
+                    "count": len(events),
+                    "events": events,
+                },
+            }
+        )
+
+    except ValueError as exc:
+        return jsonify(
+            {
+                "status": "error",
+                "error": str(exc),
+            }
+        ), 400
+
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Monitoring event retrieval failed.",
+            }
+        ), 500
+
+
+@api.get("/monitoring/alerts")
+def monitoring_alerts():
+    """Return persisted monitoring alerts."""
+
+    try:
+        limit = _monitoring_limit()
+
+        acknowledged_arg = request.args.get(
+            "acknowledged"
+        )
+
+        acknowledged = None
+
+        if acknowledged_arg is not None:
+            normalized = acknowledged_arg.strip().lower()
+
+            if normalized == "true":
+                acknowledged = True
+            elif normalized == "false":
+                acknowledged = False
+            else:
+                raise ValueError(
+                    "acknowledged must be true or false."
+                )
+
+        alerts = list_monitoring_alerts(
+            limit=limit,
+            acknowledged=acknowledged,
+        )
+
+        return jsonify(
+            {
+                "status": "success",
+                "data": {
+                    "count": len(alerts),
+                    "alerts": alerts,
+                },
+            }
+        )
+
+    except ValueError as exc:
+        return jsonify(
+            {
+                "status": "error",
+                "error": str(exc),
+            }
+        ), 400
+
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Monitoring alert retrieval failed.",
+            }
+        ), 500
+
+
+@api.post(
+    "/monitoring/alerts/<alert_id>/acknowledge"
+)
+def acknowledge_monitoring_alert_api(alert_id):
+    """Acknowledge a monitoring alert."""
+
+    try:
+        acknowledged = acknowledge_monitoring_alert(
+            alert_id
+        )
+
+        if not acknowledged:
+            return jsonify(
+                {
+                    "status": "error",
+                    "error": "Monitoring alert not found.",
+                }
+            ), 404
+
+        return jsonify(
+            {
+                "status": "success",
+                "data": {
+                    "alert_id": alert_id,
+                    "acknowledged": True,
+                },
+            }
+        )
+
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": (
+                    "Monitoring alert acknowledgement failed."
+                ),
             }
         ), 500
 
