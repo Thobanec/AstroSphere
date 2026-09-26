@@ -369,20 +369,14 @@ jobs:
           SCM_HOST=$(az webapp deployment list-publishing-profiles \
             --name "${{ env.AZURE_WEBAPP_NAME }}" \
             --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
-            --xml \
-            | python -c '
-          import sys
-          import xml.etree.ElementTree as ET
+            --query "[?publishMethod=='ZipDeploy'].publishUrl | [0]" \
+            -o tsv \
+            | cut -d: -f1)
 
-          root = ET.fromstring(sys.stdin.read())
-
-          for profile in root.findall(".//publishProfile"):
-              if profile.attrib.get("publishMethod") == "ZipDeploy":
-                  print(profile.attrib["publishUrl"].split(":")[0])
-                  break
-          else:
-              raise SystemExit("ZipDeploy publishing profile not found.")
-          '
+          if [ -z "${SCM_HOST}" ]; then
+            echo "ERROR: Unable to resolve ZipDeploy SCM hostname."
+            exit 1
+          fi
 
           echo "SCM host: ${SCM_HOST}"
 
@@ -415,19 +409,7 @@ jobs:
 
           echo "$WEBJOBS"
 
-          STATUS=$(echo "$WEBJOBS" | python -c '
-          import json
-          import sys
-
-          jobs = json.load(sys.stdin)
-
-          for job in jobs:
-              if job.get("name", "").endswith("/astrosphere-monitoring"):
-                  print(job.get("status", ""))
-                  break
-          else:
-              print("")
-          ')
+          STATUS=$(echo "$WEBJOBS" | python -c "import json,sys; jobs=json.load(sys.stdin); print(next((j.get('status','') for j in jobs if j.get('name','').endswith('/astrosphere-monitoring')), ''))")
 
           if [ "$STATUS" != "Running" ]; then
             echo ""
@@ -465,18 +447,7 @@ jobs:
 
             echo "$RESPONSE" | python -m json.tool
 
-            HEALTH=$(echo "$RESPONSE" | python -c '
-          import json
-          import sys
-
-          payload = json.load(sys.stdin)
-          worker = payload.get("data")
-
-          if worker and worker.get("status") == "running":
-              print("healthy")
-          else:
-              print("not-ready")
-          ')
+            HEALTH=$(echo "$RESPONSE" | python -c "import json,sys; payload=json.load(sys.stdin); worker=payload.get('data'); print('healthy' if worker and worker.get('status') == 'running' else 'not-ready')")
 
             if [ "$HEALTH" = "healthy" ]; then
               echo ""
