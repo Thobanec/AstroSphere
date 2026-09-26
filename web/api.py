@@ -1761,7 +1761,6 @@ def analysis():
         }
     )
 
-@api.post("/ai/query")
 @api.get("/monitoring/status")
 def monitoring_status():
     """Return the persisted health of monitoring sources."""
@@ -1933,6 +1932,7 @@ def acknowledge_monitoring_alert_api(alert_id):
             }
         ), 500
 
+@api.post("/ai/query")
 def ai_query():
     payload = request.get_json(silent=True)
 

@@ -1,0 +1,1574 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Space Monitoring — AstroSphere</title>
+
+</head>
+
+<body>
+
+{% include "_navigation.html" %}
+
+<main>
+
+<div class="monitoring-page">
+
+    <header class="monitoring-header">
+        <div>
+            <div class="monitoring-eyebrow">
+                ASTROSPHERE / SPACE MONITORING
+            </div>
+
+            <h1>Space Monitoring</h1>
+
+            <p>
+                Continuous observation of near-Earth objects,
+                space weather, and significant astronomical events.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            class="monitoring-refresh"
+            id="monitoring-refresh"
+        >
+            Refresh
+        </button>
+    </header>
+
+
+    <section class="monitoring-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">
+                    MONITORING SOURCES
+                </span>
+
+                <h2>Source Health</h2>
+            </div>
+
+            <span
+                class="section-status"
+                id="monitoring-overall-status"
+            >
+                Loading...
+            </span>
+        </div>
+
+
+        <div
+            class="monitoring-source-grid"
+            id="monitoring-sources"
+        >
+            <div class="monitoring-empty">
+                Loading monitoring sources...
+            </div>
+        </div>
+
+    </section>
+
+
+    <section class="monitoring-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">
+                    PRIORITY
+                </span>
+
+                <h2>Active Alerts</h2>
+            </div>
+
+            <span
+                class="section-count"
+                id="monitoring-alert-count"
+            >
+                0
+            </span>
+        </div>
+
+
+        <div
+            class="monitoring-alert-list"
+            id="monitoring-alerts"
+        >
+            <div class="monitoring-empty">
+                Loading alerts...
+            </div>
+        </div>
+
+    </section>
+
+
+    <section class="monitoring-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">
+                    ASTEROID ANALYSIS
+                </span>
+
+                <h2>Asteroid Risk Analysis</h2>
+            </div>
+
+            <span
+                class="section-status"
+                id="monitoring-risk-status"
+            >
+                Loading...
+            </span>
+        </div>
+
+        <div
+            class="monitoring-risk-card"
+            id="monitoring-risk-analysis"
+        >
+            <div class="monitoring-empty">
+                Loading asteroid analysis...
+            </div>
+        </div>
+
+    </section>
+
+
+    <section class="monitoring-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">
+                    OBSERVATIONS
+                </span>
+
+                <h2>Recent Monitoring Events</h2>
+            </div>
+
+            <span
+                class="section-count"
+                id="monitoring-event-count"
+            >
+                0
+            </span>
+        </div>
+
+
+        <div class="monitoring-event-table-wrap">
+
+            <table class="monitoring-event-table">
+
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Event</th>
+                        <th>Object</th>
+                        <th>Source</th>
+                        <th>Detected</th>
+                    </tr>
+                </thead>
+
+                <tbody id="monitoring-events">
+
+                    <tr>
+                        <td
+                            colspan="5"
+                            class="monitoring-empty"
+                        >
+                            Loading events...
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background:
+        radial-gradient(
+            circle at 50% 20%,
+            #081522 0%,
+            #02060d 48%,
+            #000107 100%
+        );
+    color: #f8fafc;
+    font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+/* ============================================================
+   ASTROSPHERE GLOBAL NAVIGATION
+   ============================================================ */
+
+.global-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 7%;
+    border-bottom: 1px solid #27305c;
+    background: rgba(10, 15, 35, 0.92);
+    backdrop-filter: blur(12px);
+    position: relative;
+    z-index: 50;
+}
+
+.global-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #cbd3f5;
+    text-decoration: none;
+    font-size: 0.92rem;
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        transform .18s ease;
+}
+
+.global-nav-link:hover {
+    background: #182044;
+    border-color: #394579;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.global-nav-link[aria-current="page"] {
+    background: #202a52;
+    border-color: #4b5b9a;
+    color: #ffffff;
+}
+
+/* ============================================================
+   MONITORING PAGE
+   ============================================================ */
+
+.monitoring-page {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 42px 32px 64px;
+}
+
+.monitoring-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 42px;
+}
+
+.monitoring-eyebrow,
+.section-kicker {
+    color: #8ea7d8;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.monitoring-header h1 {
+    margin: 8px 0;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1.05;
+}
+
+.monitoring-header p {
+    max-width: 760px;
+    margin: 0;
+    color: #aebbd4;
+    line-height: 1.6;
+}
+
+.monitoring-refresh {
+    appearance: none;
+    border: 1px solid #4b5b9a;
+    background: rgba(32, 42, 82, .72);
+    color: #f8fafc;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.monitoring-refresh:hover {
+    background: #263261;
+}
+
+.monitoring-section {
+    margin-bottom: 40px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.section-heading h2 {
+    margin: 5px 0 0;
+    font-size: 1.45rem;
+}
+
+.section-status,
+.section-count {
+    color: #91a1bf;
+    font-size: 0.85rem;
+}
+
+.monitoring-source-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.monitoring-source-card,
+.monitoring-alert-card,
+.monitoring-risk-card {
+    border: 1px solid rgba(106, 130, 180, .28);
+    border-radius: 12px;
+    background: rgba(8, 15, 30, .72);
+    box-shadow: 0 14px 40px rgba(0,0,0,.18);
+}
+
+.monitoring-source-card {
+    padding: 20px;
+}
+
+.monitoring-source-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.monitoring-source-name {
+    font-weight: 600;
+    color: #e8eefb;
+}
+
+.monitoring-health {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #7fe0aa;
+    font-size: 0.8rem;
+}
+
+.monitoring-health.unhealthy {
+    color: #ef8b8b;
+}
+
+.monitoring-health-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+}
+
+.monitoring-source-meta {
+    margin-top: 14px;
+    color: #91a1bf;
+    font-size: 0.82rem;
+    line-height: 1.6;
+}
+
+.monitoring-alert-list {
+    display: grid;
+    gap: 12px;
+}
+
+.monitoring-alert-card {
+    padding: 20px;
+    border-left: 4px solid #d89b27;
+}
+
+.monitoring-alert-card.critical {
+    border-left-color: #d84a4a;
+}
+
+.monitoring-alert-title {
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.monitoring-alert-message {
+    color: #b9c4d8;
+}
+
+.monitoring-alert-meta {
+    margin-top: 12px;
+    color: #7f8da6;
+    font-size: 0.78rem;
+}
+
+.monitoring-acknowledge {
+    margin-top: 14px;
+    padding: 7px 12px;
+    border: 1px solid #3d4d78;
+    border-radius: 7px;
+    background: #151e3a;
+    color: #dbe5fa;
+    cursor: pointer;
+}
+
+.monitoring-acknowledge:hover {
+    background: #202a52;
+}
+
+.monitoring-risk-card {
+    padding: 24px;
+}
+
+.monitoring-risk-warning {
+    margin-bottom: 20px;
+    padding: 12px 14px;
+    border-left: 3px solid #d89b27;
+    background: rgba(216, 155, 39, .08);
+    color: #e7d4a9;
+}
+
+.monitoring-risk-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(190px, 1fr));
+    gap: 18px;
+}
+
+.monitoring-risk-item {
+    padding: 14px;
+    border: 1px solid rgba(106, 130, 180, .18);
+    border-radius: 9px;
+    background: rgba(255,255,255,.025);
+}
+
+.monitoring-risk-label {
+    color: #7f8da6;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 7px;
+}
+
+.monitoring-risk-value {
+    color: #edf3ff;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.monitoring-event-table-wrap {
+    overflow-x: auto;
+    border: 1px solid rgba(106, 130, 180, .28);
+    border-radius: 12px;
+    background: rgba(8, 15, 30, .68);
+}
+
+.monitoring-event-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.monitoring-event-table th,
+.monitoring-event-table td {
+    padding: 13px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(106, 130, 180, .14);
+}
+
+.monitoring-event-table th {
+    color: #7f8da6;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.monitoring-event-table td {
+    color: #dce5f5;
+    font-size: 0.88rem;
+}
+
+.monitoring-severity {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.monitoring-severity.warning {
+    background: rgba(216, 155, 39, 0.16);
+    color: #f1c86b;
+}
+
+.monitoring-severity.critical {
+    background: rgba(216, 74, 74, 0.16);
+    color: #f18b8b;
+}
+
+.monitoring-severity.advisory {
+    background: rgba(216, 155, 39, 0.10);
+    color: #d9bd7c;
+}
+
+.monitoring-severity.watch {
+    background: rgba(100, 150, 210, 0.12);
+    color: #9abce9;
+}
+
+.monitoring-severity.information {
+    background: rgba(127, 127, 127, 0.12);
+    color: #aeb7c7;
+}
+
+.monitoring-empty {
+    padding: 24px;
+    text-align: center;
+    color: #7f8da6;
+}
+
+.monitoring-error {
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(216, 74, 74, 0.35);
+    color: #f18b8b;
+    background: rgba(216, 74, 74, .06);
+}
+
+@media (max-width: 700px) {
+
+    .global-nav {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding: 10px 5%;
+    }
+
+    .global-nav-link {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .monitoring-page {
+        padding: 28px 18px 48px;
+    }
+
+    .monitoring-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+}
+
+.monitoring-page {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 32px;
+}
+
+.monitoring-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 36px;
+}
+
+.monitoring-eyebrow,
+.section-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.65;
+}
+
+.monitoring-header h1 {
+    margin: 8px 0;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+.monitoring-header p {
+    max-width: 760px;
+    margin: 0;
+    opacity: 0.72;
+}
+
+.monitoring-refresh {
+    border: 1px solid currentColor;
+    background: transparent;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.monitoring-section {
+    margin-bottom: 36px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.section-heading h2 {
+    margin: 5px 0 0;
+}
+
+.section-status,
+.section-count {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.monitoring-source-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.monitoring-source-card,
+.monitoring-alert-card {
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.monitoring-source-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.monitoring-source-name {
+    font-weight: 600;
+}
+
+.monitoring-health {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+}
+
+.monitoring-health-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.monitoring-source-meta {
+    margin-top: 14px;
+    font-size: 0.82rem;
+    opacity: 0.65;
+    line-height: 1.6;
+}
+
+.monitoring-alert-list {
+    display: grid;
+    gap: 12px;
+}
+
+.monitoring-alert-card {
+    border-left: 4px solid currentColor;
+}
+
+.monitoring-alert-card.warning {
+    border-left-color: #d89b27;
+}
+
+.monitoring-alert-card.critical {
+    border-left-color: #d84a4a;
+}
+
+.monitoring-alert-title {
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.monitoring-alert-message {
+    opacity: 0.75;
+}
+
+.monitoring-alert-meta {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    opacity: 0.55;
+}
+
+.monitoring-event-table-wrap {
+    overflow-x: auto;
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    border-radius: 12px;
+}
+
+.monitoring-event-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.monitoring-event-table th,
+.monitoring-event-table td {
+    padding: 13px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.15);
+}
+
+.monitoring-event-table th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+}
+
+.monitoring-event-table td {
+    font-size: 0.88rem;
+}
+
+.monitoring-severity {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.monitoring-severity.warning {
+    background: rgba(216, 155, 39, 0.16);
+}
+
+.monitoring-severity.advisory {
+    background: rgba(216, 155, 39, 0.10);
+}
+
+.monitoring-severity.watch {
+    background: rgba(100, 150, 210, 0.12);
+}
+
+.monitoring-severity.information {
+    background: rgba(127, 127, 127, 0.12);
+}
+
+.monitoring-empty {
+    padding: 24px;
+    text-align: center;
+    opacity: 0.6;
+}
+
+.monitoring-error {
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(216, 74, 74, 0.35);
+    color: #d84a4a;
+}
+
+@media (max-width: 700px) {
+
+    .monitoring-page {
+        padding: 20px;
+    }
+
+    .monitoring-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+}
+
+</style>
+
+
+<script>
+
+(function () {
+
+    "use strict";
+
+
+    const refreshButton =
+        document.getElementById(
+            "monitoring-refresh"
+        );
+
+
+    async function fetchJson(url) {
+
+        const response = await fetch(url);
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                payload.error ||
+                "Monitoring request failed."
+            );
+        }
+
+        return payload.data;
+
+    }
+
+
+    function escapeHtml(value) {
+
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    function formatDate(value) {
+
+        if (!value) {
+            return "—";
+        }
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+        return date.toLocaleString();
+
+    }
+
+
+    function renderSources(sources) {
+
+        const container =
+            document.getElementById(
+                "monitoring-sources"
+            );
+
+        const overall =
+            document.getElementById(
+                "monitoring-overall-status"
+            );
+
+        if (!sources || sources.length === 0) {
+
+            container.innerHTML =
+                '<div class="monitoring-empty">' +
+                'No monitoring source status available.' +
+                '</div>';
+
+            overall.textContent =
+                "No source data";
+
+            return;
+
+        }
+
+
+        const healthy =
+            sources.every(
+                source => source.healthy
+            );
+
+
+        overall.textContent =
+            healthy
+                ? "All sources healthy"
+                : "Source attention required";
+
+
+        container.innerHTML =
+            sources.map(source => {
+
+                const healthClass =
+                    source.healthy
+                        ? "healthy"
+                        : "unhealthy";
+
+                const healthText =
+                    source.healthy
+                        ? "Healthy"
+                        : "Attention";
+
+
+                return `
+                    <article
+                        class="monitoring-source-card"
+                    >
+                        <div
+                            class="monitoring-source-top"
+                        >
+                            <div
+                                class="monitoring-source-name"
+                            >
+                                ${escapeHtml(
+                                    source.source
+                                )}
+                            </div>
+
+                            <div
+                                class="monitoring-health
+                                       ${healthClass}"
+                            >
+                                <span
+                                    class="monitoring-health-dot"
+                                ></span>
+
+                                ${healthText}
+                            </div>
+                        </div>
+
+                        <div
+                            class="monitoring-source-meta"
+                        >
+                            Checked:
+                            ${formatDate(
+                                source.checked_at
+                            )}
+                            <br>
+
+                            Last success:
+                            ${formatDate(
+                                source.last_success_at
+                            )}
+
+                            ${
+                                source.error
+                                    ? `<br>
+                                       Error:
+                                       ${escapeHtml(
+                                           source.error
+                                       )}`
+                                    : ""
+                            }
+                        </div>
+                    </article>
+                `;
+
+            }).join("");
+
+    }
+
+
+    function renderAlerts(alerts) {
+
+        const container =
+            document.getElementById(
+                "monitoring-alerts"
+            );
+
+        const count =
+            document.getElementById(
+                "monitoring-alert-count"
+            );
+
+
+        const activeAlerts =
+            (alerts || []).filter(
+                alert => !alert.acknowledged
+            );
+
+
+        count.textContent =
+            activeAlerts.length;
+
+
+        if (activeAlerts.length === 0) {
+
+            container.innerHTML =
+                '<div class="monitoring-empty">' +
+                'No active alerts.' +
+                '</div>';
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            activeAlerts.map(alert => {
+
+                const severity =
+                    String(
+                        alert.severity ||
+                        "information"
+                    ).toLowerCase();
+
+
+                return `
+                    <article
+                        class="
+                            monitoring-alert-card
+                            ${escapeHtml(severity)}
+                        "
+                    >
+
+                        <div
+                            class="monitoring-alert-title"
+                        >
+                            ${escapeHtml(
+                                alert.title
+                            )}
+                        </div>
+
+                        <div
+                            class="monitoring-alert-message"
+                        >
+                            ${escapeHtml(
+                                alert.message
+                            )}
+                        </div>
+
+                        <div
+                            class="monitoring-alert-meta"
+                        >
+                            Created:
+                            ${formatDate(
+                                alert.created_at
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            class="monitoring-acknowledge"
+                            data-alert-id="${escapeHtml(
+                                alert.alert_id
+                            )}"
+                        >
+                            Acknowledge Alert
+                        </button>
+
+                    </article>
+                `;
+
+            }).join("");
+
+    }
+
+
+    async function acknowledgeAlert(alertId) {
+
+        if (!alertId) {
+            return;
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/v1/monitoring/alerts/${encodeURIComponent(alertId)}/acknowledge`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        }
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error ||
+                    "Failed to acknowledge alert."
+                );
+            }
+
+            await loadMonitoring();
+
+        } catch (error) {
+
+            console.error(
+                "Alert acknowledgement failed:",
+                error
+            );
+
+            window.alert(
+                error.message ||
+                "Failed to acknowledge alert."
+            );
+
+        }
+
+    }
+
+
+    function bindAlertActions() {
+
+        document
+            .querySelectorAll(
+                ".monitoring-acknowledge"
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+                        acknowledgeAlert(
+                            button.dataset.alertId
+                        );
+                    }
+                );
+
+            });
+
+    }
+
+
+    function renderAsteroidRisk(events) {
+
+        const container =
+            document.getElementById(
+                "monitoring-risk-analysis"
+            );
+
+        const status =
+            document.getElementById(
+                "monitoring-risk-status"
+            );
+
+        const asteroidEvents =
+            (events || [])
+                .filter(
+                    event =>
+                        event.event_type ===
+                        "asteroid_close_approach"
+                )
+                .filter(
+                    event =>
+                        event.data &&
+                        Number.isFinite(
+                            Number(
+                                event.data.distance_au
+                            )
+                        )
+                )
+                .sort(
+                    (a, b) =>
+                        Number(
+                            a.data.distance_au
+                        ) -
+                        Number(
+                            b.data.distance_au
+                        )
+                );
+
+        if (asteroidEvents.length === 0) {
+
+            status.textContent = "No asteroid data";
+
+            container.innerHTML =
+                '<div class="monitoring-empty">' +
+                'No asteroid close-approach data available.' +
+                '</div>';
+
+            return;
+        }
+
+        const event = asteroidEvents[0];
+
+        const data = event.data || {};
+
+        const distanceAu =
+            Number(data.distance_au);
+
+        const distanceKm =
+            distanceAu * 149597870.7;
+
+        const velocity =
+            Number(
+                data.relative_velocity_km_s
+            );
+
+        const severity =
+            String(
+                event.severity ||
+                "information"
+            ).toLowerCase();
+
+        const objectName =
+            event.object_name ||
+            data.fullname ||
+            event.object_id ||
+            "Unknown object";
+
+        const approachTime =
+            data.close_approach_time ||
+            event.event_time ||
+            "Not available";
+
+        status.textContent =
+            asteroidEvents.length +
+            " asteroid approaches";
+
+        container.innerHTML = `
+
+            <div class="monitoring-risk-warning">
+
+                <strong>
+                    Scientific interpretation:
+                </strong>
+
+                Proximity severity describes how close
+                the object approaches Earth. It does
+                <strong>not</strong> represent an
+                impact probability.
+
+                AstroSphere currently does not calculate
+                impact probability for this event.
+
+            </div>
+
+            <div class="monitoring-risk-grid">
+
+                <div class="monitoring-risk-item">
+                    <div class="monitoring-risk-label">
+                        Object
+                    </div>
+
+                    <div class="monitoring-risk-value">
+                        ${escapeHtml(objectName)}
+                    </div>
+                </div>
+
+                <div class="monitoring-risk-item">
+                    <div class="monitoring-risk-label">
+                        Affected Body
+                    </div>
+
+                    <div class="monitoring-risk-value">
+                        ${escapeHtml(
+                            event.affected_body ||
+                            "Earth"
+                        )}
+                    </div>
+                </div>
+
+                <div class="monitoring-risk-item">
+                    <div class="monitoring-risk-label">
+                        Close Approach
+                    </div>
+
+                    <div class="monitoring-risk-value">
+                        ${escapeHtml(
+                            approachTime
+                        )}
+                    </div>
+                </div>
+
+                <div class="monitoring-risk-item">
+                    <div class="monitoring-risk-label">
+                        Distance
+                    </div>
+
+                    <div class="monitoring-risk-value">
+                        ${distanceAu.toFixed(6)} AU
+                        <br>
+                        ${distanceKm.toLocaleString(
+                            undefined,
+                            {
+                                maximumFractionDigits: 0
+                            }
+                        )} km
+                    </div>
+                </div>
+
+                <div class="monitoring-risk-item">
+                    <div class="monitoring-risk-label">
+                        Relative Velocity
+                    </div>
+
+                    <div class="monitoring-risk-value">
+                        ${
+                            Number.isFinite(velocity)
+                                ? velocity.toFixed(3) +
+                                  " km/s"
+                                : "Not available"
+                        }
+                    </div>
+                </div>
+
+                <div class="monitoring-risk-item">
+                    <div class="monitoring-risk-label">
+                        Proximity Severity
+                    </div>
+
+                    <div class="monitoring-risk-value">
+
+                        <span
+                            class="
+                                monitoring-severity
+                                ${escapeHtml(severity)}
+                            "
+                        >
+                            ${escapeHtml(severity)}
+                        </span>
+
+                    </div>
+                </div>
+
+                <div class="monitoring-risk-item">
+
+                    <div class="monitoring-risk-label">
+                        Impact Probability
+                    </div>
+
+                    <div class="monitoring-risk-value">
+                        NOT ASSESSED
+                    </div>
+
+                </div>
+
+                <div class="monitoring-risk-item">
+
+                    <div class="monitoring-risk-label">
+                        Data Source
+                    </div>
+
+                    <div class="monitoring-risk-value">
+                        ${escapeHtml(
+                            event.source ||
+                            "NASA/JPL CNEOS"
+                        )}
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    function renderEvents(events) {
+
+        const container =
+            document.getElementById(
+                "monitoring-events"
+            );
+
+        const count =
+            document.getElementById(
+                "monitoring-event-count"
+            );
+
+
+        count.textContent =
+            (events || []).length;
+
+
+        if (!events || events.length === 0) {
+
+            container.innerHTML =
+                `<tr>
+                    <td
+                        colspan="5"
+                        class="monitoring-empty"
+                    >
+                        No monitoring events found.
+                    </td>
+                </tr>`;
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            events.map(event => {
+
+                const severity =
+                    String(
+                        event.severity ||
+                        "information"
+                    ).toLowerCase();
+
+
+                return `
+                    <tr>
+
+                        <td>
+                            <span
+                                class="
+                                    monitoring-severity
+                                    ${escapeHtml(severity)}
+                                "
+                            >
+                                ${escapeHtml(
+                                    severity
+                                )}
+                            </span>
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                event.event_type
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                event.object_name ||
+                                event.object_id ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                event.source
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatDate(
+                                event.detected_at
+                            )}
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+
+    }
+
+
+    async function loadMonitoring() {
+
+        refreshButton.disabled = true;
+
+        try {
+
+            const [
+                status,
+                alerts,
+                events
+            ] = await Promise.all([
+
+                fetchJson(
+                    "/api/v1/monitoring/status"
+                ),
+
+                fetchJson(
+                    "/api/v1/monitoring/alerts" +
+                    "?acknowledged=false&limit=50"
+                ),
+
+                fetchJson(
+                    "/api/v1/monitoring/events" +
+                    "?limit=50"
+                )
+
+            ]);
+
+
+            renderSources(
+                status.sources || []
+            );
+
+            renderAlerts(
+                alerts.alerts || []
+            );
+
+            bindAlertActions();
+
+            renderAsteroidRisk(
+                events.events || []
+            );
+
+            renderEvents(
+                events.events || []
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Monitoring dashboard error:",
+                error
+            );
+
+
+            document.getElementById(
+                "monitoring-sources"
+            ).innerHTML =
+                `<div
+                    class="monitoring-error"
+                >
+                    ${escapeHtml(
+                        error.message
+                    )}
+                </div>`;
+
+        } finally {
+
+            refreshButton.disabled = false;
+
+        }
+
+    }
+
+
+    refreshButton.addEventListener(
+        "click",
+        loadMonitoring
+    );
+
+
+    loadMonitoring();
+
+})();
+
+</script>
+
+</main>
+
+</body>
+</html>

@@ -115,6 +115,12 @@ def ai_workspace():
         "ai.html"
     )
 
+@app.route("/monitoring")
+def monitoring():
+    return render_template(
+        "monitoring.html"
+    )
+
 @app.route("/overview")
 def overview():
 
