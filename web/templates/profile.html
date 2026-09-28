@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AstroSphere user profile and security settings.">
+    <title>Profile | AstroSphere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+
+<body class="auth-page">
+
+<header class="auth-nav">
+    <a class="auth-brand" href="{{ url_for('index') }}">
+        <span class="logo">&#9673;</span> AstroSphere
+    </a>
+
+    <a class="auth-nav-link" href="{{ url_for('index') }}">
+        Explore AstroSphere
+    </a>
+</header>
+
+<main class="auth-main">
+    <section class="auth-card">
+
+        <div class="auth-eyebrow">ASTROSPHERE PROFILE</div>
+
+        <h1>{{ user.display_name }}</h1>
+
+        <p class="auth-intro">
+            Manage your AstroSphere account and security settings.
+        </p>
+
+        {% if mfa_message %}
+        <div class="auth-alert">
+            {{ mfa_message }}
+        </div>
+
+        {% if recovery_codes %}
+        <div class="profile-security">
+            <h2>Recovery codes</h2>
+
+            <p class="profile-security-intro">
+                These recovery codes can each be used once if you lose
+                access to your authenticator. Save them somewhere secure.
+                They will not be shown again.
+            </p>
+
+            <div class="recovery-code-grid">
+                {% for recovery_code in recovery_codes %}
+                <div class="recovery-code">
+                    {{ recovery_code }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        {% if mfa_error %}
+        <div class="auth-alert" role="alert">
+            {{ mfa_error }}
+        </div>
+        {% endif %}
+
+        <div class="profile-grid">
+
+            <div class="profile-row">
+                <span class="profile-label">Display name</span>
+                <span class="profile-value">
+                    {{ user.display_name }}
+                </span>
+            </div>
+
+            <div class="profile-row">
+                <span class="profile-label">Username</span>
+                <span class="profile-value">
+                    {{ user.username }}
+                </span>
+            </div>
+
+            <div class="profile-row">
+                <span class="profile-label">Email</span>
+                <span class="profile-value">
+                    {{ user.email }}
+                </span>
+            </div>
+
+            <div class="profile-row">
+                <span class="profile-label">Member since</span>
+                <span class="profile-value">
+                    {{ user.created_at.strftime("%d %B %Y") }}
+                </span>
+            </div>
+
+        </div>
+
+        <div class="profile-security">
+
+        <div class="profile-security">
+            <h2>Organization</h2>
+
+            {% if organization %}
+            <div class="profile-grid">
+
+                <div class="profile-row">
+                    <span class="profile-label">Organization</span>
+                    <span class="profile-value">
+                        {{ organization.name }}
+                    </span>
+                </div>
+
+                <div class="profile-row">
+                    <span class="profile-label">Type</span>
+                    <span class="profile-value">
+                        {{ organization.organization_type.replace("_", " ") | title }}
+                    </span>
+                </div>
+
+                <div class="profile-row">
+                    <span class="profile-label">Role</span>
+                    <span class="profile-value">
+                        {% if organization_roles %}
+                            {% for role in organization_roles %}
+                                {{ role["name"].replace("_", " ") | title }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            No organization role assigned
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="profile-row">
+                    <span class="profile-label">Membership</span>
+                    <span class="profile-value">
+                        {{ membership.status | title }}
+                    </span>
+                </div>
+
+            </div>
+            {% else %}
+            <p class="profile-security-intro">
+                This account is a platform-level account and is not
+                currently assigned to an organization.
+            </p>
+            {% endif %}
+        </div>
+            <h2>Security</h2>
+
+            <p class="profile-security-intro">
+                Protect your AstroSphere account with multi-factor
+                authentication.
+            </p>
+
+            <div class="security-status">
+                <div>
+                    <div class="security-status-label">
+                        Multi-Factor Authentication
+                    </div>
+
+                    {% if mfa_status.enabled %}
+                    <div class="security-status-value enabled">
+                        Enabled
+                    </div>
+                    {% else %}
+                    <div class="security-status-value disabled">
+                        Not enabled
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if mfa_status.enabled %}
+                <div>
+                    <div class="security-status-label">
+                        Recovery codes remaining
+                    </div>
+
+                    <div class="security-status-value">
+                        {{ mfa_status.recovery_codes_remaining }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if not mfa_status.enabled %}
+
+            <div class="security-actions">
+                <form
+                    method="post"
+                    action="{{ url_for('profile_mfa_enable') }}"
+                >
+                    <button class="auth-submit" type="submit">
+                        Enable MFA
+                    </button>
+                </form>
+            </div>
+
+            {% else %}
+
+            <div class="security-actions">
+
+                <form
+                    method="post"
+                    action="{{ url_for('profile_mfa_disable') }}"
+                >
+                    <div class="auth-field">
+                        <label for="disable-password">
+                            Current password
+                        </label>
+
+                        <input
+                            id="disable-password"
+                            name="password"
+                            type="password"
+                            autocomplete="current-password"
+                            required
+                            placeholder="Enter current password"
+                        >
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="disable-code">
+                            Authenticator code
+                        </label>
+
+                        <input
+                            id="disable-code"
+                            name="code"
+                            type="text"
+                            inputmode="numeric"
+                            pattern="[0-9]{6}"
+                            maxlength="6"
+                            autocomplete="one-time-code"
+                            required
+                            placeholder="000000"
+                        >
+                    </div>
+
+                    <button
+                        class="auth-submit"
+                        type="submit"
+                    >
+                        Disable MFA
+                    </button>
+                </form>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+        <div class="auth-actions">
+
+            <a class="auth-secondary" href="{{ url_for('index') }}">
+                Explore AstroSphere
+            </a>
+
+            <form method="post" action="{{ url_for('logout') }}">
+                <button class="auth-submit" type="submit">
+                    Sign Out
+                </button>
+            </form>
+
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

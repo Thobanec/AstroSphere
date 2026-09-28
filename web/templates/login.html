@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Sign in to AstroSphere.">
+    <title>Sign In | AstroSphere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+
+<body class="auth-page">
+
+<header class="auth-nav">
+    <a class="auth-brand" href="{{ url_for('landing') }}">
+        <span class="logo">&#9673;</span> AstroSphere
+    </a>
+
+    <a class="auth-nav-link" href="{{ url_for('landing') }}">
+        Back to AstroSphere
+    </a>
+</header>
+
+<main class="auth-main">
+    <section class="auth-card">
+
+        <div class="auth-eyebrow">ASTROSPHERE ACCESS</div>
+
+        <h1>Welcome back.</h1>
+
+        <p class="auth-intro">
+            Sign in to continue exploring the Universe through AstroSphere.
+        </p>
+
+        {% if error %}
+        <div class="auth-alert" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form class="auth-form" method="post" action="{{ url_for('login') }}">
+
+            <input
+                type="hidden"
+                name="next"
+                value="{{ next_url }}"
+            >
+
+            <div class="auth-field">
+                <label for="identifier">Email or username</label>
+                <input
+                    id="identifier"
+                    name="identifier"
+                    type="text"
+                    value="{{ identifier }}"
+                    autocomplete="username"
+                    required
+                    autofocus
+                    placeholder="Enter your email or username"
+                >
+            </div>
+
+            <div class="auth-field">
+                <label for="password">Password</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                    placeholder="Enter your password"
+                >
+            </div>
+
+            <button class="auth-submit" type="submit">
+                Sign In
+            </button>
+
+        </form>
+
+        <div class="auth-footer">
+            Need access to AstroSphere?
+            Contact an administrator to have an account created.
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

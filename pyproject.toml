@@ -14,7 +14,9 @@ dependencies = [
     "matplotlib>=3.11,<4",
     "numpy>=2.0,<3",
     "openai>=3.14,<4",
+    "cryptography>=50,<51",
     "pandas>=2.2,<3",
+    "qrcode>=8,<9",
     "skyfield>=1.55,<2",
 ]
 

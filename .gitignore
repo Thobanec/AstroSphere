@@ -87,9 +87,11 @@ backups/
 
 web/_celestial_import.txt
 web/templates/*.before-*
+web/*.before-*
+src/astrosphere/auth/*.before-*
 
 # =========================================================
-# AstroSphere Monitoring Runtime Data
+# AstroSphere Runtime Data
 # =========================================================
 
-data/monitoring.db
+data/

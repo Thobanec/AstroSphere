@@ -1,0 +1,128 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Set up multi-factor authentication for AstroSphere.">
+    <title>Set Up MFA | AstroSphere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+
+<body class="auth-page">
+
+<header class="auth-nav">
+    <a class="auth-brand" href="{{ url_for('index') }}">
+        <span class="logo">&#9673;</span> AstroSphere
+    </a>
+
+    <a class="auth-nav-link" href="{{ url_for('profile') }}">
+        Back to Profile
+    </a>
+</header>
+
+<main class="auth-main">
+    <section class="auth-card mfa-setup-card">
+
+        <div class="auth-eyebrow">ACCOUNT SECURITY</div>
+
+        <h1>Set up MFA.</h1>
+
+        <p class="auth-intro">
+            Use an authenticator app such as Microsoft Authenticator,
+            Google Authenticator, or another compatible TOTP application.
+        </p>
+
+        {% if error %}
+        <div class="auth-alert" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="mfa-step">
+            <span class="mfa-step-number">1</span>
+            <div>
+                <strong>Scan the QR code</strong>
+                <p>Open your authenticator app and scan this code.</p>
+            </div>
+        </div>
+
+        <div class="mfa-qr">
+            <img
+                src="{{ qr_data_uri }}"
+                alt="AstroSphere MFA setup QR code"
+            >
+        </div>
+
+        <div class="mfa-manual">
+            <label for="mfa-secret">Can't scan the QR code?</label>
+
+            <input
+                id="mfa-secret"
+                type="text"
+                value="{{ secret }}"
+                readonly
+            >
+
+            <small>
+                Enter this setup key manually in your authenticator app.
+            </small>
+        </div>
+
+        <div class="mfa-step">
+            <span class="mfa-step-number">2</span>
+            <div>
+                <strong>Verify your authenticator</strong>
+                <p>Enter the 6-digit code shown by your authenticator.</p>
+            </div>
+        </div>
+
+        <form
+            class="auth-form"
+            method="post"
+            action="{{ url_for('profile_mfa_confirm') }}"
+        >
+            <input
+                type="hidden"
+                name="provisioning_uri"
+                value="{{ provisioning_uri }}"
+            >
+
+            <input
+                type="hidden"
+                name="secret"
+                value="{{ secret }}"
+            >
+
+            <div class="auth-field">
+                <label for="code">Authenticator code</label>
+
+                <input
+                    id="code"
+                    name="code"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    required
+                    autofocus
+                    placeholder="000000"
+                >
+            </div>
+
+            <button class="auth-submit" type="submit">
+                Enable MFA
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <a href="{{ url_for('profile') }}">
+                Cancel
+            </a>
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

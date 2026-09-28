@@ -1,0 +1,128 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Multi-factor authentication for AstroSphere.">
+    <title>Multi-Factor Authentication | AstroSphere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+
+<body class="auth-page">
+
+<header class="auth-nav">
+    <a class="auth-brand" href="{{ url_for('landing') }}">
+        <span class="logo">&#9673;</span> AstroSphere
+    </a>
+</header>
+
+<main class="auth-main">
+    <section class="auth-card">
+
+        <div class="auth-eyebrow">ASTROSPHERE SECURITY</div>
+
+        <h1>Verify your identity.</h1>
+
+        <p class="auth-intro">
+            Enter the six-digit code from your authenticator app
+            to complete sign-in.
+        </p>
+
+        {% if error %}
+        <div class="auth-alert" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if recovery_mode %}
+
+        <form
+            class="auth-form"
+            method="post"
+            action="{{ url_for('mfa_challenge') }}"
+        >
+            <input
+                type="hidden"
+                name="method"
+                value="recovery"
+            >
+
+            <div class="auth-field">
+                <label for="code">Recovery code</label>
+
+                <input
+                    id="code"
+                    name="code"
+                    type="text"
+                    autocomplete="one-time-code"
+                    required
+                    autofocus
+                    placeholder="XXXXXXXX-XXXXXXXX"
+                >
+            </div>
+
+            <button class="auth-submit" type="submit">
+                Verify Recovery Code
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <a href="{{ url_for('mfa_challenge') }}">
+                Use authenticator app instead
+            </a>
+        </div>
+
+        {% else %}
+
+        <form
+            class="auth-form"
+            method="post"
+            action="{{ url_for('mfa_challenge') }}"
+        >
+            <input
+                type="hidden"
+                name="method"
+                value="totp"
+            >
+
+            <div class="auth-field">
+                <label for="code">Authenticator code</label>
+
+                <input
+                    id="code"
+                    name="code"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    required
+                    autofocus
+                    placeholder="Enter 6-digit code"
+                >
+            </div>
+
+            <button class="auth-submit" type="submit">
+                Verify Code
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <a href="{{ url_for('mfa_challenge') }}?recovery=1">
+                Use a recovery code instead
+            </a>
+        </div>
+
+        {% endif %}
+
+        <div class="auth-footer">
+            <a href="{{ url_for('login') }}">
+                Cancel and return to login
+            </a>
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>
