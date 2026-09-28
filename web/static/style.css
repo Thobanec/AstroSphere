@@ -227,6 +227,17 @@ footer {
         color 0.2s ease;
 }
 
+.global-nav-form {
+    margin: 0;
+    padding: 0;
+    display: inline-flex;
+}
+
+.global-nav-button {
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+}
 .global-nav-link:hover {
     background: #182044;
     border-color: #394579;

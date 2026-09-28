@@ -31,6 +31,22 @@
         &#9673; Overview
     </a>
 
+    {% if session.get('user_id') %}
+    <a href="{{ url_for('profile') }}"
+       class="global-nav-link{% if request.endpoint == 'profile' %} active{% endif %}"
+       {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>
+        &#128100; Profile
+    </a>
+
+    <form method="post"
+          action="{{ url_for('logout') }}"
+          class="global-nav-form">
+        <button type="submit" class="global-nav-link global-nav-button">
+            &#10140; Sign Out
+        </button>
+    </form>
+    {% endif %}
+
 </nav>
 
 {% include "_ai_floating_button.html" %}
