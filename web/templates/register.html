@@ -1,0 +1,126 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Create an AstroSphere account.">
+    <title>Create Account | AstroSphere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+
+<body class="auth-page">
+
+<header class="auth-nav">
+    <a class="auth-brand" href="{{ url_for('landing') }}">
+        <span class="logo">&#9673;</span> AstroSphere
+    </a>
+
+    <a class="auth-nav-link" href="{{ url_for('landing') }}">
+        Back to AstroSphere
+    </a>
+</header>
+
+<main class="auth-main">
+    <section class="auth-card">
+
+        <div class="auth-eyebrow">JOIN ASTROSPHERE</div>
+
+        <h1>Create your account.</h1>
+
+        <p class="auth-intro">
+            Create your AstroSphere profile and begin your exploration.
+        </p>
+
+        {% if error %}
+        <div class="auth-alert" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form class="auth-form" method="post" action="{{ url_for('register') }}">
+
+            <div class="auth-field">
+                <label for="display_name">Display name</label>
+                <input
+                    id="display_name"
+                    name="display_name"
+                    type="text"
+                    value="{{ display_name }}"
+                    autocomplete="name"
+                    required
+                    autofocus
+                    placeholder="Your name"
+                >
+            </div>
+
+            <div class="auth-field">
+                <label for="username">Username</label>
+                <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value="{{ username }}"
+                    autocomplete="username"
+                    required
+                    minlength="3"
+                    placeholder="Choose a username"
+                >
+            </div>
+
+            <div class="auth-field">
+                <label for="email">Email address</label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value="{{ email }}"
+                    autocomplete="email"
+                    required
+                    placeholder="you@example.com"
+                >
+            </div>
+
+            <div class="auth-field">
+                <label for="password">Password</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autocomplete="new-password"
+                    required
+                    minlength="8"
+                    placeholder="At least 8 characters"
+                >
+            </div>
+
+            <div class="auth-field">
+                <label for="confirm_password">Confirm password</label>
+                <input
+                    id="confirm_password"
+                    name="confirm_password"
+                    type="password"
+                    autocomplete="new-password"
+                    required
+                    minlength="8"
+                    placeholder="Enter your password again"
+                >
+            </div>
+
+            <button class="auth-submit" type="submit">
+                Create Account
+            </button>
+
+        </form>
+
+        <div class="auth-footer">
+            Already have an AstroSphere account?
+            <a href="{{ url_for('login') }}">
+                Sign in
+            </a>
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

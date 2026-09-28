@@ -1,0 +1,193 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Manage users in the current AstroSphere organization."
+    >
+
+    <title>Organization Users — AstroSphere</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+
+    <section
+        class="auth-card"
+        style="max-width: 1100px;"
+    >
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:1rem;
+                margin-bottom:1.5rem;
+                flex-wrap:wrap;
+            "
+        >
+
+            <div>
+                <div class="auth-eyebrow">
+                    ASTROSPHERE ORGANIZATION
+                </div>
+
+                <h1>Organization Users</h1>
+
+                <p class="auth-intro">
+                    {{ organization.name }}
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('organization_user_create') }}"
+                class="auth-button"
+            >
+                Create User
+            </a>
+
+        </div>
+
+
+        {% if members %}
+
+        <div style="overflow-x:auto;">
+
+            <table
+                style="
+                    width:100%;
+                    border-collapse:collapse;
+                "
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th
+                            style="
+                                text-align:left;
+                                padding:0.75rem;
+                            "
+                        >
+                            Username
+                        </th>
+
+                        <th
+                            style="
+                                text-align:left;
+                                padding:0.75rem;
+                            "
+                        >
+                            Display Name
+                        </th>
+
+                        <th
+                            style="
+                                text-align:left;
+                                padding:0.75rem;
+                            "
+                        >
+                            Email
+                        </th>
+
+                        <th
+                            style="
+                                text-align:left;
+                                padding:0.75rem;
+                            "
+                        >
+                            Role
+                        </th>
+
+                        <th
+                            style="
+                                text-align:left;
+                                padding:0.75rem;
+                            "
+                        >
+                            Status
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for member in members %}
+
+                    <tr>
+
+                        <td style="padding:0.75rem;">
+                            {{ member.user.username }}
+                        </td>
+
+                        <td style="padding:0.75rem;">
+                            {{ member.user.display_name }}
+                        </td>
+
+                        <td style="padding:0.75rem;">
+                            {{ member.user.email }}
+                        </td>
+
+                        <td style="padding:0.75rem;">
+
+                            {% for role in member.roles %}
+
+                                {{ role.name|replace('_', ' ')|title }}
+
+                                {% if not loop.last %}
+                                    ,
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </td>
+
+                        <td style="padding:0.75rem;">
+                            {{ member.membership.status|title }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <p>
+            No users are currently members of this organization.
+        </p>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

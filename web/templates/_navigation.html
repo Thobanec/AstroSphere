@@ -20,6 +20,11 @@
         &#9788; Solar System
     </a>
 
+    <a href="{{ url_for('monitoring') }}"
+       class="global-nav-link{% if request.endpoint == 'monitoring' %} active{% endif %}"
+       {% if request.endpoint == 'monitoring' %}aria-current="page"{% endif %}>
+        &#9889; Space Monitoring
+    </a>
     <a href="{{ url_for('overview') }}"
        class="global-nav-link{% if request.endpoint == 'overview' %} active{% endif %}"
        {% if request.endpoint == 'overview' %}aria-current="page"{% endif %}>

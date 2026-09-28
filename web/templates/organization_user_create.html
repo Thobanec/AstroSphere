@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Create a user in the current AstroSphere organization."
+    >
+
+    <title>Create Organization User — AstroSphere</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+
+    <section class="auth-card">
+
+        <div class="auth-eyebrow">
+            ASTROSPHERE ORGANIZATION
+        </div>
+
+        <h1>Create Organization User</h1>
+
+        <p class="auth-intro">
+            Create a new user in
+            <strong>{{ organization.name }}</strong>.
+        </p>
+
+
+        {% if error %}
+
+        <div class="auth-error">
+            {{ error }}
+        </div>
+
+        {% endif %}
+
+
+        <form method="post">
+
+            <div class="auth-field">
+
+                <label for="display_name">
+                    Display Name
+                </label>
+
+                <input
+                    id="display_name"
+                    name="display_name"
+                    type="text"
+                    value="{{ request.form.get('display_name', '') }}"
+                    required
+                    autocomplete="name"
+                >
+
+            </div>
+
+
+            <div class="auth-field">
+
+                <label for="username">
+                    Username
+                </label>
+
+                <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value="{{ request.form.get('username', '') }}"
+                    required
+                    autocomplete="username"
+                >
+
+            </div>
+
+
+            <div class="auth-field">
+
+                <label for="email">
+                    Email Address
+                </label>
+
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value="{{ request.form.get('email', '') }}"
+                    required
+                    autocomplete="email"
+                >
+
+            </div>
+
+
+            <div class="auth-field">
+
+                <label for="password">
+                    Temporary Password
+                </label>
+
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    minlength="8"
+                    autocomplete="new-password"
+                >
+
+            </div>
+
+
+            <div class="auth-field">
+
+                <label for="organization_role">
+                    Organization Role
+                </label>
+
+                <select
+                    id="organization_role"
+                    name="organization_role"
+                    required
+                >
+
+                    <option value="">
+                        Select a role
+                    </option>
+
+                    {% for role in roles %}
+
+                    <option
+                        value="{{ role.name }}"
+                        {% if request.form.get('organization_role') == role.name %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ role.name|replace('_', ' ')|title }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="auth-button"
+            >
+                Create User
+            </button>
+
+        </form>
+
+
+        <p style="margin-top:1rem;">
+
+            <a href="{{ url_for('organization_users') }}">
+                Back to organization users
+            </a>
+
+        </p>
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

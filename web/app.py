@@ -1,6 +1,18 @@
-﻿from datetime import datetime, timezone
+import base64
+import os
+from io import BytesIO
 
-from flask import Flask, render_template, request
+from datetime import datetime, timezone
+
+import qrcode
+
+from flask import (
+    Flask,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from astrosphere.astronomy.orbital_analysis import (
     analyze_body_distance,
@@ -56,7 +68,71 @@ from astrosphere.navigation import (
     get_celestial_object_url,
 )
 
+from astrosphere.auth.database import (
+    initialize_database,
+)
+from astrosphere.auth.organization import (
+    OrganizationUserCreationError,
+    create_organization_user,
+    get_assignable_organization_roles,
+    get_organization_members,
+    get_membership_roles,
+)
+
+from astrosphere.auth.rbac import (
+    get_organization_membership_roles,
+    initialize_rbac,
+)
+
+from astrosphere.auth.service import (
+    InvalidCredentialsError,
+    UserAlreadyExistsError,
+    authenticate_user,
+    begin_mfa_enrollment,
+    confirm_mfa_enrollment,
+    create_password_reset_token,
+    create_user,
+    disable_mfa,
+    get_mfa_status,
+    get_user_by_id,
+    get_user_for_password_reset,
+    reset_password,
+    verify_mfa_code,
+    verify_mfa_recovery_code,
+)
+
+from web.auth import (
+    begin_mfa_login,
+    clear_mfa_pending,
+    complete_mfa_login,
+    get_current_membership,
+    get_current_organization,
+    get_current_user,
+    get_mfa_pending_next_url,
+    get_mfa_pending_user,
+    get_safe_next_url,
+    login_required,
+    login_user,
+    logout_user,
+    organization_permission_required,
+)
+
 app = Flask(__name__)
+
+app.config["SECRET_KEY"] = os.getenv(
+    "ASTROSPHERE_SECRET_KEY",
+    "astrosphere-local-development-secret",
+)
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.getenv(
+    "ASTROSPHERE_SECURE_COOKIES",
+    "false",
+).lower() == "true"
+
+initialize_database()
+initialize_rbac()
 
 
 @app.template_global()
@@ -75,7 +151,509 @@ def landing():
     )
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    next_url = request.args.get("next", "")
+
+    if request.method == "POST":
+        identifier = request.form.get("identifier", "").strip()
+        password = request.form.get("password", "")
+
+        next_url = request.form.get("next", next_url)
+
+        try:
+            user = authenticate_user(
+                identifier=identifier,
+                password=password,
+            )
+
+        except InvalidCredentialsError:
+            return render_template(
+                "login.html",
+                error="Invalid email/username or password.",
+                identifier=identifier,
+                next_url=next_url,
+            ), 401
+
+        mfa_status = get_mfa_status(
+            user_id=user.id,
+        )
+
+        if mfa_status["enabled"]:
+            begin_mfa_login(
+                user=user,
+                next_url=next_url,
+            )
+
+            return redirect(
+                url_for("mfa_challenge")
+            )
+
+        login_user(user)
+
+        if next_url:
+            return redirect(
+                get_safe_next_url(next_url)
+            )
+
+        return redirect(
+            url_for("profile")
+        )
+
+    return render_template(
+        "login.html",
+        error=None,
+        identifier="",
+        next_url=next_url,
+    )
+
+
+@app.route("/mfa", methods=["GET", "POST"])
+def mfa_challenge():
+    user = get_mfa_pending_user()
+
+    if user is None:
+        return redirect(
+            url_for("login")
+        )
+
+    if request.method == "POST":
+        code = request.form.get(
+            "code",
+            "",
+        ).strip()
+
+        method = request.form.get(
+            "method",
+            "totp",
+        ).strip().lower()
+
+        verified = False
+
+        if method == "recovery":
+            verified = verify_mfa_recovery_code(
+                user_id=user.id,
+                code=code,
+            )
+        else:
+            verified = verify_mfa_code(
+                user_id=user.id,
+                code=code,
+            )
+
+        if not verified:
+            return render_template(
+                "mfa_challenge.html",
+                error="The verification code is invalid or has already been used.",
+                recovery_mode=(method == "recovery"),
+            ), 401
+
+        next_url = complete_mfa_login(user)
+
+        return redirect(
+            get_safe_next_url(next_url)
+        )
+
+    recovery_mode = (
+        request.args.get("recovery", "").strip() == "1"
+    )
+
+    return render_template(
+        "mfa_challenge.html",
+        error=None,
+        recovery_mode=recovery_mode,
+    )
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        identifier = request.form.get("identifier", "").strip()
+
+        # Always return the same message so that the endpoint
+        # does not reveal whether an account exists.
+        message = (
+            "If an account exists for that information, "
+            "password-reset instructions have been prepared."
+        )
+
+        if identifier:
+            user = get_user_for_password_reset(identifier)
+
+            if user is not None and user.is_active:
+                create_password_reset_token(user.id)
+
+        return render_template(
+            "forgot_password.html",
+            message=message,
+            identifier=identifier,
+            error=None,
+        )
+
+    return render_template(
+        "forgot_password.html",
+        message=None,
+        identifier="",
+        error=None,
+    )
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password_route(token):
+    if request.method == "POST":
+        new_password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if new_password != confirm_password:
+            return render_template(
+                "reset_password.html",
+                token=token,
+                error="The passwords do not match.",
+                success=None,
+            ), 400
+
+        try:
+            reset_password(
+                token=token,
+                new_password=new_password,
+            )
+        except ValueError as exc:
+            return render_template(
+                "reset_password.html",
+                token=token,
+                error=str(exc),
+                success=None,
+            ), 400
+
+        return render_template(
+            "reset_password.html",
+            token=None,
+            error=None,
+            success=(
+                "Your password has been reset successfully. "
+                "You can now sign in with your new password."
+            ),
+        )
+
+    return render_template(
+        "reset_password.html",
+        token=token,
+        error=None,
+        success=None,
+    )
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    return redirect(url_for("login"))
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    logout_user()
+
+    return redirect(
+        url_for("landing")
+    )
+
+
+def _mfa_qr_data_uri(provisioning_uri: str) -> str:
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=4,
+    )
+
+    qr.add_data(provisioning_uri)
+    qr.make(fit=True)
+
+    image = qr.make_image()
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+
+    encoded = base64.b64encode(
+        buffer.getvalue()
+    ).decode("ascii")
+
+    return f"data:image/png;base64,{encoded}"
+
+
+def _get_profile_organization_context(user):
+    """Build organization and role information for the profile page."""
+    organization = get_current_organization()
+    membership = get_current_membership()
+
+    organization_roles = []
+
+    if membership is not None:
+        organization_roles = get_organization_membership_roles(
+            user.id,
+            organization.id,
+        )
+
+    return {
+        "organization": organization,
+        "membership": membership,
+        "organization_roles": organization_roles,
+    }
+
+@app.route("/organization/users")
+@organization_permission_required("users.view")
+def organization_users():
+    organization = get_current_organization()
+
+    if organization is None:
+        return redirect(url_for("profile"))
+
+    memberships = get_organization_members(organization.id)
+
+    members = []
+
+    for membership in memberships:
+        user = get_user_by_id(membership.user_id)
+        roles = get_membership_roles(membership.id)
+
+        if user is None:
+            continue
+
+        members.append(
+            {
+                "user": user,
+                "membership": membership,
+                "roles": roles,
+            }
+        )
+
+    return render_template(
+        "organization_users.html",
+        organization=organization,
+        members=members,
+    )
+
+
+@app.route("/organization/users/create", methods=["GET", "POST"])
+@organization_permission_required("users.create")
+def organization_user_create():
+    organization = get_current_organization()
+    user = get_current_user()
+
+    if organization is None or user is None:
+        return redirect(url_for("profile"))
+
+    roles = get_assignable_organization_roles()
+    error = None
+
+    if request.method == "POST":
+        display_name = request.form.get("display_name", "").strip()
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        organization_role = request.form.get("organization_role", "").strip().lower()
+
+        allowed_role_names = {
+            role["name"]
+            for role in roles
+        }
+
+        if organization_role not in allowed_role_names:
+            error = "Please select a valid organization role."
+        else:
+            try:
+                create_organization_user(
+                    organization_id=organization.id,
+                    created_by=user.id,
+                    email=email,
+                    username=username,
+                    display_name=display_name,
+                    password=password,
+                    organization_role=organization_role,
+                )
+
+                return redirect(url_for("organization_users"))
+
+            except OrganizationUserCreationError as exc:
+                error = str(exc)
+
+            except ValueError as exc:
+                error = str(exc)
+
+    return render_template(
+        "organization_user_create.html",
+        organization=organization,
+        roles=roles,
+        error=error,
+    )
+
+@app.route("/profile")
+@login_required
+def profile():
+    user = get_current_user()
+    mfa_status = get_mfa_status(user_id=user.id)
+    profile_context = _get_profile_organization_context(user)
+
+    return render_template(
+        "profile.html",
+        user=user,
+        mfa_status=mfa_status,
+        mfa_error=None,
+        mfa_message=None,
+        recovery_codes=None,
+        **profile_context,
+    )
+
+
+@app.route("/profile/mfa/enable", methods=["POST"])
+@login_required
+def profile_mfa_enable():
+    user = get_current_user()
+
+    try:
+        enrollment = begin_mfa_enrollment(
+            user_id=user.id,
+        )
+    except ValueError as exc:
+        return render_template(
+            "profile.html",
+            user=user,
+            mfa_status=get_mfa_status(user_id=user.id),
+            mfa_error=str(exc),
+            mfa_message=None,
+            recovery_codes=None,
+        ), 400
+
+    return render_template(
+        "mfa_setup.html",
+        user=user,
+        provisioning_uri=enrollment["provisioning_uri"],
+        qr_data_uri=_mfa_qr_data_uri(
+            enrollment["provisioning_uri"]
+        ),
+        secret=enrollment["secret"],
+        error=None,
+    )
+
+
+@app.route("/profile/mfa/confirm", methods=["POST"])
+@login_required
+def profile_mfa_confirm():
+    user = get_current_user()
+
+    code = request.form.get(
+        "code",
+        "",
+    ).strip()
+
+    if not code:
+        provisioning_uri = request.form.get(
+            "provisioning_uri",
+            "",
+        )
+
+        return render_template(
+            "mfa_setup.html",
+            user=user,
+            provisioning_uri=provisioning_uri,
+            qr_data_uri=(
+                _mfa_qr_data_uri(provisioning_uri)
+                if provisioning_uri
+                else ""
+            ),
+            secret=request.form.get(
+                "secret",
+                "",
+            ),
+            error="Enter the 6-digit verification code.",
+        ), 400
+
+    try:
+        recovery_codes = confirm_mfa_enrollment(
+            user_id=user.id,
+            code=code,
+        )
+    except ValueError as exc:
+        provisioning_uri = request.form.get(
+            "provisioning_uri",
+            "",
+        )
+
+        return render_template(
+            "mfa_setup.html",
+            user=user,
+            provisioning_uri=provisioning_uri,
+            qr_data_uri=(
+                _mfa_qr_data_uri(provisioning_uri)
+                if provisioning_uri
+                else ""
+            ),
+            secret=request.form.get(
+                "secret",
+                "",
+            ),
+            error=str(exc),
+        ), 400
+
+    return render_template(
+        "profile.html",
+        user=user,
+        mfa_status=get_mfa_status(user_id=user.id),
+        mfa_error=None,
+        mfa_message=(
+            "MFA has been enabled. Save your recovery codes "
+            "before leaving this page."
+        ),
+        recovery_codes=recovery_codes,
+    )
+
+
+@app.route("/profile/mfa/disable", methods=["POST"])
+@login_required
+def profile_mfa_disable():
+    user = get_current_user()
+
+    password = request.form.get(
+        "password",
+        "",
+    )
+    code = request.form.get(
+        "code",
+        "",
+    ).strip()
+
+    try:
+        authenticate_user(
+            identifier=user.email,
+            password=password,
+        )
+    except InvalidCredentialsError:
+        return render_template(
+            "profile.html",
+            user=user,
+            mfa_status=get_mfa_status(user_id=user.id),
+            mfa_error="The current password is incorrect.",
+            mfa_message=None,
+            recovery_codes=None,
+        ), 401
+
+    if not verify_mfa_code(
+        user_id=user.id,
+        code=code,
+    ):
+        return render_template(
+            "profile.html",
+            user=user,
+            mfa_status=get_mfa_status(user_id=user.id),
+            mfa_error="The MFA verification code is invalid.",
+            mfa_message=None,
+            recovery_codes=None,
+        ), 401
+
+    disable_mfa(user_id=user.id)
+
+    return redirect(url_for("profile"))
+
+
 @app.route("/app")
+@login_required
 def index():
 
     return render_template(
@@ -113,6 +691,12 @@ def solar_system():
 def ai_workspace():
     return render_template(
         "ai.html"
+    )
+
+@app.route("/monitoring")
+def monitoring():
+    return render_template(
+        "monitoring.html"
     )
 
 @app.route("/overview")
