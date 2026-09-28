@@ -1,6 +1,5 @@
 import base64
 import os
-import secrets
 from io import BytesIO
 
 from datetime import datetime, timezone
@@ -89,7 +88,6 @@ from astrosphere.auth.service import (
     InvalidCredentialsError,
     UserAlreadyExistsError,
     authenticate_user,
-    create_super_administrator,
     begin_mfa_enrollment,
     confirm_mfa_enrollment,
     create_password_reset_token,
@@ -152,58 +150,6 @@ def landing():
         "landing.html"
     )
 
-
-@app.route("/api/v1/bootstrap/super-admin", methods=["POST"])
-def bootstrap_super_admin():
-    """Create the initial Super Administrator using a temporary bootstrap token."""
-    expected_token = os.getenv("ASTROSPHERE_BOOTSTRAP_TOKEN", "").strip()
-
-    if not expected_token:
-        return {"error": "Bootstrap is disabled."}, 404
-
-    supplied_token = request.headers.get(
-        "X-AstroSphere-Bootstrap-Token",
-        "",
-    ).strip()
-
-    if not supplied_token or not secrets.compare_digest(
-        supplied_token,
-        expected_token,
-    ):
-        return {"error": "Unauthorized."}, 401
-
-    payload = request.get_json(silent=True) or {}
-
-    email = str(payload.get("email", "")).strip()
-    username = str(payload.get("username", "")).strip()
-    display_name = str(payload.get("display_name", "")).strip()
-    password = str(payload.get("password", ""))
-
-    if not email or not username or not display_name or not password:
-        return {
-            "error": (
-                "email, username, display_name and password "
-                "are required."
-            )
-        }, 400
-
-    try:
-        user = create_super_administrator(
-            email=email,
-            username=username,
-            display_name=display_name,
-            password=password,
-        )
-    except PermissionError as exc:
-        return {"error": str(exc)}, 409
-    except UserAlreadyExistsError as exc:
-        return {"error": str(exc)}, 409
-    except ValueError as exc:
-        return {"error": str(exc)}, 400
-    except RuntimeError as exc:
-        return {"error": str(exc)}, 500
-
-    return {"status": "created"}, 201
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
