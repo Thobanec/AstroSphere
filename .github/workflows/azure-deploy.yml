@@ -49,6 +49,18 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Verify Azure identity
+        run: |
+          echo "Authenticated Azure identity:"
+          az account show \
+            --query "{subscription:id,tenant:tenantId,user:user.name}" \
+            -o table
+
+          echo "Azure CLI account type:"
+          az account show \
+            --query "user.type" \
+            -o tsv
+
       - name: Verify Azure Web App exists
         run: |
           echo "Checking Azure Web App..."
