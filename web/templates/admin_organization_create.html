@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="Create an AstroSphere organization."
+    >
+
+    <title>Create Organization — AstroSphere</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+
+    <section class="page-shell">
+
+        <div class="page-header">
+
+            <div>
+                <p class="eyebrow">Administration</p>
+
+                <h1>Create Organization</h1>
+
+                <p class="page-subtitle">
+                    Create a new AstroSphere tenant.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="form-card">
+
+            {% if error %}
+
+            <div
+                class="alert alert-error"
+                role="alert"
+            >
+                {{ error }}
+            </div>
+
+            {% endif %}
+
+            <form method="post">
+
+                <div class="form-group">
+
+                    <label for="name">
+                        Organization Name
+                    </label>
+
+                    <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        required
+                        value="{{ request.form.get('name', '') }}"
+                        placeholder="Example Astronomy University"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="slug">
+                        Organization Slug
+                    </label>
+
+                    <input
+                        id="slug"
+                        name="slug"
+                        type="text"
+                        required
+                        value="{{ request.form.get('slug', '') }}"
+                        placeholder="example-astronomy-university"
+                    >
+
+                    <small>
+                        Used as the unique identifier for the organization.
+                    </small>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="organization_type">
+                        Organization Type
+                    </label>
+
+                    <select
+                        id="organization_type"
+                        name="organization_type"
+                        required
+                    >
+
+                        <option value="">
+                            Select organization type
+                        </option>
+
+                        {% for organization_type in organization_types %}
+
+                        <option
+                            value="{{ organization_type }}"
+                            {% if request.form.get('organization_type') == organization_type %}
+                            selected
+                            {% endif %}
+                        >
+                            {{ organization_type.replace('_', ' ').title() }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="form-actions">
+
+                    <a
+                        class="button button-secondary"
+                        href="{{ url_for('admin_organizations') }}"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        class="button button-primary"
+                        type="submit"
+                    >
+                        Create Organization
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>

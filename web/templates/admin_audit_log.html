@@ -1,0 +1,142 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="AstroSphere administrative audit log."
+    >
+
+    <title>Audit Log — AstroSphere</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+    <section class="page-shell">
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Administration</p>
+
+                <h1>Audit Log</h1>
+
+                <p class="page-subtitle">
+                    Recent administrative activity across AstroSphere.
+                </p>
+            </div>
+        </div>
+
+        <div class="table-card">
+
+            {% if entries %}
+
+            <div class="table-responsive">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Actor</th>
+                            <th>Action</th>
+                            <th>Target</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    {% for entry in entries %}
+
+                        <tr>
+
+                            <td>
+                                {{ entry.created_at }}
+                            </td>
+
+                            <td>
+                                {% if entry.actor_username %}
+                                    <strong>
+                                        {{ entry.actor_display_name }}
+                                    </strong>
+
+                                    <br>
+
+                                    <small>
+                                        {{ entry.actor_username }}
+                                    </small>
+                                {% else %}
+                                    <span>
+                                        System / Unknown
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    {{ entry.action }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {% if entry.target_type %}
+                                    {{ entry.target_type }}
+
+                                    {% if entry.target_id is not none %}
+                                        #{{ entry.target_id }}
+                                    {% endif %}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ entry.details }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <h2>No audit events</h2>
+
+                <p>
+                    No administrative activity has been recorded yet.
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

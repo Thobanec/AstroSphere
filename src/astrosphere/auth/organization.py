@@ -249,6 +249,64 @@ def get_organization_by_slug(slug: str) -> Optional[Organization]:
     return _row_to_organization(row) if row else None
 
 
+def deactivate_organization(organization_id: int) -> None:
+    """Deactivate an organization without deleting its data."""
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE organizations
+            SET is_active = 0
+            WHERE id = ?
+            """,
+            (organization_id,),
+        )
+
+        if cursor.rowcount == 0:
+            raise OrganizationNotFoundError(
+                "The organization was not found."
+            )
+
+        connection.commit()
+
+
+def activate_organization(organization_id: int) -> None:
+    """Reactivate a previously deactivated organization."""
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE organizations
+            SET is_active = 1
+            WHERE id = ?
+            """,
+            (organization_id,),
+        )
+
+        if cursor.rowcount == 0:
+            raise OrganizationNotFoundError(
+                "The organization was not found."
+            )
+
+        connection.commit()
+
+
+def delete_organization(organization_id: int) -> None:
+    """Permanently delete an organization and its memberships."""
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            DELETE FROM organizations
+            WHERE id = ?
+            """,
+            (organization_id,),
+        )
+
+        if cursor.rowcount == 0:
+            raise OrganizationNotFoundError(
+                "The organization was not found."
+            )
+
+        connection.commit()
+
 def get_all_organizations() -> list[Organization]:
     with get_connection() as connection:
         rows = connection.execute(

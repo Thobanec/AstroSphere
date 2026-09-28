@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Edit User — AstroSphere</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+    <section class="page-shell">
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">User Management</p>
+                <h1>Edit User</h1>
+                <p class="page-subtitle">
+                    Update account information.
+                </p>
+            </div>
+        </div>
+
+        <div class="auth-card">
+
+            {% if error %}
+                <div class="auth-error">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="post">
+
+                <div class="form-grid">
+
+                    <div class="form-field">
+                        <label for="display_name">Display Name</label>
+                        <input
+                            id="display_name"
+                            name="display_name"
+                            type="text"
+                            required
+                            value="{{ request.form.get(
+                                'display_name',
+                                target.display_name
+                            ) }}"
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="username">Username</label>
+                        <input
+                            id="username"
+                            name="username"
+                            type="text"
+                            required
+                            value="{{ request.form.get(
+                                'username',
+                                target.username
+                            ) }}"
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="email">Email Address</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            required
+                            value="{{ request.form.get(
+                                'email',
+                                target.email
+                            ) }}"
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label>Platform Role</label>
+                        <input
+                            type="text"
+                            value="{{ target_role.replace(
+                                '_',
+                                ' '
+                            ).title() }}"
+                            disabled
+                        >
+                    </div>
+
+                </div>
+
+                <div class="form-actions">
+                    <a class="button button-secondary"
+                       href="{{ url_for('user_management') }}">
+                        Cancel
+                    </a>
+
+                    <button class="button button-primary"
+                            type="submit">
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

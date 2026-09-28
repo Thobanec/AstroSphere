@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>User Management — AstroSphere</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+    <section class="page-shell">
+
+        <div class="page-header page-header-with-action">
+            <div>
+                <p class="eyebrow">User Management</p>
+                <h1>Users</h1>
+                <p class="page-subtitle">
+                    Manage Standard User accounts.
+                </p>
+            </div>
+
+            <a class="button button-primary"
+               href="{{ url_for('user_management_create') }}">
+                + Create Standard User
+            </a>
+        </div>
+
+        <div class="table-card">
+
+            {% if users %}
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for row in users %}
+                        <tr>
+
+                            <td>
+                                <strong>{{ row.user.display_name }}</strong>
+                            </td>
+
+                            <td>{{ row.user.username }}</td>
+
+                            <td>{{ row.user.email }}</td>
+
+                            <td>Standard User</td>
+
+                            <td>
+                                {% if row.user.is_active %}
+                                    <span class="status-badge status-active">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="table-actions">
+
+                                    <a class="button button-secondary"
+                                       href="{{ url_for(
+                                           'user_management_edit',
+                                           user_id=row.user.id
+                                       ) }}">
+                                        Edit
+                                    </a>
+
+                                    {% if row.user.is_active %}
+
+                                        <form method="post"
+                                              action="{{ url_for(
+                                                  'user_management_deactivate',
+                                                  user_id=row.user.id
+                                              ) }}">
+                                            <button
+                                                class="button button-secondary"
+                                                type="submit">
+                                                Disable
+                                            </button>
+                                        </form>
+
+                                    {% else %}
+
+                                        <form method="post"
+                                              action="{{ url_for(
+                                                  'user_management_activate',
+                                                  user_id=row.user.id
+                                              ) }}">
+                                            <button
+                                                class="button button-primary"
+                                                type="submit">
+                                                Enable
+                                            </button>
+                                        </form>
+
+                                    {% endif %}
+
+                                    <form method="post"
+                                          action="{{ url_for(
+                                              'user_management_delete',
+                                              user_id=row.user.id
+                                          ) }}"
+                                          onsubmit="return confirm(
+                                              'Delete this user permanently?'
+                                          );">
+                                        <button
+                                            class="button button-danger"
+                                            type="submit">
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+                <h2>No Standard Users</h2>
+                <p>
+                    No Standard User accounts are currently available.
+                </p>
+
+                <a class="button button-primary"
+                   href="{{ url_for('user_management_create') }}">
+                    Create Standard User
+                </a>
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

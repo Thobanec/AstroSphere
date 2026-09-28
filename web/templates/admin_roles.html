@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="AstroSphere roles and permissions."
+    >
+
+    <title>Roles &amp; Permissions — AstroSphere</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+    <section class="page-shell">
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Administration</p>
+
+                <h1>Roles &amp; Permissions</h1>
+
+                <p class="page-subtitle">
+                    Review platform and organization roles and their
+                    assigned permissions.
+                </p>
+            </div>
+        </div>
+
+        <div class="card-grid">
+
+            {% for role in roles %}
+
+            <article class="feature-card">
+
+                <div>
+                    <h2>
+                        {{ role.name.replace('_', ' ').title() }}
+                    </h2>
+
+                    <p>
+                        {{ role.description }}
+                    </p>
+                </div>
+
+                {% if role.is_system_role %}
+                    <span class="status-badge status-active">
+                        System Role
+                    </span>
+                {% endif %}
+
+                <div>
+                    <strong>
+                        {{ role.permissions|length }}
+                    </strong>
+
+                    <span>Permissions</span>
+                </div>
+
+                {% if role.permissions %}
+
+                <div class="role-permissions">
+                    <ul>
+                        {% for permission in role.permissions %}
+                        <li>
+                            <strong>{{ permission.name }}</strong>
+                            <span>{{ permission.description }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                {% else %}
+
+                <p>
+                    No permissions are currently assigned.
+                </p>
+
+                {% endif %}
+
+            </article>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

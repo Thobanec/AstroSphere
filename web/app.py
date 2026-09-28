@@ -72,16 +72,27 @@ from astrosphere.auth.database import (
     initialize_database,
 )
 from astrosphere.auth.organization import (
+    OrganizationAlreadyExistsError,
     OrganizationUserCreationError,
+    ORGANIZATION_TYPES,
+    create_organization,
+    activate_organization,
     create_organization_user,
+    deactivate_organization,
+    delete_organization,
+    get_all_organizations,
     get_assignable_organization_roles,
     get_organization_members,
     get_membership_roles,
 )
 
 from astrosphere.auth.rbac import (
+    FULL_ADMINISTRATOR,
+    STANDARD_USER,
+    SUPER_ADMINISTRATOR,
     get_organization_membership_roles,
     initialize_rbac,
+    user_has_permission,
 )
 
 from astrosphere.auth.service import (
@@ -92,11 +103,19 @@ from astrosphere.auth.service import (
     confirm_mfa_enrollment,
     create_password_reset_token,
     create_user,
+    delete_user,
     disable_mfa,
+    get_all_users,
+    get_primary_platform_role,
+    get_user_platform_roles,
+    get_all_roles_with_permissions,
+    get_audit_log_entries,
     get_mfa_status,
     get_user_by_id,
     get_user_for_password_reset,
     reset_password,
+    set_user_active,
+    update_user,
     verify_mfa_code,
     verify_mfa_recovery_code,
 )
@@ -138,6 +157,34 @@ initialize_rbac()
 @app.template_global()
 def celestial_url(object_id):
     return get_celestial_object_url(object_id)
+
+@app.template_global()
+def can_access_platform_administration(permission_name="users.view"):
+    """Return True only for Super Administrators."""
+
+    user = get_current_user()
+
+    if user is None:
+        return False
+
+    return get_primary_platform_role(user.id) == SUPER_ADMINISTRATOR
+
+
+@app.template_global()
+def can_access_user_management():
+    """Return True for Full Administrators and Super Administrators."""
+
+    user = get_current_user()
+
+    if user is None:
+        return False
+
+    role = get_primary_platform_role(user.id)
+
+    return role in {
+        SUPER_ADMINISTRATOR,
+        FULL_ADMINISTRATOR,
+    }
 
 
 app.register_blueprint(api)
@@ -396,6 +443,579 @@ def _get_profile_organization_context(user):
         "membership": membership,
         "organization_roles": organization_roles,
     }
+
+
+def _platform_admin_required():
+    """Require the Super Administrator platform role."""
+
+    user = get_current_user()
+
+    if user is None:
+        return redirect(url_for("login"))
+
+    if get_primary_platform_role(user.id) != SUPER_ADMINISTRATOR:
+        return render_template(
+            "error.html",
+            status_code=403,
+            message="You do not have permission to access this administration area.",
+        ), 403
+
+    return None
+
+
+def _user_management_required():
+    """Require Full Administrator or Super Administrator."""
+
+    user = get_current_user()
+
+    if user is None:
+        return redirect(url_for("login"))
+
+    role = get_primary_platform_role(user.id)
+
+    if role not in {
+        SUPER_ADMINISTRATOR,
+        FULL_ADMINISTRATOR,
+    }:
+        return render_template(
+            "error.html",
+            status_code=403,
+            message="You do not have permission to access user management.",
+        ), 403
+
+    return None
+
+
+@app.route("/admin")
+@login_required
+def administration():
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    organizations = get_all_organizations()
+
+    return render_template(
+        "administration.html",
+        organizations=organizations,
+    )
+
+
+@app.route("/admin/organizations")
+@login_required
+def admin_organizations():
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    organizations = get_all_organizations()
+
+    return render_template(
+        "admin_organizations.html",
+        organizations=organizations,
+    )
+
+
+@app.route("/admin/organizations/create", methods=["GET", "POST"])
+@login_required
+def admin_organization_create():
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    user = get_current_user()
+    error = None
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        slug = request.form.get("slug", "").strip()
+        organization_type = request.form.get(
+            "organization_type",
+            "",
+        ).strip().upper()
+
+        if not name:
+            error = "Organization name is required."
+        elif not slug:
+            error = "Organization slug is required."
+        elif organization_type not in ORGANIZATION_TYPES:
+            error = "Please select a valid organization type."
+        else:
+            try:
+                create_organization(
+                    name=name,
+                    slug=slug,
+                    organization_type=organization_type,
+                    created_by=user.id,
+                )
+
+                return redirect(url_for("admin_organizations"))
+
+            except OrganizationAlreadyExistsError as exc:
+                error = str(exc)
+
+            except ValueError as exc:
+                error = str(exc)
+
+    return render_template(
+        "admin_organization_create.html",
+        organization_types=ORGANIZATION_TYPES,
+        error=error,
+    )
+
+@app.route("/admin/organizations/<int:organization_id>/deactivate", methods=["POST"])
+@login_required
+def admin_organization_deactivate(organization_id):
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    try:
+        deactivate_organization(organization_id)
+    except OrganizationNotFoundError as exc:
+        return render_template(
+            "error.html",
+            error=str(exc),
+        ), 404
+
+    return redirect(url_for("admin_organizations"))
+
+
+@app.route("/admin/organizations/<int:organization_id>/activate", methods=["POST"])
+@login_required
+def admin_organization_activate(organization_id):
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    try:
+        activate_organization(organization_id)
+    except OrganizationNotFoundError as exc:
+        return render_template(
+            "error.html",
+            error=str(exc),
+        ), 404
+
+    return redirect(url_for("admin_organizations"))
+
+
+@app.route("/admin/organizations/<int:organization_id>/delete", methods=["POST"])
+@login_required
+def admin_organization_delete(organization_id):
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    try:
+        delete_organization(organization_id)
+    except OrganizationNotFoundError as exc:
+        return render_template(
+            "error.html",
+            error=str(exc),
+        ), 404
+
+    return redirect(url_for("admin_organizations"))
+
+@app.route("/admin/roles")
+@login_required
+def admin_roles():
+    """Super Administrator view of platform and organization roles."""
+
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    roles = get_all_roles_with_permissions()
+
+    return render_template(
+        "admin_roles.html",
+        roles=roles,
+    )
+
+
+@app.route("/admin/audit-log")
+@login_required
+def admin_audit_log():
+    """Super Administrator view of platform audit events."""
+
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    entries = get_audit_log_entries(limit=250)
+
+    return render_template(
+        "admin_audit_log.html",
+        entries=entries,
+    )
+
+@app.route("/admin/users")
+@login_required
+def admin_users():
+    """Super Administrator platform-wide user management."""
+
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    users = get_all_users()
+
+    user_rows = []
+
+    for user in users:
+        user_rows.append(
+            {
+                "user": user,
+                "platform_role": get_primary_platform_role(user.id),
+                "platform_roles": get_user_platform_roles(user.id),
+            }
+        )
+
+    return render_template(
+        "admin_users.html",
+        users=user_rows,
+        current_user=get_current_user(),
+    )
+
+
+@app.route("/admin/users/create", methods=["GET", "POST"])
+@login_required
+def admin_user_create():
+    """Super Administrator creates platform users."""
+
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    error = None
+    allowed_roles = [
+        STANDARD_USER,
+        FULL_ADMINISTRATOR,
+    ]
+
+    if request.method == "POST":
+        display_name = request.form.get("display_name", "").strip()
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        role_name = request.form.get("role_name", "").strip()
+
+        if role_name not in allowed_roles:
+            error = "Please select a valid platform role."
+        elif not display_name:
+            error = "Display name is required."
+        elif not username:
+            error = "Username is required."
+        elif not email:
+            error = "Email address is required."
+        elif not password:
+            error = "Temporary password is required."
+        else:
+            try:
+                user = create_user(
+                    email=email,
+                    username=username,
+                    display_name=display_name,
+                    password=password,
+                    created_by=get_current_user().id,
+                    role_name=role_name,
+                )
+
+                return redirect(url_for("admin_users"))
+
+            except UserAlreadyExistsError as exc:
+                error = str(exc)
+            except ValueError as exc:
+                error = str(exc)
+
+    return render_template(
+        "admin_user_create.html",
+        allowed_roles=allowed_roles,
+        error=error,
+    )
+
+
+@app.route("/user-management")
+@login_required
+def user_management():
+    """Full Administrator user management.
+
+    Full Administrators can only see Standard Users.
+    Super Administrators can see all platform users here as well.
+    """
+
+    access_denied = _user_management_required()
+    if access_denied is not None:
+        return access_denied
+
+    current_user = get_current_user()
+    current_role = get_primary_platform_role(current_user.id)
+
+    all_users = get_all_users()
+
+    user_rows = []
+
+    for user in all_users:
+        platform_role = get_primary_platform_role(user.id)
+
+        if (
+            current_role == FULL_ADMINISTRATOR
+            and platform_role != STANDARD_USER
+        ):
+            continue
+
+        user_rows.append(
+            {
+                "user": user,
+                "platform_role": platform_role,
+                "platform_roles": get_user_platform_roles(user.id),
+            }
+        )
+
+    return render_template(
+        "user_management.html",
+        users=user_rows,
+        current_user=current_user,
+        current_role=current_role,
+    )
+
+
+@app.route("/user-management/create", methods=["GET", "POST"])
+@login_required
+def user_management_create():
+    """Create a Standard User from Full Administrator user management."""
+
+    access_denied = _user_management_required()
+    if access_denied is not None:
+        return access_denied
+
+    current_user = get_current_user()
+    current_role = get_primary_platform_role(current_user.id)
+
+    error = None
+
+    if request.method == "POST":
+        display_name = request.form.get("display_name", "").strip()
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+
+        if not display_name:
+            error = "Display name is required."
+        elif not username:
+            error = "Username is required."
+        elif not email:
+            error = "Email address is required."
+        elif not password:
+            error = "Temporary password is required."
+        else:
+            try:
+                create_user(
+                    email=email,
+                    username=username,
+                    display_name=display_name,
+                    password=password,
+                    created_by=current_user.id,
+                    role_name=STANDARD_USER,
+                )
+
+                return redirect(url_for("user_management"))
+
+            except UserAlreadyExistsError as exc:
+                error = str(exc)
+            except ValueError as exc:
+                error = str(exc)
+
+    return render_template(
+        "user_management_create.html",
+        error=error,
+        current_role=current_role,
+    )
+
+
+@app.route("/user-management/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+def user_management_edit(user_id):
+    """Edit a user according to platform administrator restrictions."""
+
+    access_denied = _user_management_required()
+    if access_denied is not None:
+        return access_denied
+
+    current_user = get_current_user()
+    current_role = get_primary_platform_role(current_user.id)
+
+    target = get_user_by_id(user_id)
+
+    if target is None:
+        return render_template(
+            "error.html",
+            status_code=404,
+            message="User was not found.",
+        ), 404
+
+    target_role = get_primary_platform_role(target.id)
+
+    if (
+        current_role == FULL_ADMINISTRATOR
+        and target_role != STANDARD_USER
+    ):
+        return render_template(
+            "error.html",
+            status_code=403,
+            message="Full Administrators can only manage Standard Users.",
+        ), 403
+
+    error = None
+
+    if request.method == "POST":
+        display_name = request.form.get("display_name", "").strip()
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+
+        if not display_name:
+            error = "Display name is required."
+        elif not username:
+            error = "Username is required."
+        elif not email:
+            error = "Email address is required."
+        else:
+            try:
+                update_user(
+                    actor_user_id=current_user.id,
+                    target_user_id=user_id,
+                    email=email,
+                    username=username,
+                    display_name=display_name,
+                )
+
+                return redirect(url_for("user_management"))
+
+            except UserAlreadyExistsError as exc:
+                error = str(exc)
+            except ValueError as exc:
+                error = str(exc)
+            except PermissionError as exc:
+                return render_template(
+                    "error.html",
+                    status_code=403,
+                    message=str(exc),
+                ), 403
+
+    return render_template(
+        "user_management_edit.html",
+        target=target,
+        target_role=target_role,
+        current_role=current_role,
+        error=error,
+    )
+
+
+@app.route(
+    "/user-management/<int:user_id>/activate",
+    methods=["POST"],
+)
+@login_required
+def user_management_activate(user_id):
+    """Activate an eligible platform user."""
+
+    access_denied = _user_management_required()
+    if access_denied is not None:
+        return access_denied
+
+    current_user = get_current_user()
+
+    try:
+        set_user_active(
+            actor_user_id=current_user.id,
+            target_user_id=user_id,
+            is_active=True,
+        )
+    except PermissionError as exc:
+        return render_template(
+            "error.html",
+            status_code=403,
+            message=str(exc),
+        ), 403
+    except ValueError as exc:
+        return render_template(
+            "error.html",
+            status_code=404,
+            message=str(exc),
+        ), 404
+
+    return redirect(url_for("user_management"))
+
+
+@app.route(
+    "/user-management/<int:user_id>/deactivate",
+    methods=["POST"],
+)
+@login_required
+def user_management_deactivate(user_id):
+    """Deactivate an eligible platform user."""
+
+    access_denied = _user_management_required()
+    if access_denied is not None:
+        return access_denied
+
+    current_user = get_current_user()
+
+    try:
+        set_user_active(
+            actor_user_id=current_user.id,
+            target_user_id=user_id,
+            is_active=False,
+        )
+    except PermissionError as exc:
+        return render_template(
+            "error.html",
+            status_code=403,
+            message=str(exc),
+        ), 403
+    except ValueError as exc:
+        return render_template(
+            "error.html",
+            status_code=404,
+            message=str(exc),
+        ), 404
+
+    return redirect(url_for("user_management"))
+
+
+@app.route(
+    "/user-management/<int:user_id>/delete",
+    methods=["POST"],
+)
+@login_required
+def user_management_delete(user_id):
+    """Delete an eligible platform user."""
+
+    access_denied = _user_management_required()
+    if access_denied is not None:
+        return access_denied
+
+    current_user = get_current_user()
+
+    try:
+        delete_user(
+            actor_user_id=current_user.id,
+            target_user_id=user_id,
+        )
+    except PermissionError as exc:
+        return render_template(
+            "error.html",
+            status_code=403,
+            message=str(exc),
+        ), 403
+    except ValueError as exc:
+        return render_template(
+            "error.html",
+            status_code=404,
+            message=str(exc),
+        ), 404
+
+    return redirect(url_for("user_management"))
 
 @app.route("/organization/users")
 @organization_permission_required("users.view")

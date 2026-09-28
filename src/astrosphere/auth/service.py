@@ -7,7 +7,13 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from .database import get_connection
 from .models import User
 from .rbac import (
+    EDUCATOR,
+    FULL_ADMINISTRATOR,
+    LEARNER,
+    ORGANIZATION_ADMINISTRATOR,
+    RESEARCHER,
     STANDARD_USER,
+    SUPER_ADMINISTRATOR,
     assign_role,
 )
 from .security import (
@@ -355,6 +361,366 @@ def get_user_by_id(user_id: int) -> User | None:
 
     return _row_to_user(row)
 
+
+def get_all_roles_with_permissions() -> list[dict]:
+    """Return all platform and organization roles with their permissions."""
+
+    with get_connection() as connection:
+        roles = connection.execute(
+            """
+            SELECT
+                r.id,
+                r.name,
+                r.description,
+                r.is_system_role,
+                r.created_at
+            FROM roles r
+            ORDER BY
+                CASE
+                    WHEN r.name = ? THEN 1
+                    WHEN r.name = ? THEN 2
+                    WHEN r.name = ? THEN 3
+                    WHEN r.name = ? THEN 4
+                    WHEN r.name = ? THEN 5
+                    WHEN r.name = ? THEN 6
+                    WHEN r.name = ? THEN 7
+                    ELSE 8
+                END,
+                r.name
+            """,
+            (
+                SUPER_ADMINISTRATOR,
+                FULL_ADMINISTRATOR,
+                STANDARD_USER,
+                ORGANIZATION_ADMINISTRATOR,
+                EDUCATOR,
+                RESEARCHER,
+                LEARNER,
+            ),
+        ).fetchall()
+
+        result = []
+
+        for role in roles:
+            permissions = connection.execute(
+                """
+                SELECT
+                    p.name,
+                    p.description
+                FROM role_permissions rp
+                INNER JOIN permissions p
+                    ON p.id = rp.permission_id
+                WHERE rp.role_id = ?
+                ORDER BY p.name
+                """,
+                (role["id"],),
+            ).fetchall()
+
+            result.append(
+                {
+                    "id": role["id"],
+                    "name": role["name"],
+                    "description": role["description"],
+                    "is_system_role": bool(role["is_system_role"]),
+                    "created_at": role["created_at"],
+                    "permissions": [dict(permission) for permission in permissions],
+                }
+            )
+
+        return result
+
+
+def get_audit_log_entries(limit: int = 250) -> list[dict]:
+    """Return recent platform audit events."""
+
+    limit = max(1, min(int(limit), 1000))
+
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT
+                a.id,
+                a.actor_user_id,
+                a.action,
+                a.target_type,
+                a.target_id,
+                a.details,
+                a.created_at,
+                u.username AS actor_username,
+                u.display_name AS actor_display_name
+            FROM audit_log a
+            LEFT JOIN users u
+                ON u.id = a.actor_user_id
+            ORDER BY a.id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
+        return [dict(row) for row in rows]
+
+def get_user_platform_roles(user_id: int) -> list[str]:
+    """Return platform role names assigned to a user."""
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT r.name
+            FROM user_roles ur
+            INNER JOIN roles r
+                ON r.id = ur.role_id
+            WHERE ur.user_id = ?
+            ORDER BY r.name
+            """,
+            (user_id,),
+        ).fetchall()
+
+    return [row["name"] for row in rows]
+
+
+def get_primary_platform_role(user_id: int) -> str | None:
+    """Return the user's primary platform role."""
+    roles = get_user_platform_roles(user_id)
+
+    if SUPER_ADMINISTRATOR in roles:
+        return SUPER_ADMINISTRATOR
+
+    if FULL_ADMINISTRATOR in roles:
+        return FULL_ADMINISTRATOR
+
+    if STANDARD_USER in roles:
+        return STANDARD_USER
+
+    return roles[0] if roles else None
+
+
+def _write_audit_log(
+    connection,
+    *,
+    actor_user_id: int | None,
+    action: str,
+    target_type: str,
+    target_id: int | None,
+    details: str,
+) -> None:
+    """Write an administrative audit event."""
+    connection.execute(
+        """
+        INSERT INTO audit_log (
+            actor_user_id,
+            action,
+            target_type,
+            target_id,
+            details,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            actor_user_id,
+            action,
+            target_type,
+            target_id,
+            details,
+            utc_now(),
+        ),
+    )
+
+
+def _validate_user_management_target(
+    *,
+    actor_user_id: int,
+    target_user_id: int,
+    allow_self: bool = True,
+) -> User:
+    """Validate that an administrator may manage the target user."""
+    actor = get_user_by_id(actor_user_id)
+    target = get_user_by_id(target_user_id)
+
+    if actor is None:
+        raise PermissionError("Administrator account was not found.")
+
+    if target is None:
+        raise ValueError("User not found.")
+
+    actor_role = get_primary_platform_role(actor_user_id)
+    target_role = get_primary_platform_role(target_user_id)
+
+    if not allow_self and actor_user_id == target_user_id:
+        raise PermissionError(
+            "You cannot perform this action on your own account."
+        )
+
+    if actor_role == SUPER_ADMINISTRATOR:
+        return target
+
+    if actor_role != FULL_ADMINISTRATOR:
+        raise PermissionError(
+            "You do not have permission to manage platform users."
+        )
+
+    if target_role != STANDARD_USER:
+        raise PermissionError(
+            "Full Administrators may only manage Standard Users."
+        )
+
+    return target
+
+
+def update_user(
+    *,
+    actor_user_id: int,
+    target_user_id: int,
+    email: str,
+    username: str,
+    display_name: str,
+) -> User:
+    """Update a platform user's basic profile information."""
+    target = _validate_user_management_target(
+        actor_user_id=actor_user_id,
+        target_user_id=target_user_id,
+    )
+
+    email = email.strip().lower()
+    username = username.strip().lower()
+    display_name = display_name.strip()
+
+    if not email or not username or not display_name:
+        raise ValueError(
+            "Email, username, and display name are required."
+        )
+
+    with get_connection() as connection:
+        duplicate = connection.execute(
+            """
+            SELECT id
+            FROM users
+            WHERE (email = ? OR username = ?)
+              AND id != ?
+            LIMIT 1
+            """,
+            (
+                email,
+                username,
+                target_user_id,
+            ),
+        ).fetchone()
+
+        if duplicate is not None:
+            raise UserAlreadyExistsError(
+                "A user with that email or username already exists."
+            )
+
+        connection.execute(
+            """
+            UPDATE users
+            SET email = ?,
+                username = ?,
+                display_name = ?
+            WHERE id = ?
+            """,
+            (
+                email,
+                username,
+                display_name,
+                target_user_id,
+            ),
+        )
+
+        _write_audit_log(
+            connection,
+            actor_user_id=actor_user_id,
+            action="user.updated",
+            target_type="user",
+            target_id=target_user_id,
+            details=(
+                f"Updated user profile for '{target.username}'."
+            ),
+        )
+
+        connection.commit()
+
+    return get_user_by_id(target_user_id)
+
+
+def set_user_active(
+    *,
+    actor_user_id: int,
+    target_user_id: int,
+    is_active: bool,
+) -> User:
+    """Enable or disable a platform user."""
+    target = _validate_user_management_target(
+        actor_user_id=actor_user_id,
+        target_user_id=target_user_id,
+        allow_self=False,
+    )
+
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE users
+            SET is_active = ?
+            WHERE id = ?
+            """,
+            (
+                1 if is_active else 0,
+                target_user_id,
+            ),
+        )
+
+        action = (
+            "user.activated"
+            if is_active
+            else "user.deactivated"
+        )
+
+        state = "activated" if is_active else "deactivated"
+
+        _write_audit_log(
+            connection,
+            actor_user_id=actor_user_id,
+            action=action,
+            target_type="user",
+            target_id=target_user_id,
+            details=f"User '{target.username}' was {state}.",
+        )
+
+        connection.commit()
+
+    return get_user_by_id(target_user_id)
+
+
+def delete_user(
+    *,
+    actor_user_id: int,
+    target_user_id: int,
+) -> None:
+    """Permanently delete a platform user."""
+    target = _validate_user_management_target(
+        actor_user_id=actor_user_id,
+        target_user_id=target_user_id,
+        allow_self=False,
+    )
+
+    with get_connection() as connection:
+        _write_audit_log(
+            connection,
+            actor_user_id=actor_user_id,
+            action="user.deleted",
+            target_type="user",
+            target_id=target_user_id,
+            details=f"User '{target.username}' was permanently deleted.",
+        )
+
+        connection.execute(
+            """
+            DELETE FROM users
+            WHERE id = ?
+            """,
+            (target_user_id,),
+        )
+
+        connection.commit()
 
 def get_user_by_login(identifier: str) -> User | None:
     identifier = identifier.strip().lower()

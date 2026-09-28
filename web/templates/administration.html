@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="AstroSphere platform administration."
+    >
+
+    <title>Administration — AstroSphere</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+
+    <section class="page-shell">
+
+        <div class="page-header">
+
+            <div>
+                <p class="eyebrow">Super Administrator</p>
+
+                <h1>AstroSphere Administration</h1>
+
+                <p class="page-subtitle">
+                    Manage organizations, platform users, roles,
+                    permissions, and administrative activity.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="card-grid">
+
+            <a
+                class="feature-card"
+                href="{{ url_for('admin_organizations') }}"
+            >
+                <h2>Organizations / Tenants</h2>
+
+                <p>
+                    Create and manage AstroSphere organizations,
+                    tenant status, and organization access.
+                </p>
+
+                <strong>{{ organizations|length }}</strong>
+
+                <span>Organizations</span>
+            </a>
+
+
+            <a
+                class="feature-card"
+                href="{{ url_for('admin_users') }}"
+            >
+                <h2>Users</h2>
+
+                <p>
+                    Manage platform-wide user accounts and
+                    administrator roles.
+                </p>
+
+                <span>Manage Users</span>
+            </a>
+
+
+            <a
+                class="feature-card"
+                href="{{ url_for('admin_roles') }}"
+            >
+                <h2>Roles &amp; Permissions</h2>
+
+                <p>
+                    Review platform and organization roles and
+                    their assigned permissions.
+                </p>
+
+                <span>View Roles &amp; Permissions</span>
+            </a>
+
+
+            <a
+                class="feature-card"
+                href="{{ url_for('admin_audit_log') }}"
+            >
+                <h2>Audit Log</h2>
+
+                <p>
+                    Review administrative activity and
+                    user-management events across AstroSphere.
+                </p>
+
+                <span>View Audit Log</span>
+            </a>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>

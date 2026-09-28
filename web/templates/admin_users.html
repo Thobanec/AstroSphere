@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage AstroSphere platform users.">
+    <title>Platform Users — AstroSphere</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+    <section class="page-shell">
+
+        <div class="page-header page-header-with-action">
+            <div>
+                <p class="eyebrow">Administration</p>
+                <h1>Platform Users</h1>
+                <p class="page-subtitle">
+                    Manage AstroSphere platform accounts and administrator roles.
+                </p>
+            </div>
+
+            <a class="button button-primary"
+               href="{{ url_for('admin_user_create') }}">
+                + Create User
+            </a>
+        </div>
+
+        <div class="table-card">
+
+            {% if users %}
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Platform Role</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for row in users %}
+                        <tr>
+                            <td>
+                                <strong>{{ row.user.display_name }}</strong>
+                            </td>
+
+                            <td>{{ row.user.username }}</td>
+
+                            <td>{{ row.user.email }}</td>
+
+                            <td>
+                                {% if row.platform_role == "super_administrator" %}
+                                    <span class="status-badge status-active">
+                                        Super Administrator
+                                    </span>
+                                {% elif row.platform_role == "full_administrator" %}
+                                    <span class="status-badge status-active">
+                                        Full Administrator
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge">
+                                        Standard User
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if row.user.is_active %}
+                                    <span class="status-badge status-active">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ row.user.created_at.strftime("%Y-%m-%d") }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+                <h2>No platform users</h2>
+                <p>Create the first platform user.</p>
+
+                <a class="button button-primary"
+                   href="{{ url_for('admin_user_create') }}">
+                    Create User
+                </a>
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+</main>
+
+</body>
+</html>

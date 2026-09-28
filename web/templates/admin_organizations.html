@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="Manage AstroSphere organizations and tenants."
+    >
+
+    <title>Organizations — AstroSphere</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="auth-page">
+
+{% include "_navigation.html" %}
+
+<main class="auth-main">
+
+    <section class="page-shell">
+
+        <div class="page-header page-header-with-action">
+
+            <div>
+                <p class="eyebrow">Administration</p>
+
+                <h1>Organizations</h1>
+
+                <p class="page-subtitle">
+                    Manage AstroSphere tenants.
+                </p>
+            </div>
+
+            <a
+                class="button button-primary"
+                href="{{ url_for('admin_organization_create') }}"
+            >
+                + Create Organization
+            </a>
+
+        </div>
+
+        <div class="table-card">
+
+            {% if organizations %}
+
+            <div class="table-responsive">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Slug</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for organization in organizations %}
+
+                        <tr>
+
+                            <td>
+                                <strong>{{ organization.name }}</strong>
+                            </td>
+
+                            <td>
+                                {{ organization.slug }}
+                            </td>
+
+                            <td>
+                                {{ organization.organization_type.replace('_', ' ').title() }}
+                            </td>
+
+                            <td>
+
+                                {% if organization.is_active %}
+
+                                <span class="status-badge status-active">
+                                    Active
+                                </span>
+
+                                {% else %}
+
+                                <span class="status-badge status-inactive">
+                                    Inactive
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ organization.created_at.strftime("%Y-%m-%d") }}
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <h2>No organizations yet</h2>
+
+                <p>
+                    Create the first AstroSphere organization to begin.
+                </p>
+
+                <a
+                    class="button button-primary"
+                    href="{{ url_for('admin_organization_create') }}"
+                >
+                    Create Organization
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>

@@ -1,12 +1,10 @@
-<nav class="global-nav" aria-label="Primary navigation">
+﻿<nav class="global-nav" aria-label="Primary navigation">
 
     <a href="{{ url_for('landing') }}"
        class="global-nav-link{% if request.endpoint == 'landing' %} active{% endif %}"
        {% if request.endpoint == 'landing' %}aria-current="page"{% endif %}>
         &#8962; Home
     </a>
-
-
 
     <a href="{{ url_for('galaxy') }}"
        class="global-nav-link{% if request.endpoint == 'galaxy' %} active{% endif %}"
@@ -25,6 +23,7 @@
        {% if request.endpoint == 'monitoring' %}aria-current="page"{% endif %}>
         &#9889; Space Monitoring
     </a>
+
     <a href="{{ url_for('overview') }}"
        class="global-nav-link{% if request.endpoint == 'overview' %} active{% endif %}"
        {% if request.endpoint == 'overview' %}aria-current="page"{% endif %}>
@@ -32,19 +31,65 @@
     </a>
 
     {% if session.get('user_id') %}
-    <a href="{{ url_for('profile') }}"
-       class="global-nav-link{% if request.endpoint == 'profile' %} active{% endif %}"
-       {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>
-        &#128100; Profile
-    </a>
 
-    <form method="post"
-          action="{{ url_for('logout') }}"
-          class="global-nav-form">
-        <button type="submit" class="global-nav-link global-nav-button">
-            &#10140; Sign Out
-        </button>
-    </form>
+        {% if can_access_platform_administration() %}
+
+        <a href="{{ url_for('administration') }}"
+           class="global-nav-link{% if request.endpoint in [
+               'administration',
+               'admin_organizations',
+               'admin_organization_create',
+               'admin_users',
+               'admin_user_create'
+           ] %} active{% endif %}"
+           {% if request.endpoint in [
+               'administration',
+               'admin_organizations',
+               'admin_organization_create',
+               'admin_users',
+               'admin_user_create'
+           ] %}aria-current="page"{% endif %}>
+            &#9881; Administration
+        </a>
+
+        {% elif can_access_user_management() %}
+
+        <a href="{{ url_for('user_management') }}"
+           class="global-nav-link{% if request.endpoint in [
+               'user_management',
+               'user_management_create',
+               'user_management_edit',
+               'user_management_activate',
+               'user_management_deactivate',
+               'user_management_delete'
+           ] %} active{% endif %}"
+           {% if request.endpoint in [
+               'user_management',
+               'user_management_create',
+               'user_management_edit',
+               'user_management_activate',
+               'user_management_deactivate',
+               'user_management_delete'
+           ] %}aria-current="page"{% endif %}>
+            &#9881; User Management
+        </a>
+
+        {% endif %}
+
+        <a href="{{ url_for('profile') }}"
+           class="global-nav-link{% if request.endpoint == 'profile' %} active{% endif %}"
+           {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>
+            &#128100; Profile
+        </a>
+
+        <form method="post"
+              action="{{ url_for('logout') }}"
+              class="global-nav-form">
+            <button type="submit" class="global-nav-link global-nav-button">
+                &#10140; Sign Out
+            </button>
+        </form>
+
     {% endif %}
 
 </nav>
