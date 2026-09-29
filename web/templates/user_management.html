@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>User Management — AstroSphere</title>
+    <title>User Management &mdash; AstroSphere</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/auth.css') }}">
@@ -28,10 +28,17 @@
                 </p>
             </div>
 
-            <a class="button button-primary"
-               href="{{ url_for('user_management_create') }}">
-                + Create Standard User
-            </a>
+            <div class="page-header-actions">
+                <a class="button button-secondary"
+                   href="{{ url_for('administration') }}">
+                    &#8592; Back to Administration
+                </a>
+
+                <a class="button button-primary"
+                   href="{{ url_for('user_management_create') }}">
+                    &#43; Create Standard User
+                </a>
+            </div>
         </div>
 
         <div class="table-card">
@@ -80,13 +87,30 @@
                             <td>
                                 <div class="table-actions">
 
-                                    <a class="button button-secondary"
-                                       href="{{ url_for(
-                                           'user_management_edit',
-                                           user_id=row.user.id
-                                       ) }}">
-                                        Edit
-                                    </a>
+                                    <a
+    class="button-action button-action-edit"
+    href="{{ url_for('user_management_edit', user_id=row.user.id) }}"
+>
+    <span class="button-icon">✎</span>
+    Edit
+</a>
+
+                                    <form method="post"
+                                          action="{{ url_for(
+                                              'user_management_reset_password',
+                                              user_id=row.user.id
+                                          ) }}"
+                                          onsubmit="return confirm(
+                                              'Generate a password reset link for this user&#10006;'
+                                          );">
+                                        <button
+    class="button-action button-action-reset"
+    type="submit"
+>
+    <span class="button-icon">⚿</span>
+    Reset Password
+</button>
+                                    </form>
 
                                     {% if row.user.is_active %}
 
@@ -96,8 +120,9 @@
                                                   user_id=row.user.id
                                               ) }}">
                                             <button
-                                                class="button button-secondary"
+                                                class="button-action button-action-warning"
                                                 type="submit">
+                                                <span class="button-icon">&#9208;</span>
                                                 Disable
                                             </button>
                                         </form>
@@ -110,8 +135,9 @@
                                                   user_id=row.user.id
                                               ) }}">
                                             <button
-                                                class="button button-primary"
+                                                class="button-action button-action-success"
                                                 type="submit">
+                                                <span class="button-icon">&#9654;</span>
                                                 Enable
                                             </button>
                                         </form>
@@ -124,11 +150,12 @@
                                               user_id=row.user.id
                                           ) }}"
                                           onsubmit="return confirm(
-                                              'Delete this user permanently?'
+                                              'Delete this user permanently&#10006;'
                                           );">
                                         <button
-                                            class="button button-danger"
+                                            class="button-action button-action-danger"
                                             type="submit">
+                                            <span class="button-icon">&#10006;</span>
                                             Delete
                                         </button>
                                     </form>

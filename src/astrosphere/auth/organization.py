@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sqlite3
+
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
@@ -248,6 +250,74 @@ def get_organization_by_slug(slug: str) -> Optional[Organization]:
 
     return _row_to_organization(row) if row else None
 
+
+def update_organization(
+    *,
+    organization_id: int,
+    name: str,
+    slug: str,
+    organization_type: str,
+) -> Organization:
+    """Update an organization's editable properties."""
+    name = name.strip()
+    slug = _normalize_slug(slug)
+    organization_type = _validate_organization_type(organization_type)
+
+    if not name:
+        raise ValueError("Organization name is required.")
+
+    with get_connection() as connection:
+        try:
+            cursor = connection.execute(
+                """
+                UPDATE organizations
+                SET
+                    name = ?,
+                    slug = ?,
+                    organization_type = ?
+                WHERE id = ?
+                """,
+                (
+                    name,
+                    slug,
+                    organization_type,
+                    organization_id,
+                ),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise OrganizationAlreadyExistsError(
+                "An organization with this name or slug already exists."
+            ) from exc
+
+        if cursor.rowcount == 0:
+            raise OrganizationNotFoundError(
+                "The organization was not found."
+            )
+
+        connection.commit()
+
+        row = connection.execute(
+            """
+            SELECT
+                id,
+                name,
+                slug,
+                organization_type,
+                is_active,
+                created_at,
+                created_by
+            FROM organizations
+            WHERE id = ?
+            """,
+            (organization_id,),
+        ).fetchone()
+
+    if row is None:
+        raise OrganizationNotFoundError(
+            "The organization was not found."
+        )
+
+    return _row_to_organization(row)
 
 def deactivate_organization(organization_id: int) -> None:
     """Deactivate an organization without deleting its data."""

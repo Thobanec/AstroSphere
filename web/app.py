@@ -73,17 +73,20 @@ from astrosphere.auth.database import (
 )
 from astrosphere.auth.organization import (
     OrganizationAlreadyExistsError,
+    OrganizationNotFoundError,
     OrganizationUserCreationError,
     ORGANIZATION_TYPES,
-    create_organization,
     activate_organization,
+    create_organization,
     create_organization_user,
     deactivate_organization,
     delete_organization,
     get_all_organizations,
     get_assignable_organization_roles,
+    get_organization,
     get_organization_members,
     get_membership_roles,
+    update_organization,
 )
 
 from astrosphere.auth.rbac import (
@@ -563,6 +566,67 @@ def admin_organization_create():
         error=error,
     )
 
+@app.route("/admin/organizations/<int:organization_id>/edit", methods=["GET", "POST"])
+@login_required
+def admin_organization_edit(organization_id):
+    access_denied = _platform_admin_required()
+    if access_denied is not None:
+        return access_denied
+
+    organization = get_organization(organization_id)
+
+    if organization is None:
+        return render_template(
+            "error.html",
+            error="The organization was not found.",
+        ), 404
+
+    error = None
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        slug = request.form.get("slug", "").strip()
+        organization_type = request.form.get(
+            "organization_type",
+            "",
+        ).strip().upper()
+
+        if not name:
+            error = "Organization name is required."
+        elif not slug:
+            error = "Organization slug is required."
+        elif organization_type not in ORGANIZATION_TYPES:
+            error = "Please select a valid organization type."
+        else:
+            try:
+                organization = update_organization(
+                    organization_id=organization_id,
+                    name=name,
+                    slug=slug,
+                    organization_type=organization_type,
+                )
+
+                return redirect(url_for("admin_organizations"))
+
+            except OrganizationAlreadyExistsError as exc:
+                error = str(exc)
+
+            except OrganizationNotFoundError as exc:
+                return render_template(
+                    "error.html",
+                    error=str(exc),
+                ), 404
+
+            except ValueError as exc:
+                error = str(exc)
+
+    return render_template(
+        "admin_organization_edit.html",
+        organization=organization,
+        organization_types=ORGANIZATION_TYPES,
+        error=error,
+    )
+
 @app.route("/admin/organizations/<int:organization_id>/deactivate", methods=["POST"])
 @login_required
 def admin_organization_deactivate(organization_id):
@@ -910,6 +974,51 @@ def user_management_edit(user_id):
         error=error,
     )
 
+
+@app.route(
+    "/user-management/<int:user_id>/reset-password",
+    methods=["POST"],
+)
+@login_required
+def user_management_reset_password(user_id):
+    """Generate a one-time password reset link for an eligible platform user."""
+
+    access_denied = _user_management_required()
+    if access_denied is not None:
+        return access_denied
+
+    current_user = get_current_user()
+    current_role = get_primary_platform_role(current_user.id)
+
+    target = get_user_by_id(user_id)
+
+    if target is None:
+        return render_template(
+            "error.html",
+            status_code=404,
+            message="User was not found.",
+        ), 404
+
+    target_role = get_primary_platform_role(target.id)
+
+    if (
+        current_role == FULL_ADMINISTRATOR
+        and target_role != STANDARD_USER
+    ):
+        return render_template(
+            "error.html",
+            status_code=403,
+            message="Full Administrators can only manage Standard Users.",
+        ), 403
+
+    token, _ = create_password_reset_token(target.id)
+
+    return redirect(
+        url_for(
+            "reset_password_route",
+            token=token,
+        )
+    )
 
 @app.route(
     "/user-management/<int:user_id>/activate",
