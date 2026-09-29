@@ -1450,3 +1450,37 @@ hr {
     white-space: nowrap;
     min-width: 420px;
 }
+
+
+/* ASTROSPHERE ROLES & PERMISSIONS TYPOGRAPHY */
+
+.roles-permissions-page .feature-card > strong {
+    font-size: 24px;
+    line-height: 1.1;
+    margin-top: 4px;
+}
+
+.roles-permissions-page .feature-card > span {
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.roles-permissions-page .feature-card ul {
+    margin-top: 10px;
+    padding-left: 24px;
+}
+
+.roles-permissions-page .feature-card li {
+    margin-bottom: 9px;
+}
+
+.roles-permissions-page .feature-card li strong {
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.roles-permissions-page .feature-card li span,
+.roles-permissions-page .feature-card li p {
+    font-size: 12px;
+    line-height: 1.45;
+}
