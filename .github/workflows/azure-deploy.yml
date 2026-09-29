@@ -414,10 +414,36 @@ jobs:
           echo "Verifying AstroSphere monitoring WebJob"
           echo "=============================================="
 
-          WEBJOBS=$(az webapp webjob continuous list \
+          echo "Obtaining Azure access token..."
+
+          TOKEN=$(az account get-access-token \
+            --resource https://management.azure.com/ \
+            --query accessToken \
+            -o tsv)
+
+          echo "Resolving Kudu SCM hostname..."
+
+          SCM_HOST=$(az webapp deployment list-publishing-profiles \
             --name "${{ env.AZURE_WEBAPP_NAME }}" \
             --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
-            -o json)
+            --query "[?publishMethod=='ZipDeploy'].publishUrl | [0]" \
+            -o tsv \
+            | cut -d: -f1)
+
+          if [ -z "${SCM_HOST}" ]; then
+            echo "ERROR: Unable to resolve ZipDeploy SCM hostname."
+            exit 1
+          fi
+
+          echo "SCM host: ${SCM_HOST}"
+
+          echo "Querying Kudu Continuous WebJobs API..."
+
+          WEBJOBS=$(curl --fail-with-body \
+            --silent \
+            --show-error \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "https://${SCM_HOST}/api/continuouswebjobs")
 
           echo "$WEBJOBS"
 
