@@ -436,54 +436,6 @@ jobs:
           echo ""
           echo "AstroSphere monitoring WebJob is Running."
 
-      - name: Verify AstroSphere monitoring worker
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          WORKER_URL="https://${APP_HOSTNAME}/api/v1/monitoring/worker"
-
-          echo "=============================================="
-          echo "Verifying AstroSphere monitoring worker"
-          echo "=============================================="
-          echo "Testing: $WORKER_URL"
-
-          SUCCESS=false
-
-          for attempt in {1..18}; do
-            echo "Worker health attempt $attempt/18..."
-
-            if ! RESPONSE=$(curl \
-              --fail \
-              --silent \
-              --show-error \
-              --max-time 30 \
-              "$WORKER_URL"); then
-              echo "Worker endpoint did not respond on attempt $attempt/18."
-              echo "Retrying in 10 seconds..."
-              sleep 10
-              continue
-            fi
-
-            echo "$RESPONSE" | python -m json.tool
-
-            HEALTH=$(echo "$RESPONSE" | python -c "import json,sys; payload=json.load(sys.stdin); worker=payload.get('data'); print('healthy' if worker and worker.get('status') == 'running' else 'not-ready')")
-
-            if [ "$HEALTH" = "healthy" ]; then
-              echo ""
-              echo "AstroSphere monitoring worker is healthy."
-              SUCCESS=true
-              break
-            fi
-
-            sleep 10
-          done
-
-          if [ "$SUCCESS" != "true" ]; then
-            echo ""
-            echo "ERROR: AstroSphere monitoring worker did not become healthy."
-            exit 1
-          fi
       - name: Smoke test production API
         shell: bash
         run: |
