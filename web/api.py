@@ -6,6 +6,8 @@ from flask import (
     request,
 )
 
+from web.auth import login_required
+
 from astrosphere.astronomy.asteroids import (
     AsteroidDataError,
     AsteroidNotFoundError,
@@ -1763,6 +1765,7 @@ def analysis():
     )
 
 @api.get("/monitoring/status")
+@login_required
 def monitoring_status():
     """Return the persisted health of monitoring sources."""
 
@@ -1796,6 +1799,7 @@ def _monitoring_limit():
 
 
 @api.get("/monitoring/worker")
+@login_required
 def monitoring_worker():
     """Return persisted monitoring worker health."""
 
@@ -1818,6 +1822,7 @@ def monitoring_worker():
 
 
 @api.get("/monitoring/events")
+@login_required
 def monitoring_events():
     """Return persisted monitoring events."""
 
@@ -1860,6 +1865,7 @@ def monitoring_events():
 
 
 @api.get("/monitoring/alerts")
+@login_required
 def monitoring_alerts():
     """Return persisted monitoring alerts."""
 
@@ -1919,6 +1925,7 @@ def monitoring_alerts():
 @api.post(
     "/monitoring/alerts/<alert_id>/acknowledge"
 )
+@login_required
 def acknowledge_monitoring_alert_api(alert_id):
     """Acknowledge a monitoring alert."""
 

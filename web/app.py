@@ -1423,6 +1423,7 @@ def ai_workspace():
     )
 
 @app.route("/monitoring")
+@login_required
 def monitoring():
     return render_template(
         "monitoring.html"
