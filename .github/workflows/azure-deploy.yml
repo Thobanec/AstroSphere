@@ -424,7 +424,7 @@ jobs:
 
           echo "$WEBJOBS"
 
-          STATUS=$(echo "$WEBJOBS" | python -c "import json,sys; jobs=json.load(sys.stdin).get('value', []); print(next((j.get('properties',{}).get('status','') for j in jobs if j.get('name','') == 'astrosphere-monitoring'), ''))")
+          STATUS=$(echo "$WEBJOBS" | python -c "import json,sys; jobs=json.load(sys.stdin).get('value', []); print(next((j.get('properties',{}).get('status','') for j in jobs if j.get('properties',{}).get('name','') == 'astrosphere-monitoring'), ''))")
 
           if [ "$STATUS" != "Running" ]; then
             echo ""
