@@ -414,40 +414,17 @@ jobs:
           echo "Verifying AstroSphere monitoring WebJob"
           echo "=============================================="
 
-          echo "Obtaining Azure access token..."
+          echo "Querying Azure App Service Continuous WebJobs API..."
 
-          TOKEN=$(az account get-access-token \
-            --resource https://management.azure.com/ \
-            --query accessToken \
-            -o tsv)
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
-          echo "Resolving Kudu SCM hostname..."
-
-          SCM_HOST=$(az webapp deployment list-publishing-profiles \
-            --name "${{ env.AZURE_WEBAPP_NAME }}" \
-            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
-            --query "[?publishMethod=='ZipDeploy'].publishUrl | [0]" \
-            -o tsv \
-            | cut -d: -f1)
-
-          if [ -z "${SCM_HOST}" ]; then
-            echo "ERROR: Unable to resolve ZipDeploy SCM hostname."
-            exit 1
-          fi
-
-          echo "SCM host: ${SCM_HOST}"
-
-          echo "Querying Kudu Continuous WebJobs API..."
-
-          WEBJOBS=$(curl --fail-with-body \
-            --silent \
-            --show-error \
-            -H "Authorization: Bearer ${TOKEN}" \
-            "https://${SCM_HOST}/api/continuouswebjobs")
+          WEBJOBS=$(az rest \
+            --method get \
+            --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Web/sites/${{ env.AZURE_WEBAPP_NAME }}/continuouswebjobs?api-version=2026-03-15")
 
           echo "$WEBJOBS"
 
-          STATUS=$(echo "$WEBJOBS" | python -c "import json,sys; jobs=json.load(sys.stdin); print(next((j.get('status','') for j in jobs if j.get('name','') == 'astrosphere-monitoring'), ''))")
+          STATUS=$(echo "$WEBJOBS" | python -c "import json,sys; jobs=json.load(sys.stdin).get('value', []); print(next((j.get('properties',{}).get('status','') for j in jobs if j.get('name','') == 'astrosphere-monitoring'), ''))")
 
           if [ "$STATUS" != "Running" ]; then
             echo ""
