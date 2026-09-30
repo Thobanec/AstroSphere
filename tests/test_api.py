@@ -1,3 +1,5 @@
+import pytest
+
 from datetime import datetime, timezone
 
 from web.app import app
@@ -14,7 +16,16 @@ from astrosphere.models.scientific import (
     ScientificData,
 )
 
-def test_get_monitoring_status(monkeypatch):
+@pytest.fixture()
+def authenticated_monitoring_client(monkeypatch):
+    monkeypatch.setattr(
+        "web.auth.get_current_user",
+        lambda: object(),
+    )
+
+    return app.test_client()
+
+def test_get_monitoring_status(monkeypatch, authenticated_monitoring_client):
     def fake_monitoring_status():
         return {
             "enabled": True,
@@ -42,7 +53,7 @@ def test_get_monitoring_status(monkeypatch):
         fake_monitoring_status,
     )
 
-    client = app.test_client()
+    client = authenticated_monitoring_client
 
     response = client.get(
         "/api/v1/monitoring/status"
@@ -63,7 +74,7 @@ def test_get_monitoring_status(monkeypatch):
     assert source["healthy"] is True
     assert source["error"] is None
 
-def test_get_monitoring_worker(monkeypatch):
+def test_get_monitoring_worker(monkeypatch, authenticated_monitoring_client):
     def fake_monitoring_worker_status():
         return {
             "worker_id": "primary",
@@ -84,7 +95,7 @@ def test_get_monitoring_worker(monkeypatch):
         fake_monitoring_worker_status,
     )
 
-    client = app.test_client()
+    client = authenticated_monitoring_client
 
     response = client.get(
         "/api/v1/monitoring/worker"
@@ -1666,9 +1677,60 @@ def test_get_celestial_object_relationships_pluto_moon():
 
 # =========================================================
 # Monitoring API
+
+def test_monitoring_status_requires_authentication():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/status"
+    )
+
+    assert response.status_code == 302
+
+
+def test_monitoring_worker_requires_authentication():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/worker"
+    )
+
+    assert response.status_code == 302
+
+
+def test_monitoring_events_requires_authentication():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/events"
+    )
+
+    assert response.status_code == 302
+
+
+def test_monitoring_alerts_requires_authentication():
+    client = app.test_client()
+
+    response = client.get(
+        "/api/v1/monitoring/alerts"
+    )
+
+    assert response.status_code == 302
+
+
+def test_monitoring_alert_acknowledge_requires_authentication():
+    client = app.test_client()
+
+    response = client.post(
+        "/api/v1/monitoring/alerts/alert-001/acknowledge"
+    )
+
+    assert response.status_code == 302
+
+
 # =========================================================
 
-def test_get_monitoring_events(monkeypatch):
+def test_get_monitoring_events(monkeypatch, authenticated_monitoring_client):
     def fake_events(**kwargs):
         assert kwargs["limit"] == 10
         assert kwargs["severity"] == "warning"
@@ -1703,7 +1765,7 @@ def test_get_monitoring_events(monkeypatch):
         fake_events,
     )
 
-    client = app.test_client()
+    client = authenticated_monitoring_client
 
     response = client.get(
         "/api/v1/monitoring/events"
@@ -1727,8 +1789,8 @@ def test_get_monitoring_events(monkeypatch):
     assert event["object_name"] == "(2026 SA8)"
 
 
-def test_get_monitoring_events_rejects_invalid_limit():
-    client = app.test_client()
+def test_get_monitoring_events_rejects_invalid_limit(authenticated_monitoring_client):
+    client = authenticated_monitoring_client
 
     response = client.get(
         "/api/v1/monitoring/events?limit=invalid"
@@ -1742,8 +1804,8 @@ def test_get_monitoring_events_rejects_invalid_limit():
     assert data["error"] == "limit must be an integer."
 
 
-def test_get_monitoring_events_rejects_limit_out_of_range():
-    client = app.test_client()
+def test_get_monitoring_events_rejects_limit_out_of_range(authenticated_monitoring_client):
+    client = authenticated_monitoring_client
 
     response = client.get(
         "/api/v1/monitoring/events?limit=501"
@@ -1760,7 +1822,7 @@ def test_get_monitoring_events_rejects_limit_out_of_range():
     )
 
 
-def test_get_monitoring_alerts(monkeypatch):
+def test_get_monitoring_alerts(monkeypatch, authenticated_monitoring_client):
     def fake_alerts(**kwargs):
         assert kwargs["limit"] == 10
         assert kwargs["acknowledged"] is False
@@ -1792,7 +1854,7 @@ def test_get_monitoring_alerts(monkeypatch):
         fake_alerts,
     )
 
-    client = app.test_client()
+    client = authenticated_monitoring_client
 
     response = client.get(
         "/api/v1/monitoring/alerts"
@@ -1815,8 +1877,8 @@ def test_get_monitoring_alerts(monkeypatch):
     assert alert["acknowledged"] is False
 
 
-def test_get_monitoring_alerts_rejects_invalid_acknowledged():
-    client = app.test_client()
+def test_get_monitoring_alerts_rejects_invalid_acknowledged(authenticated_monitoring_client):
+    client = authenticated_monitoring_client
 
     response = client.get(
         "/api/v1/monitoring/alerts"
@@ -1834,7 +1896,7 @@ def test_get_monitoring_alerts_rejects_invalid_acknowledged():
     )
 
 
-def test_acknowledge_monitoring_alert(monkeypatch):
+def test_acknowledge_monitoring_alert(monkeypatch, authenticated_monitoring_client):
     def fake_acknowledge(alert_id):
         assert alert_id == "alert-001"
         return True
@@ -1844,7 +1906,7 @@ def test_acknowledge_monitoring_alert(monkeypatch):
         fake_acknowledge,
     )
 
-    client = app.test_client()
+    client = authenticated_monitoring_client
 
     response = client.post(
         "/api/v1/monitoring/alerts/alert-001/acknowledge"
@@ -1862,9 +1924,7 @@ def test_acknowledge_monitoring_alert(monkeypatch):
     assert data["data"]["acknowledged"] is True
 
 
-def test_acknowledge_monitoring_alert_not_found(
-    monkeypatch,
-):
+def test_acknowledge_monitoring_alert_not_found(monkeypatch, authenticated_monitoring_client):
     def fake_acknowledge(alert_id):
         assert alert_id == "missing-alert"
         return False
@@ -1874,7 +1934,7 @@ def test_acknowledge_monitoring_alert_not_found(
         fake_acknowledge,
     )
 
-    client = app.test_client()
+    client = authenticated_monitoring_client
 
     response = client.post(
         "/api/v1/monitoring/alerts/missing-alert/acknowledge"
