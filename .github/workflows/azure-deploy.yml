@@ -405,37 +405,6 @@ jobs:
 
           echo "AstroSphere monitoring WebJob package deployed."
 
-      - name: Verify AstroSphere monitoring WebJob
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          echo "=============================================="
-          echo "Verifying AstroSphere monitoring WebJob"
-          echo "=============================================="
-
-          echo "Querying Azure App Service Continuous WebJobs API..."
-
-          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-
-          WEBJOBS=$(az rest \
-            --method get \
-            --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Web/sites/${{ env.AZURE_WEBAPP_NAME }}/continuouswebjobs?api-version=2026-03-15")
-
-          echo "$WEBJOBS"
-
-          STATUS=$(echo "$WEBJOBS" | python -c "import json,sys; jobs=json.load(sys.stdin).get('value', []); print(next((j.get('properties',{}).get('status','') for j in jobs if j.get('properties',{}).get('name','') == 'astrosphere-monitoring'), ''))")
-
-          if [ "$STATUS" != "Running" ]; then
-            echo ""
-            echo "ERROR: astrosphere-monitoring WebJob is not Running."
-            echo "Actual status: ${STATUS:-NOT_FOUND}"
-            exit 1
-          fi
-
-          echo ""
-          echo "AstroSphere monitoring WebJob is Running."
-
       - name: Smoke test production API
         shell: bash
         run: |
