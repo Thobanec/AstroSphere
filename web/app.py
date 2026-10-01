@@ -847,7 +847,7 @@ def user_management():
 @app.route("/user-management/create", methods=["GET", "POST"])
 @login_required
 def user_management_create():
-    """Create a Standard User from Full Administrator user management."""
+    """Create a user according to the current platform administrator role."""
 
     access_denied = _user_management_required()
     if access_denied is not None:
@@ -856,15 +856,29 @@ def user_management_create():
     current_user = get_current_user()
     current_role = get_primary_platform_role(current_user.id)
 
+    if current_role == SUPER_ADMINISTRATOR:
+        allowed_roles = [
+            STANDARD_USER,
+            FULL_ADMINISTRATOR,
+        ]
+    else:
+        allowed_roles = [
+            STANDARD_USER,
+        ]
+
     error = None
+    selected_role = STANDARD_USER
 
     if request.method == "POST":
         display_name = request.form.get("display_name", "").strip()
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
+        selected_role = request.form.get("role_name", "").strip()
 
-        if not display_name:
+        if selected_role not in allowed_roles:
+            error = "You do not have permission to create a user with the selected role."
+        elif not display_name:
             error = "Display name is required."
         elif not username:
             error = "Username is required."
@@ -880,7 +894,7 @@ def user_management_create():
                     display_name=display_name,
                     password=password,
                     created_by=current_user.id,
-                    role_name=STANDARD_USER,
+                    role_name=selected_role,
                 )
 
                 return redirect(url_for("user_management"))
@@ -894,6 +908,8 @@ def user_management_create():
         "user_management_create.html",
         error=error,
         current_role=current_role,
+        allowed_roles=allowed_roles,
+        selected_role=selected_role,
     )
 
 

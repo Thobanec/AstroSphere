@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from functools import wraps
+import os
+import time
 from urllib.parse import urlparse
 
 from flask import (
@@ -29,6 +31,47 @@ SESSION_USER_ID = "user_id"
 SESSION_MFA_PENDING_USER_ID = "mfa_pending_user_id"
 SESSION_MFA_NEXT_URL = "mfa_next_url"
 SESSION_ORGANIZATION_ID = "organization_id"
+SESSION_LAST_ACTIVITY = "last_activity"
+
+DEFAULT_SESSION_IDLE_TIMEOUT_SECONDS = 1800
+
+
+def _get_session_idle_timeout_seconds() -> int:
+    """Return the configured authenticated-session idle timeout."""
+    configured_timeout = os.getenv(
+        "ASTROSPHERE_SESSION_IDLE_TIMEOUT_SECONDS",
+        str(DEFAULT_SESSION_IDLE_TIMEOUT_SECONDS),
+    )
+
+    try:
+        timeout = int(configured_timeout)
+    except (TypeError, ValueError):
+        timeout = DEFAULT_SESSION_IDLE_TIMEOUT_SECONDS
+
+    return max(60, timeout)
+
+
+def _session_has_expired() -> bool:
+    """Return True when the authenticated session exceeded its idle timeout."""
+    last_activity = session.get(SESSION_LAST_ACTIVITY)
+
+    if last_activity is None:
+        return True
+
+    try:
+        last_activity = float(last_activity)
+    except (TypeError, ValueError):
+        return True
+
+    return (
+        time.time() - last_activity
+        > _get_session_idle_timeout_seconds()
+    )
+
+
+def _touch_session_activity() -> None:
+    """Refresh the authenticated session activity timestamp."""
+    session[SESSION_LAST_ACTIVITY] = time.time()
 
 
 def get_current_user() -> User | None:
@@ -38,17 +81,23 @@ def get_current_user() -> User | None:
     if user_id is None:
         return None
 
+    if _session_has_expired():
+        session.clear()
+        return None
+
     try:
         user_id = int(user_id)
     except (TypeError, ValueError):
-        session.pop(SESSION_USER_ID, None)
+        session.clear()
         return None
 
     user = get_user_by_id(user_id)
 
     if user is None or not user.is_active:
-        session.pop(SESSION_USER_ID, None)
+        session.clear()
         return None
+
+    _touch_session_activity()
 
     return user
 
@@ -57,6 +106,7 @@ def login_user(user: User) -> None:
     """Create an authenticated session for a user."""
     session.clear()
     session[SESSION_USER_ID] = user.id
+    _touch_session_activity()
 
     memberships = get_user_memberships(user.id)
 
@@ -226,6 +276,7 @@ def complete_mfa_login(user: User) -> str:
 
     session.clear()
     session[SESSION_USER_ID] = user.id
+    _touch_session_activity()
 
     return next_url
 

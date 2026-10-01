@@ -1,4 +1,5 @@
 import importlib
+import time
 
 import pytest
 
@@ -85,8 +86,11 @@ def _create_standard_user(service):
 
 
 def _login(client, user):
+    from web.auth import SESSION_LAST_ACTIVITY
+
     with client.session_transaction() as session:
         session["user_id"] = user.id
+        session[SESSION_LAST_ACTIVITY] = time.time()
 
 
 @pytest.mark.parametrize(
@@ -211,6 +215,104 @@ def test_unauthenticated_user_is_redirected_to_login(
     assert "/login" in response.headers["Location"]
 
 
+def test_super_admin_create_user_page_offers_standard_and_full_admin(
+    auth_environment,
+    client,
+):
+    service = auth_environment["service"]
+
+    super_admin = _create_super_admin(service)
+
+    _login(client, super_admin)
+
+    response = client.get("/user-management/create")
+
+    assert response.status_code == 200
+    assert b'value="standard_user"' in response.data
+    assert b'value="full_administrator"' in response.data
+    assert b"Standard User" in response.data
+    assert b"Full Administrator" in response.data
+
+
+def test_super_admin_can_create_standard_user(
+    auth_environment,
+    client,
+):
+    service = auth_environment["service"]
+
+    super_admin = _create_super_admin(service)
+
+    _login(client, super_admin)
+
+    response = client.post(
+        "/user-management/create",
+        data={
+            "email": "created-standard@astro-test.local",
+            "username": "created_standard",
+            "display_name": "Created Standard User",
+            "password": "TestPassword123!",
+            "role_name": "standard_user",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303}
+
+    created = service.get_user_by_login("created_standard")
+
+    assert created is not None
+    assert service.get_primary_platform_role(created.id) == "standard_user"
+
+
+def test_super_admin_can_create_full_admin(
+    auth_environment,
+    client,
+):
+    service = auth_environment["service"]
+
+    super_admin = _create_super_admin(service)
+
+    _login(client, super_admin)
+
+    response = client.post(
+        "/user-management/create",
+        data={
+            "email": "created-full-admin@astro-test.local",
+            "username": "created_full_admin",
+            "display_name": "Created Full Administrator",
+            "password": "TestPassword123!",
+            "role_name": "full_administrator",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303}
+
+    created = service.get_user_by_login("created_full_admin")
+
+    assert created is not None
+    assert service.get_primary_platform_role(created.id) == "full_administrator"
+
+
+def test_full_admin_create_user_page_offers_standard_user_only(
+    auth_environment,
+    client,
+):
+    service = auth_environment["service"]
+
+    full_admin = _create_full_admin(service)
+
+    _login(client, full_admin)
+
+    response = client.get("/user-management/create")
+
+    assert response.status_code == 200
+    assert b'value="standard_user"' in response.data
+    assert b'value="full_administrator"' not in response.data
+    assert b"Standard User" in response.data
+    assert b"Full Administrators can create Standard Users only." in response.data
+
+
 def test_full_admin_can_create_standard_user(
     auth_environment,
     client,
@@ -228,6 +330,7 @@ def test_full_admin_can_create_standard_user(
             "username": "created_standard",
             "display_name": "Created Standard User",
             "password": "TestPassword123!",
+            "role_name": "standard_user",
         },
         follow_redirects=False,
     )
@@ -257,17 +360,20 @@ def test_full_admin_cannot_create_elevated_user_through_management_route(
             "username": "attempted_admin",
             "display_name": "Attempted Administrator",
             "password": "TestPassword123!",
-            "role": "full_administrator",
+            "role_name": "full_administrator",
         },
         follow_redirects=False,
     )
 
-    assert response.status_code == 302
+    assert response.status_code == 200
+    assert (
+        b"You do not have permission to create a user with the selected role."
+        in response.data
+    )
 
     created = service.get_user_by_login("attempted_admin")
-    assert created is not None
-    assert service.get_primary_platform_role(created.id) == "standard_user"
 
+    assert created is None
 
 def test_full_admin_cannot_directly_edit_elevated_user(
     auth_environment,

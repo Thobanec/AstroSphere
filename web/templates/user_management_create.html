@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Create Standard User — AstroSphere</title>
+    <title>Create User — AstroSphere</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/auth.css') }}">
@@ -22,9 +22,9 @@
         <div class="page-header">
             <div>
                 <p class="eyebrow">User Management</p>
-                <h1>Create Standard User</h1>
+                <h1>Create User</h1>
                 <p class="page-subtitle">
-                    Create a new Standard User account.
+                    Create a new user account and assign the appropriate platform role.
                 </p>
             </div>
         </div>
@@ -84,12 +84,47 @@
                         >
                     </div>
 
+                    <div class="form-field">
+                        <label for="role_name">Platform Role</label>
+
+                        <select id="role_name"
+                                name="role_name"
+                                required>
+
+                            {% for role in allowed_roles %}
+                                {% if role == 'full_administrator' %}
+                                    <option value="full_administrator"
+                                            {% if selected_role == 'full_administrator' %}selected{% endif %}>
+                                        Full Administrator
+                                    </option>
+                                {% elif role == 'standard_user' %}
+                                    <option value="standard_user"
+                                            {% if selected_role == 'standard_user' %}selected{% endif %}>
+                                        Standard User
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+
+                        </select>
+
+                        {% if current_role == 'super_administrator' %}
+                            <p class="form-help">
+                                Super Administrators can create Standard Users and Full Administrators.
+                            </p>
+                        {% else %}
+                            <p class="form-help">
+                                Full Administrators can create Standard Users only.
+                            </p>
+                        {% endif %}
+                    </div>
+
                 </div>
 
                 <div class="form-actions">
+
                     <a class="button button-secondary"
                        href="{{ url_for('administration') }}">
-                        ← Back to Administration
+                        &larr; Back to Administration
                     </a>
 
                     <a class="button button-secondary"
@@ -99,8 +134,9 @@
 
                     <button class="button button-primary"
                             type="submit">
-                        Create Standard User
+                        Create User
                     </button>
+
                 </div>
 
             </form>
